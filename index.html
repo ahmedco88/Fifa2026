@@ -12,6 +12,29 @@
     --navy: #1E3C5A; --coral: #C96442; --teal: #00796D; --cream: #F5F0E8;
     --ink: #2C2C2A; --muted: #5F5E5A; --line: #E2DCD0; --card: #ffffff;
   }
+  /* Dark theme: redefine the palette, then fix the few spots that hard-code
+     light surfaces or use --navy as text (which would vanish on a dark card). */
+  :root[data-theme="dark"] {
+    --navy: #0E1B28; --cream: #11151A; --ink: #E7E5E0;
+    --muted: #9AA1AB; --line: #2A323C; --card: #1B2027;
+  }
+  :root[data-theme="dark"] .pill,
+  :root[data-theme="dark"] .refresh,
+  :root[data-theme="dark"] .modal,
+  :root[data-theme="dark"] .btn-ghost,
+  :root[data-theme="dark"] .pick { background: var(--card); }
+  :root[data-theme="dark"] .pill,
+  :root[data-theme="dark"] .team-name,
+  :root[data-theme="dark"] .score,
+  :root[data-theme="dark"] .day-head,
+  :root[data-theme="dark"] .modal-head h2,
+  :root[data-theme="dark"] .pick { color: var(--ink); }
+  :root[data-theme="dark"] .status { background: #232C36; color: var(--ink); }
+  :root[data-theme="dark"] .pick.sel { background: #143A30; color: var(--ink); }
+  :root[data-theme="dark"] .vs { color: #6B7480; }
+
+  .theme-toggle { flex-shrink: 0; width: 34px; height: 34px; border-radius: 50%; border: 1px solid rgba(255,255,255,.25); background: rgba(255,255,255,.1); font-size: 15px; line-height: 1; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--cream); color: var(--ink); line-height: 1.5; -webkit-font-smoothing: antialiased; }
   .wrap { max-width: 480px; margin: 0 auto; padding-bottom: 1rem; }
@@ -111,6 +134,7 @@
       <div class="eyebrow line2" id="subhead">Canada · Mexico · USA · 104 matches</div>
       <div class="eyebrow line2 clock" id="clock"></div>
     </div>
+    <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode" title="Toggle dark mode">🌙</button>
   </header>
 
   <div class="controls">
@@ -327,6 +351,24 @@
     const sub=document.getElementById("subhead"); if(sub)sub.textContent+=" · "+TZ;
     const note=document.getElementById("note"); if(note)note.textContent=note.textContent.replace("your local timezone","your local time ("+TZ+")");
   }
+
+  // Light/dark theme — saved per browser, defaults to the OS preference.
+  const THEME_KEY = "wc2026_theme";
+  function applyTheme(t){
+    document.documentElement.setAttribute("data-theme", t);
+    const btn=document.getElementById("themeToggle"); if(btn)btn.textContent = t==="dark"?"☀️":"🌙";
+    const meta=document.querySelector('meta[name="theme-color"]'); if(meta)meta.content = t==="dark"?"#0E1B28":"#1E3C5A";
+  }
+  function initTheme(){
+    let t; try{ t=localStorage.getItem(THEME_KEY); }catch{}
+    if(!t) t=(window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches)?"dark":"light";
+    applyTheme(t);
+  }
+  document.getElementById("themeToggle").onclick=function(){
+    const next=document.documentElement.getAttribute("data-theme")==="dark"?"light":"dark";
+    applyTheme(next); try{ localStorage.setItem(THEME_KEY, next); }catch{}
+  };
+  initTheme();
 
   // Live local-time line in the banner, ticking each second.
   function updateClock(){ const el=document.getElementById("clock"); if(!el)return; const d=new Date(); let h=d.getHours();const ap=h>=12?"pm":"am";h=h%12||12; const t=`${h}:${pad(d.getMinutes())}:${pad(d.getSeconds())}${ap}`; el.textContent="🕒 "+t+(TZ?" "+TZ:""); }
