@@ -52,11 +52,12 @@
 
   .controls { padding: 1rem 1rem .25rem; }
   .label { font-size: 11px; text-transform: uppercase; letter-spacing: .5px; color: var(--muted); margin-bottom: 6px; display: block; }
+  .label.sep { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line); }
   .pills { display: flex; flex-wrap: wrap; gap: 7px; }
   .pill { border: 1.5px solid var(--line); background: #fff; color: var(--navy); border-radius: 20px; padding: 6px 13px; font-size: 13px; font-weight: 500; cursor: pointer; transition: all .15s; }
   .pill.active { background: var(--coral); border-color: var(--coral); color: #fff; }
   .pill.fav.active { background: var(--teal); border-color: var(--teal); }
-  .toggle-row { display: flex; gap: 7px; margin-top: 10px; flex-wrap: wrap; }
+  .toggle-row { display: flex; gap: 7px; flex-wrap: wrap; }
 
   .day-head { font-size: 13px; font-weight: 600; color: var(--navy); margin: 1.25rem 0 .5rem; padding: 0 1rem; display: flex; align-items: center; gap: 8px; }
   .day-head::after { content: ""; flex: 1; height: 1px; background: var(--line); }
@@ -140,6 +141,7 @@
   <div class="controls">
     <span class="label">Filter by group</span>
     <div class="pills" id="teamPills"></div>
+    <span class="label sep">My filters</span>
     <div class="toggle-row">
       <button class="pill fav" id="favBtn">★ My teams only</button>
       <button class="pill" id="upcomingBtn">Upcoming only</button>
