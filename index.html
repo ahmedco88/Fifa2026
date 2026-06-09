@@ -103,7 +103,7 @@
     <div class="head-text">
       <div class="eyebrow">FIFA World Cup 2026 · 11 Jun – 19 Jul</div>
       <h1>Match Tracker</h1>
-      <div class="eyebrow line2">Canada · Mexico · USA · 104 matches · AEST</div>
+      <div class="eyebrow line2" id="subhead">Canada · Mexico · USA · 104 matches</div>
     </div>
   </header>
 
@@ -124,7 +124,7 @@
   <button class="refresh" id="refreshBtn" style="display:none;">↻ Refresh scores</button>
   <div class="stamp" id="stamp"></div>
 
-  <div class="note">⚠ Times in AEST (UTC+10), converted from each venue's local kick-off. Scores update from the open-source openfootball dataset as matches are played — may lag a few minutes behind live broadcast.</div>
+  <div class="note" id="note">⚠ Times shown in your local timezone, converted from each venue's local kick-off. Scores update from the open-source openfootball dataset as matches are played — may lag a few minutes behind live broadcast.</div>
 
   <footer>Designed by <a href="https://www.linkedin.com/in/drobaidi" target="_blank" rel="noopener">Ahmed Al-Obaidi</a></footer>
 </div>
@@ -139,8 +139,11 @@
 
 <script>
   const DATA_URL = "https://raw.githubusercontent.com/openfootball/worldcup.json/master/2026/worldcup.json";
-  const AEST_OFFSET = 10;
   const STORAGE_KEY = "wc2026_fav_teams";
+
+  // Short label for the viewer's local timezone (e.g. "AEST", "GMT+10", "PST").
+  function tzLabel(){ try{ const s=new Date().toLocaleTimeString(undefined,{timeZoneName:"short"}); const m=s.match(/[A-Z]{2,5}$|GMT[+-]\d+(?::\d+)?$/); return m?m[0]:""; }catch{ return ""; } }
+  const TZ = tzLabel();
 
   const ALIAS = {
     "UEFA Path C winner":"Türkiye","IC Path 2 winner":"Iraq","UEFA Path A winner":"Playoff A",
@@ -183,18 +186,20 @@
   function labelOf(n){ const c=canon(n); if(TEAM[c]) return c+((ALIAS[n]&&n!==c)?"*":""); return n; }
   function badge(n){ const code=codeOf(n),col=colorOf(n); const txt=LIGHT_BADGES.has(code)?"#2C2C2A":"#fff"; return `<span class="badge" style="background:${col};color:${txt}">${code}</span>`; }
 
-  function toAEST(d,t){ const m=t.match(/(\d{1,2}):(\d{2})\s*UTC([+-]\d{1,2})/); if(!m)return null; const[_,hh,mm,off]=m; const[y,mo,dd]=d.split("-").map(Number); return new Date(Date.UTC(y,mo-1,dd,Number(hh)-Number(off),Number(mm))+AEST_OFFSET*3600*1000); }
-  function fmtDay(dt){ return `${DAYS[dt.getUTCDay()]} ${dt.getUTCDate()} ${MONTHS[dt.getUTCMonth()]}`; }
-  function fmtTime(dt){ let h=dt.getUTCHours(),m=dt.getUTCMinutes();const ap=h>=12?"pm":"am";h=h%12||12;return `${h}:${String(m).padStart(2,"0")}${ap}`; }
-  function matchState(dt,score){ if(score&&score.ft)return"ft"; const now=new Date(Date.now()+AEST_OFFSET*3600*1000); const diff=dt-now; if(diff<0&&diff>-2.5*3600*1000)return"live"; return"upcoming"; }
+  // Parse a venue date + "HH:MM UTC±N" string into the true UTC instant.
+  // Local getters (getHours/getDate/…) then render it in the viewer's timezone.
+  function toLocal(d,t){ const m=t.match(/(\d{1,2}):(\d{2})\s*UTC([+-]\d{1,2})/); if(!m)return null; const[_,hh,mm,off]=m; const[y,mo,dd]=d.split("-").map(Number); return new Date(Date.UTC(y,mo-1,dd,Number(hh)-Number(off),Number(mm))); }
+  function fmtDay(dt){ return `${DAYS[dt.getDay()]} ${dt.getDate()} ${MONTHS[dt.getMonth()]}`; }
+  function fmtTime(dt){ let h=dt.getHours(),m=dt.getMinutes();const ap=h>=12?"pm":"am";h=h%12||12;return `${h}:${String(m).padStart(2,"0")}${ap}`; }
+  function matchState(dt,score){ if(score&&score.ft)return"ft"; const diff=dt.getTime()-Date.now(); if(diff<0&&diff>-2.5*3600*1000)return"live"; return"upcoming"; }
 
   function pad(n){ return String(n).padStart(2,"0"); }
-  function icsStamp(dt){ const u=new Date(dt.getTime()-AEST_OFFSET*3600*1000); return `${u.getUTCFullYear()}${pad(u.getUTCMonth()+1)}${pad(u.getUTCDate())}T${pad(u.getUTCHours())}${pad(u.getUTCMinutes())}00Z`; }
+  function icsStamp(dt){ return `${dt.getUTCFullYear()}${pad(dt.getUTCMonth()+1)}${pad(dt.getUTCDate())}T${pad(dt.getUTCHours())}${pad(dt.getUTCMinutes())}00Z`; }
   function downloadICS(m,dt){
     const start=icsStamp(dt), end=icsStamp(new Date(dt.getTime()+2*3600*1000));
     const title=`${labelOf(m.team1)} v ${labelOf(m.team2)} — WC2026`;
     const ics=["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//WC2026//EN","BEGIN:VEVENT",
-      `UID:wc2026-${start}-${codeOf(m.team1)}@netlify`,`DTSTAMP:${start}`,`DTSTART:${start}`,`DTEND:${end}`,
+      `UID:wc2026-${start}-${codeOf(m.team1)}-${codeOf(m.team2)}@worldcup.local`,`DTSTAMP:${start}`,`DTSTART:${start}`,`DTEND:${end}`,
       `SUMMARY:${title}`,`LOCATION:${(m.ground||"").replace(/,/g,"")}`,`DESCRIPTION:${m.group||m.round||""} · FIFA World Cup 2026`,
       "END:VEVENT","END:VCALENDAR"].join("\r\n");
     const url=URL.createObjectURL(new Blob([ics],{type:"text/calendar"}));
@@ -205,7 +210,7 @@
 
   function render(){
     const content=document.getElementById("content");
-    let rows=RAW.map(mt=>({...mt,dt:toAEST(mt.date,mt.time)})).filter(r=>r.dt);
+    let rows=RAW.map(mt=>({...mt,dt:toLocal(mt.date,mt.time)})).filter(r=>r.dt);
     rows.sort((a,b)=>a.dt-b.dt);
     if(groupFilter) rows=rows.filter(r=>r.group===groupFilter);
     if(showFavOnly) rows=rows.filter(r=>isFav(r.team1)||isFav(r.team2));
@@ -213,14 +218,14 @@
     if(!rows.length){ content.innerHTML='<div class="loading">No matches for this filter.</div>'; return; }
 
     let html="",lastDay="",open=false;
-    const todayKey = fmtDay(new Date(Date.now()+AEST_OFFSET*3600*1000));
+    const todayKey = fmtDay(new Date());
     for(const r of rows){
       const dayKey=fmtDay(r.dt);
       if(dayKey!==lastDay){ if(open)html+="</div>"; const isT = dayKey===todayKey; html+=`<div class="day-head${isT?' is-today':''}"${isT?' id="todayAnchor"':''}>${dayKey}</div><div class="matches">`; open=true; lastDay=dayKey; }
       const fav=isFav(r.team1)||isFav(r.team2);
       const st=matchState(r.dt,r.score);
       const scoreDisp=(r.score&&r.score.ft)?`${r.score.ft[0]}–${r.score.ft[1]}`:"";
-      const stTag=st==="live"?'<span class="status live">● Live</span>':st==="ft"?'<span class="status ft">FT</span>':`<span class="status">${fmtTime(r.dt)} AEST</span>`;
+      const stTag=st==="live"?'<span class="status live">● Live</span>':st==="ft"?'<span class="status ft">FT</span>':`<span class="status">${fmtTime(r.dt)}${TZ?" "+TZ:""}</span>`;
       const grp=r.group?r.group.replace("Group ","Grp "):(r.round||"");
       const cid="ics"+(icsId++); ICS_REG[cid]={m:r,dt:r.dt};
       html+=`<div class="match ${fav?'fav':''}">
@@ -265,8 +270,8 @@
     let el=document.getElementById("todayAnchor");
     if(!el){
       // no match today — find the next upcoming day header
-      const now=new Date(Date.now()+AEST_OFFSET*3600*1000);
-      const rows=RAW.map(m=>({...m,dt:toAEST(m.date,m.time)})).filter(r=>r.dt&&r.dt>=now).sort((a,b)=>a.dt-b.dt);
+      const now=new Date();
+      const rows=RAW.map(m=>({...m,dt:toLocal(m.date,m.time)})).filter(r=>r.dt&&r.dt>=now).sort((a,b)=>a.dt-b.dt);
       if(rows.length){ const k=fmtDay(rows[0].dt); const heads=[...document.querySelectorAll(".day-head")]; el=heads.find(h=>h.textContent.includes(k)); }
     }
     if(el) el.scrollIntoView({behavior:"smooth",block:"start"});
@@ -275,9 +280,15 @@
   document.getElementById("todayBtn").onclick=jumpToToday;
   document.getElementById("upcomingBtn").onclick=function(){ showUpcomingOnly=!showUpcomingOnly; this.classList.toggle("active",showUpcomingOnly); render(); };
 
-  async function load(){
+  // Auto-refresh scores while any match is live, so the page stays current
+  // without the user tapping refresh. Polls once a minute during live windows.
+  let pollTimer=null;
+  function anyLive(){ return RAW.some(m=>{ const dt=toLocal(m.date,m.time); return dt && matchState(dt,m.score)==="live"; }); }
+  function schedulePoll(){ if(pollTimer)clearInterval(pollTimer); pollTimer=setInterval(()=>{ if(anyLive())load(true); }, 60000); }
+
+  async function load(silent){
     const content=document.getElementById("content");
-    content.innerHTML='<div class="loading">Loading schedule…</div>';
+    if(!silent) content.innerHTML='<div class="loading">Loading schedule…</div>';
     try{
       const res=await fetch(DATA_URL,{cache:"no-store"});
       if(!res.ok)throw new Error("HTTP "+res.status);
@@ -285,12 +296,18 @@
       RAW=json.matches||[];
       buildGroupPills(); render();
       document.getElementById("refreshBtn").style.display="block";
-      const now=new Date(Date.now()+AEST_OFFSET*3600*1000);
-      document.getElementById("stamp").textContent="Updated "+fmtTime(now)+" AEST · tap refresh during matches";
-    }catch(e){ content.innerHTML='<div class="err">Couldn\'t load schedule.<br>Check connection and tap refresh.</div>'; }
+      const stampTz=TZ?" "+TZ:"";
+      const live=anyLive();
+      document.getElementById("stamp").textContent="Updated "+fmtTime(new Date())+stampTz+(live?" · auto-refreshing live scores":" · tap refresh during matches");
+      schedulePoll();
+    }catch(e){ if(!silent) content.innerHTML='<div class="err">Couldn\'t load schedule.<br>Check connection and tap refresh.</div>'; }
   }
-  document.getElementById("refreshBtn").onclick=load;
+  document.getElementById("refreshBtn").onclick=()=>load();
 
+  if(TZ){
+    const sub=document.getElementById("subhead"); if(sub)sub.textContent+=" · "+TZ;
+    const note=document.getElementById("note"); if(note)note.textContent=note.textContent.replace("your local timezone","your local time ("+TZ+")");
+  }
   loadFavs(); load();
 </script>
 </body>
