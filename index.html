@@ -35,6 +35,13 @@
 
   .theme-toggle { flex-shrink: 0; width: 34px; height: 34px; border-radius: 50%; border: 1px solid rgba(255,255,255,.25); background: rgba(255,255,255,.1); font-size: 15px; line-height: 1; cursor: pointer; display: flex; align-items: center; justify-content: center; }
 
+  .reminder-bar { display: none; align-items: center; gap: 10px; margin: .6rem 1rem 0; padding: 9px 12px; background: #FFF4E8; border: 1px solid var(--coral); border-radius: 10px; font-size: 13px; color: var(--ink); }
+  .reminder-bar.show { display: flex; }
+  .reminder-bar .rb-text { flex: 1; font-weight: 600; }
+  .reminder-bar .rb-x { border: none; background: none; cursor: pointer; font-size: 18px; color: var(--muted); line-height: 1; padding: 0 2px; }
+  :root[data-theme="dark"] .reminder-bar { background: #2A2017; }
+  .pill.remind.active { background: var(--teal); border-color: var(--teal); color: #fff; }
+
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--cream); color: var(--ink); line-height: 1.5; -webkit-font-smoothing: antialiased; }
   .wrap { max-width: 480px; margin: 0 auto; padding-bottom: 1rem; }
@@ -138,6 +145,11 @@
     <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode" title="Toggle dark mode">🌙</button>
   </header>
 
+  <div class="reminder-bar" id="reminderBar">
+    <span class="rb-text"></span>
+    <button class="rb-x" id="reminderX" aria-label="Dismiss">×</button>
+  </div>
+
   <div class="controls">
     <span class="label">Filter by group</span>
     <div class="pills" id="teamPills"></div>
@@ -145,6 +157,7 @@
     <div class="toggle-row">
       <button class="pill fav" id="favBtn">★ My teams only</button>
       <button class="pill" id="upcomingBtn">Upcoming only</button>
+      <button class="pill remind" id="remindBtn" title="Get a heads-up before your teams kick off">🔔 Reminders</button>
       <button class="pill" id="pickBtn">⚙ Choose my teams</button>
     </div>
   </div>
@@ -344,7 +357,7 @@
       const stampTz=TZ?" "+TZ:"";
       const live=anyLive();
       document.getElementById("stamp").textContent="Updated "+fmtTime(new Date())+stampTz+(live?" · auto-refreshing live scores":" · tap refresh during matches");
-      schedulePoll();
+      schedulePoll(); checkReminders();
     }catch(e){ if(!silent) content.innerHTML='<div class="err">Couldn\'t load schedule.<br>Check connection and tap refresh.</div>'; }
   }
   document.getElementById("refreshBtn").onclick=()=>load();
@@ -375,6 +388,51 @@
   // Live local-time line in the banner, ticking each second.
   function updateClock(){ const el=document.getElementById("clock"); if(!el)return; const d=new Date(); let h=d.getHours();const ap=h>=12?"pm":"am";h=h%12||12; const t=`${h}:${pad(d.getMinutes())}:${pad(d.getSeconds())}${ap}`; el.textContent="🕒 "+t+(TZ?" "+TZ:""); }
   updateClock(); setInterval(updateClock,1000);
+
+  // Kick-off reminders for favourite teams. Because there's no server, this only
+  // fires while the page is open: an in-page banner always shows, plus a browser
+  // notification if the user granted permission.
+  const REMIND_KEY = "wc2026_reminders";
+  const REMIND_LEAD = 15;          // minutes before kick-off to alert
+  let remindersOn = false;
+  const notified = new Set();      // match keys already alerted (avoid repeats)
+  function matchKey(m){ return `${m.date}|${m.team1}|${m.team2}`; }
+
+  function showReminderBanner(msg){
+    const bar=document.getElementById("reminderBar");
+    bar.querySelector(".rb-text").textContent="⚽ "+msg;
+    bar.classList.add("show");
+    clearTimeout(showReminderBanner._t);
+    showReminderBanner._t=setTimeout(()=>bar.classList.remove("show"), 60000);
+  }
+  function fireReminder(m,mins){
+    const msg=`${labelOf(m.team1)} v ${labelOf(m.team2)} ${mins>1?`kicks off in ${Math.round(mins)} min`:"is kicking off now"}`;
+    showReminderBanner(msg);
+    try{ if("Notification" in window && Notification.permission==="granted") new Notification("⚽ World Cup 2026", {body:msg, icon:"favicon.svg"}); }catch{}
+  }
+  function checkReminders(){
+    if(!remindersOn || !RAW.length) return;
+    const now=Date.now();
+    for(const m of RAW){
+      if(!(isFav(m.team1)||isFav(m.team2))) continue;
+      const dt=toLocal(m.date,m.time); if(!dt) continue;
+      const mins=(dt.getTime()-now)/60000;
+      if(mins<=REMIND_LEAD && mins>-2){ const k=matchKey(m); if(!notified.has(k)){ notified.add(k); fireReminder(m,mins); } }
+    }
+  }
+  function setReminders(on){
+    remindersOn=on;
+    document.getElementById("remindBtn").classList.toggle("active",on);
+    try{ localStorage.setItem(REMIND_KEY, on?"1":""); }catch{}
+  }
+  document.getElementById("remindBtn").onclick=async function(){
+    if(remindersOn){ setReminders(false); return; }
+    if("Notification" in window && Notification.permission==="default"){ try{ await Notification.requestPermission(); }catch{} }
+    setReminders(true); checkReminders();
+  };
+  document.getElementById("reminderX").onclick=()=>document.getElementById("reminderBar").classList.remove("show");
+  try{ if(localStorage.getItem(REMIND_KEY)==="1") setReminders(true); }catch{}
+  setInterval(checkReminders, 30000);
 
   loadFavs(); load();
 </script>
