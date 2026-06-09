@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>World Cup 2026 Tracker</title>
+<style>
+  :root {
+    --navy: #1E3C5A;
+    --coral: #C96442;
+    --teal: #00796D;
+    --cream: #F5F0E8;
+    --ink: #2C2C2A;
+    --muted: #5F5E5A;
+    --line: #E2DCD0;
+    --card: #ffffff;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--cream);
+    color: var(--ink);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 480px; margin: 0 auto; padding-bottom: 3rem; }
+
+  header {
+    background: var(--navy);
+    color: #fff;
+    padding: 1.25rem 1.25rem 1.5rem;
+    border-radius: 0 0 18px 18px;
+  }
+  .eyebrow { font-size: 11px; letter-spacing: 1px; text-transform: uppercase; opacity: .7; }
+  h1 { font-size: 22px; font-weight: 600; margin: 4px 0; }
+  .sub { font-size: 12px; opacity: .75; }
+
+  .controls { padding: 1rem 1rem .25rem; }
+  .label { font-size: 11px; text-transform: uppercase; letter-spacing: .5px; color: var(--muted); margin-bottom: 6px; display: block; }
+  .pills { display: flex; flex-wrap: wrap; gap: 7px; }
+  .pill {
+    border: 1.5px solid var(--line);
+    background: #fff;
+    color: var(--navy);
+    border-radius: 20px;
+    padding: 6px 13px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all .15s;
+  }
+  .pill.active { background: var(--coral); border-color: var(--coral); color: #fff; }
+  .pill.fav.active { background: var(--teal); border-color: var(--teal); }
+
+  .toggle-row { display: flex; gap: 7px; margin-top: 10px; }
+
+  .day-head {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--navy);
+    margin: 1.25rem 0 .5rem;
+    padding: 0 1rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .day-head::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+
+  .matches { padding: 0 1rem; }
+  .match {
+    background: var(--card);
+    border: 0.5px solid var(--line);
+    border-radius: 12px;
+    padding: .7rem .9rem;
+    margin-bottom: 9px;
+  }
+  .match.fav { border-left: 4px solid var(--coral); }
+  .m-top { display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: var(--muted); }
+  .grp-tag { font-weight: 600; }
+  .m-teams { display: flex; align-items: center; justify-content: space-between; margin: 7px 0; gap: 8px; }
+  .team-side { display: flex; align-items: center; gap: 7px; flex: 1; min-width: 0; }
+  .team-side.right { justify-content: flex-end; text-align: right; }
+  .team-name { font-size: 14px; font-weight: 500; color: var(--navy); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .team-name.fav { font-weight: 700; }
+  .flag { font-size: 18px; flex-shrink: 0; }
+  .vs { font-size: 12px; color: #aaa; flex-shrink: 0; }
+  .score { font-size: 17px; font-weight: 700; color: var(--navy); flex-shrink: 0; min-width: 44px; text-align: center; }
+  .status {
+    font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 5px;
+    background: var(--cream); color: var(--navy); text-transform: uppercase; letter-spacing: .5px;
+  }
+  .status.live { background: #FCEBEB; color: #A32D2D; }
+  .status.ft { background: #E1F5EE; color: #0F6E56; }
+
+  .loading, .err { text-align: center; padding: 2rem 1rem; color: var(--muted); font-size: 14px; }
+  .err { color: #A32D2D; }
+  .refresh {
+    display: block; margin: 1rem auto 0; border: 1px solid var(--teal); background: #fff;
+    color: var(--teal); border-radius: 8px; padding: 8px 18px; font-size: 13px; font-weight: 600; cursor: pointer;
+  }
+  .note { font-size: 11px; color: var(--muted); padding: 1rem; line-height: 1.5; }
+  .stamp { font-size: 11px; color: var(--muted); text-align: center; padding: .5rem; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">FIFA World Cup 2026 · 11 Jun – 19 Jul</div>
+    <h1>Match Tracker</h1>
+    <div class="sub">All times AEST · Canada · Mexico · USA · 104 matches</div>
+  </header>
+
+  <div class="controls">
+    <span class="label">Filter by team</span>
+    <div class="pills" id="teamPills"></div>
+    <div class="toggle-row">
+      <button class="pill fav" id="favBtn">⭐ My teams only</button>
+      <button class="pill" id="upcomingBtn">Upcoming only</button>
+    </div>
+  </div>
+
+  <div id="content"><div class="loading">Loading schedule…</div></div>
+
+  <button class="refresh" id="refreshBtn" style="display:none;">↻ Refresh scores</button>
+  <div class="stamp" id="stamp"></div>
+
+  <div class="note">
+    ⚠ Times shown in AEST (UTC+10), converted from each venue's local kick-off.
+    Scores update from the open-source openfootball dataset as matches are played —
+    may lag a few minutes behind live broadcast. Verify critical details against FIFA.
+  </div>
+</div>
+
+<script>
+  // ── Config ──
+  const DATA_URL = "https://raw.githubusercontent.com/openfootball/worldcup.json/master/2026/worldcup.json";
+  const AEST_OFFSET = 10; // UTC+10, no DST in QLD-style AEST; June/July = AEST not AEDT
+
+  // Your favourite teams + flags. Includes playoff-slot aliases so they highlight
+  // even before openfootball resolves the placeholder names.
+  const FAV = {
+    "Australia": "🇦🇺", "UEFA Path C winner": "🇦🇺",
+    "Iraq": "🇮🇶", "IC Path 2 winner": "🇮🇶",
+    "France": "🇫🇷",
+    "Brazil": "🇧🇷"
+  };
+
+  const FLAGS = {
+    "Mexico":"🇲🇽","South Africa":"🇿🇦","South Korea":"🇰🇷","Czech Republic":"🇨🇿","Czechia":"🇨🇿",
+    "Canada":"🇨🇦","Qatar":"🇶🇦","Switzerland":"🇨🇭","Bosnia and Herzegovina":"🇧🇦",
+    "Brazil":"🇧🇷","Morocco":"🇲🇦","Haiti":"🇭🇹","Scotland":"🏴󠁧󠁢󠁳󠁣󠁴󠁿",
+    "USA":"🇺🇸","Paraguay":"🇵🇾","Australia":"🇦🇺","Turkey":"🇹🇷","Türkiye":"🇹🇷",
+    "Germany":"🇩🇪","Curaçao":"🇨🇼","Ivory Coast":"🇨🇮","Ecuador":"🇪🇨",
+    "Netherlands":"🇳🇱","Japan":"🇯🇵","Tunisia":"🇹🇳","Sweden":"🇸🇪",
+    "Belgium":"🇧🇪","Egypt":"🇪🇬","Iran":"🇮🇷","New Zealand":"🇳🇿",
+    "Spain":"🇪🇸","Cape Verde":"🇨🇻","Saudi Arabia":"🇸🇦","Uruguay":"🇺🇾",
+    "France":"🇫🇷","Senegal":"🇸🇳","Norway":"🇳🇴","Iraq":"🇮🇶",
+    "Argentina":"🇦🇷","Algeria":"🇩🇿","Austria":"🇦🇹","Jordan":"🇯🇴",
+    "Portugal":"🇵🇹","Uzbekistan":"🇺🇿","Colombia":"🇨🇴","DR Congo":"🇨🇩",
+    "England":"🏴󠁧󠁢󠁥󠁮󠁧󠁿","Croatia":"🇭🇷","Ghana":"🇬🇭","Panama":"🇵🇦"
+  };
+
+  // Friendly relabel for unresolved playoff placeholders
+  const ALIAS = {
+    "UEFA Path C winner": "Türkiye*", "IC Path 2 winner": "Iraq*",
+    "UEFA Path A winner": "Playoff A", "UEFA Path B winner": "Playoff B",
+    "UEFA Path D winner": "Playoff D", "IC Path 1 winner": "Playoff 1"
+  };
+
+  let RAW = [];
+  let showFavOnly = false;
+  let showUpcomingOnly = false;
+  let teamFilter = "ALL";
+
+  const DAYS = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+  const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+
+  // Parse "2026-06-13" + "21:00 UTC-7" → Date in UTC, then format to AEST
+  function toAEST(dateStr, timeStr) {
+    const m = timeStr.match(/(\d{1,2}):(\d{2})\s*UTC([+-]\d{1,2})/);
+    if (!m) return null;
+    const [_, hh, mm, off] = m;
+    const [y, mo, d] = dateStr.split("-").map(Number);
+    // UTC ms = local wall time minus the local offset
+    const utcMs = Date.UTC(y, mo - 1, d, Number(hh) - Number(off), Number(mm));
+    return new Date(utcMs + AEST_OFFSET * 3600 * 1000);
+  }
+
+  function fmtDay(dt) {
+    return `${DAYS[dt.getUTCDay()]} ${dt.getUTCDate()} ${MONTHS[dt.getUTCMonth()]}`;
+  }
+  function fmtTime(dt) {
+    let h = dt.getUTCHours(), m = dt.getUTCMinutes();
+    const ap = h >= 12 ? "pm" : "am";
+    h = h % 12 || 12;
+    return `${h}:${String(m).padStart(2,"0")}${ap}`;
+  }
+
+  function isFav(name) { return FAV.hasOwnProperty(name); }
+  function flagFor(name) { return FAV[name] || FLAGS[name] || "⚽"; }
+  function labelFor(name) { return ALIAS[name] || name; }
+
+  function matchState(dt, score) {
+    if (score && score.ft) return "ft";
+    const now = new Date(Date.now() + AEST_OFFSET * 3600 * 1000);
+    const diff = dt - now;
+    if (diff < 0 && diff > -2.5 * 3600 * 1000 && !(score && score.ft)) return "live";
+    return "upcoming";
+  }
+
+  function render() {
+    const content = document.getElementById("content");
+    let rows = RAW.map(mt => {
+      const dt = toAEST(mt.date, mt.time);
+      return { ...mt, dt };
+    }).filter(r => r.dt);
+
+    rows.sort((a,b) => a.dt - b.dt);
+
+    if (teamFilter !== "ALL") {
+      rows = rows.filter(r => r.team1 === teamFilter || r.team2 === teamFilter
+        || labelFor(r.team1).startsWith(teamFilter) || labelFor(r.team2).startsWith(teamFilter));
+    }
+    if (showFavOnly) {
+      rows = rows.filter(r => isFav(r.team1) || isFav(r.team2));
+    }
+    if (showUpcomingOnly) {
+      rows = rows.filter(r => matchState(r.dt, r.score) !== "ft");
+    }
+
+    if (!rows.length) {
+      content.innerHTML = '<div class="loading">No matches for this filter.</div>';
+      return;
+    }
+
+    let html = "", lastDay = "";
+    for (const r of rows) {
+      const dayKey = fmtDay(r.dt);
+      if (dayKey !== lastDay) {
+        html += `<div class="day-head">${dayKey}</div><div class="matches">`;
+        if (lastDay) html = html.replace('<div class="matches">', '</div><div class="matches">'); // close prev
+        lastDay = dayKey;
+      }
+      const fav = isFav(r.team1) || isFav(r.team2);
+      const st = matchState(r.dt, r.score);
+      const scoreDisp = (r.score && r.score.ft) ? `${r.score.ft[0]}–${r.score.ft[1]}` : "";
+      const stTag = st === "live" ? '<span class="status live">● Live</span>'
+                  : st === "ft" ? '<span class="status ft">FT</span>'
+                  : `<span class="status">${fmtTime(r.dt)}</span>`;
+      const grp = r.group ? r.group.replace("Group ", "Grp ") : (r.round || "");
+
+      html += `
+        <div class="match ${fav ? 'fav' : ''}">
+          <div class="m-top">
+            <span class="grp-tag">${grp}</span>
+            <span>${r.ground || ""}</span>
+          </div>
+          <div class="m-teams">
+            <div class="team-side">
+              <span class="flag">${flagFor(r.team1)}</span>
+              <span class="team-name ${isFav(r.team1)?'fav':''}">${labelFor(r.team1)}</span>
+            </div>
+            ${scoreDisp ? `<span class="score">${scoreDisp}</span>` : '<span class="vs">v</span>'}
+            <div class="team-side right">
+              <span class="team-name ${isFav(r.team2)?'fav':''}">${labelFor(r.team2)}</span>
+              <span class="flag">${flagFor(r.team2)}</span>
+            </div>
+          </div>
+          <div class="m-top">${stTag}<span></span></div>
+        </div>`;
+    }
+    html += "</div>";
+    content.innerHTML = html;
+  }
+
+  function buildPills() {
+    const groups = [...new Set(RAW.map(m => m.group).filter(Boolean))].sort();
+    const el = document.getElementById("teamPills");
+    let h = `<button class="pill active" data-f="ALL">All</button>`;
+    for (const g of groups) {
+      h += `<button class="pill" data-f="${g.replace('Group ','')}">${g}</button>`;
+    }
+    el.innerHTML = h;
+    el.querySelectorAll(".pill").forEach(b => {
+      b.onclick = () => {
+        el.querySelectorAll(".pill").forEach(x => x.classList.remove("active"));
+        b.classList.add("active");
+        const f = b.dataset.f;
+        // group filter: match by group field
+        teamFilter = "ALL";
+        if (f !== "ALL") {
+          RAW.__groupFilter = "Group " + f;
+        } else { RAW.__groupFilter = null; }
+        renderWithGroup();
+      };
+    });
+  }
+
+  function renderWithGroup() {
+    // temporarily filter by group via teamFilter mechanism
+    const gf = RAW.__groupFilter;
+    const content = document.getElementById("content");
+    let rows = RAW.map(mt => ({ ...mt, dt: toAEST(mt.date, mt.time) })).filter(r => r.dt);
+    rows.sort((a,b)=>a.dt-b.dt);
+    if (gf) rows = rows.filter(r => r.group === gf);
+    if (showFavOnly) rows = rows.filter(r => isFav(r.team1) || isFav(r.team2));
+    if (showUpcomingOnly) rows = rows.filter(r => matchState(r.dt, r.score) !== "ft");
+
+    if (!rows.length) { content.innerHTML = '<div class="loading">No matches for this filter.</div>'; return; }
+
+    let html = "", lastDay = "", open = false;
+    for (const r of rows) {
+      const dayKey = fmtDay(r.dt);
+      if (dayKey !== lastDay) {
+        if (open) html += "</div>";
+        html += `<div class="day-head">${dayKey}</div><div class="matches">`;
+        open = true; lastDay = dayKey;
+      }
+      const fav = isFav(r.team1) || isFav(r.team2);
+      const st = matchState(r.dt, r.score);
+      const scoreDisp = (r.score && r.score.ft) ? `${r.score.ft[0]}–${r.score.ft[1]}` : "";
+      const stTag = st === "live" ? '<span class="status live">● Live</span>'
+                  : st === "ft" ? '<span class="status ft">FT</span>'
+                  : `<span class="status">${fmtTime(r.dt)}</span>`;
+      const grp = r.group ? r.group.replace("Group ","Grp ") : (r.round || "");
+      html += `
+        <div class="match ${fav?'fav':''}">
+          <div class="m-top"><span class="grp-tag">${grp}</span><span>${r.ground||""}</span></div>
+          <div class="m-teams">
+            <div class="team-side"><span class="flag">${flagFor(r.team1)}</span><span class="team-name ${isFav(r.team1)?'fav':''}">${labelFor(r.team1)}</span></div>
+            ${scoreDisp?`<span class="score">${scoreDisp}</span>`:'<span class="vs">v</span>'}
+            <div class="team-side right"><span class="team-name ${isFav(r.team2)?'fav':''}">${labelFor(r.team2)}</span><span class="flag">${flagFor(r.team2)}</span></div>
+          </div>
+          <div class="m-top">${stTag}<span></span></div>
+        </div>`;
+    }
+    if (open) html += "</div>";
+    content.innerHTML = html;
+  }
+
+  async function load() {
+    const content = document.getElementById("content");
+    content.innerHTML = '<div class="loading">Loading schedule…</div>';
+    try {
+      const res = await fetch(DATA_URL, { cache: "no-store" });
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      const json = await res.json();
+      RAW = json.matches || [];
+      buildPills();
+      renderWithGroup();
+      document.getElementById("refreshBtn").style.display = "block";
+      const now = new Date(Date.now() + AEST_OFFSET*3600*1000);
+      document.getElementById("stamp").textContent =
+        "Updated " + fmtTime(now) + " AEST · tap refresh during matches";
+    } catch (e) {
+      content.innerHTML = '<div class="err">Couldn\'t load schedule.<br>Check your connection and tap refresh.</div>';
+    }
+  }
+
+  document.getElementById("favBtn").onclick = function() {
+    showFavOnly = !showFavOnly;
+    this.classList.toggle("active", showFavOnly);
+    renderWithGroup();
+  };
+  document.getElementById("upcomingBtn").onclick = function() {
+    showUpcomingOnly = !showUpcomingOnly;
+    this.classList.toggle("active", showUpcomingOnly);
+    renderWithGroup();
+  };
+  document.getElementById("refreshBtn").onclick = load;
+
+  load();
+</script>
+</body>
+</html>
