@@ -12,10 +12,17 @@
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--cream); color: var(--ink); line-height: 1.5; -webkit-font-smoothing: antialiased; }
   .wrap { max-width: 480px; margin: 0 auto; padding-bottom: 1rem; }
-  header { background: var(--navy); color: #fff; padding: 1.25rem 1.25rem 1.5rem; border-radius: 0 0 18px 18px; }
+  header { background: var(--navy); color: #fff; padding: 1.25rem 1.25rem 1.5rem; border-radius: 0 0 18px 18px; display: flex; align-items: center; gap: 14px; }
+  .trophy { flex-shrink: 0; width: 46px; height: 56px; }
+  .head-text { flex: 1; }
   .eyebrow { font-size: 11px; letter-spacing: 1px; text-transform: uppercase; opacity: .7; }
-  h1 { font-size: 22px; font-weight: 600; margin: 4px 0; }
-  .sub { font-size: 12px; opacity: .75; }
+  .eyebrow.line2 { letter-spacing: .5px; opacity: .55; margin-top: 2px; }
+  h1 { font-size: 22px; font-weight: 600; margin: 4px 0 2px; }
+
+  .today-row { padding: .5rem 1rem 0; }
+  .today-btn { width: 100%; background: var(--teal); color: #fff; border: none; border-radius: 10px; padding: 9px; font-size: 13px; font-weight: 600; cursor: pointer; }
+  .day-head.is-today { color: var(--coral); }
+  .day-head.is-today::before { content: "TODAY"; font-size: 9px; background: var(--coral); color: #fff; padding: 2px 6px; border-radius: 4px; letter-spacing: .5px; }
 
   .controls { padding: 1rem 1rem .25rem; }
   .label { font-size: 11px; text-transform: uppercase; letter-spacing: .5px; color: var(--muted); margin-bottom: 6px; display: block; }
@@ -76,9 +83,28 @@
 <body>
 <div class="wrap">
   <header>
-    <div class="eyebrow">FIFA World Cup 2026 · 11 Jun – 19 Jul</div>
-    <h1>Match Tracker</h1>
-    <div class="sub">All times AEST · Canada · Mexico · USA · 104 matches</div>
+    <svg class="trophy" viewBox="0 0 46 56" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <defs>
+        <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#F4D98B"/><stop offset=".5" stop-color="#D4AF37"/><stop offset="1" stop-color="#A8842A"/>
+        </linearGradient>
+      </defs>
+      <!-- cup bowl -->
+      <path d="M15 6 h16 c0 10 -3 18 -8 22 c-5 -4 -8 -12 -8 -22 z" fill="url(#g)"/>
+      <!-- arms curving out -->
+      <path d="M15 6 c-7 2 -9 9 -5 14 M31 6 c7 2 9 9 5 14" stroke="url(#g)" stroke-width="3" fill="none" stroke-linecap="round"/>
+      <!-- stem -->
+      <rect x="21" y="27" width="4" height="9" fill="url(#g)"/>
+      <!-- base bands -->
+      <rect x="13" y="36" width="20" height="5" rx="1.5" fill="#1F7A4D"/>
+      <rect x="11" y="41" width="24" height="6" rx="2" fill="url(#g)"/>
+      <rect x="12" y="47" width="22" height="4" rx="1.5" fill="#1F7A4D"/>
+    </svg>
+    <div class="head-text">
+      <div class="eyebrow">FIFA World Cup 2026 · 11 Jun – 19 Jul</div>
+      <h1>Match Tracker</h1>
+      <div class="eyebrow line2">Canada · Mexico · USA · 104 matches · AEST</div>
+    </div>
   </header>
 
   <div class="controls">
@@ -90,6 +116,8 @@
       <button class="pill" id="pickBtn">⚙ Choose my teams</button>
     </div>
   </div>
+
+  <div class="today-row"><button class="today-btn" id="todayBtn">📍 Jump to today's matches</button></div>
 
   <div id="content"><div class="loading">Loading schedule…</div></div>
 
@@ -185,9 +213,10 @@
     if(!rows.length){ content.innerHTML='<div class="loading">No matches for this filter.</div>'; return; }
 
     let html="",lastDay="",open=false;
+    const todayKey = fmtDay(new Date(Date.now()+AEST_OFFSET*3600*1000));
     for(const r of rows){
       const dayKey=fmtDay(r.dt);
-      if(dayKey!==lastDay){ if(open)html+="</div>"; html+=`<div class="day-head">${dayKey}</div><div class="matches">`; open=true; lastDay=dayKey; }
+      if(dayKey!==lastDay){ if(open)html+="</div>"; const isT = dayKey===todayKey; html+=`<div class="day-head${isT?' is-today':''}"${isT?' id="todayAnchor"':''}>${dayKey}</div><div class="matches">`; open=true; lastDay=dayKey; }
       const fav=isFav(r.team1)||isFav(r.team2);
       const st=matchState(r.dt,r.score);
       const scoreDisp=(r.score&&r.score.ft)?`${r.score.ft[0]}–${r.score.ft[1]}`:"";
@@ -231,6 +260,19 @@
   document.getElementById("clearPicks").onclick=()=>{ document.querySelectorAll("#pickGrid .pick.sel").forEach(b=>b.classList.remove("sel")); };
   document.getElementById("savePicks").onclick=()=>{ favTeams=new Set([...document.querySelectorAll("#pickGrid .pick.sel")].map(b=>b.dataset.team)); saveFavs(); closePicker(); render(); };
   document.getElementById("favBtn").onclick=function(){ showFavOnly=!showFavOnly; this.classList.toggle("active",showFavOnly); render(); };
+
+  function jumpToToday(){
+    let el=document.getElementById("todayAnchor");
+    if(!el){
+      // no match today — find the next upcoming day header
+      const now=new Date(Date.now()+AEST_OFFSET*3600*1000);
+      const rows=RAW.map(m=>({...m,dt:toAEST(m.date,m.time)})).filter(r=>r.dt&&r.dt>=now).sort((a,b)=>a.dt-b.dt);
+      if(rows.length){ const k=fmtDay(rows[0].dt); const heads=[...document.querySelectorAll(".day-head")]; el=heads.find(h=>h.textContent.includes(k)); }
+    }
+    if(el) el.scrollIntoView({behavior:"smooth",block:"start"});
+    else { const s=document.getElementById("stamp"); s.textContent="No upcoming matches found for today."; }
+  }
+  document.getElementById("todayBtn").onclick=jumpToToday;
   document.getElementById("upcomingBtn").onclick=function(){ showUpcomingOnly=!showUpcomingOnly; this.classList.toggle("active",showUpcomingOnly); render(); };
 
   async function load(){
