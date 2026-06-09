@@ -20,7 +20,7 @@
   h1 { font-size: 22px; font-weight: 600; margin: 4px 0 2px; }
 
   .today-row { padding: .5rem 1rem 0; }
-  .today-btn { width: 100%; background: var(--teal); color: #fff; border: none; border-radius: 10px; padding: 9px; font-size: 13px; font-weight: 600; cursor: pointer; }
+  .today-btn { display: inline-flex; align-items: center; gap: 5px; width: auto; background: var(--teal); color: #fff; border: none; border-radius: 7px; padding: 5px 11px; font-size: 12px; font-weight: 600; cursor: pointer; }
   .day-head.is-today { color: var(--coral); }
   .day-head.is-today::before { content: "TODAY"; font-size: 9px; background: var(--coral); color: #fff; padding: 2px 6px; border-radius: 4px; letter-spacing: .5px; }
 
@@ -48,6 +48,8 @@
   .vs { font-size: 12px; color: #aaa; flex-shrink: 0; }
   .score { font-size: 17px; font-weight: 700; color: var(--navy); flex-shrink: 0; min-width: 44px; text-align: center; }
   .badge { width: 30px; height: 22px; border-radius: 4px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; color: #fff; letter-spacing: .3px; }
+  img.badge.flag { object-fit: cover; background: var(--line); box-shadow: inset 0 0 0 1px rgba(0,0,0,.08); }
+  .clock { font-variant-numeric: tabular-nums; }
 
   .m-foot { display: flex; justify-content: space-between; align-items: center; margin-top: 4px; }
   .status { font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 5px; background: var(--cream); color: var(--navy); text-transform: uppercase; letter-spacing: .5px; }
@@ -104,6 +106,7 @@
       <div class="eyebrow">FIFA World Cup 2026 · 11 Jun – 19 Jul</div>
       <h1>Match Tracker</h1>
       <div class="eyebrow line2" id="subhead">Canada · Mexico · USA · 104 matches</div>
+      <div class="eyebrow line2 clock" id="clock"></div>
     </div>
   </header>
 
@@ -117,7 +120,7 @@
     </div>
   </div>
 
-  <div class="today-row"><button class="today-btn" id="todayBtn">📍 Jump to today's matches</button></div>
+  <div class="today-row"><button class="today-btn" id="todayBtn">📍 Today's matches</button></div>
 
   <div id="content"><div class="loading">Loading schedule…</div></div>
 
@@ -148,26 +151,29 @@
   const ALIAS = {
     "UEFA Path C winner":"Türkiye","IC Path 2 winner":"Iraq","UEFA Path A winner":"Playoff A",
     "UEFA Path B winner":"Playoff B","UEFA Path D winner":"Playoff D","IC Path 1 winner":"Playoff 1",
-    "Czech Republic":"Czechia"
+    "Czech Republic":"Czechia","Bosnia & Herzegovina":"Bosnia and Herzegovina",
+    "Korea Republic":"South Korea","IR Iran":"Iran","Turkey":"Türkiye","Cabo Verde":"Cape Verde",
+    "Côte d'Ivoire":"Ivory Coast","United States":"USA","Congo DR":"DR Congo"
   };
+  // [FIFA code, brand colour, ISO-3166-1 alpha-2 code for the flag image]
   const TEAM = {
-    "Mexico":["MEX","#006847"],"South Africa":["RSA","#007749"],"South Korea":["KOR","#0047A0"],
-    "Czechia":["CZE","#11457E"],"Canada":["CAN","#D52B1E"],"Qatar":["QAT","#8A1538"],
-    "Switzerland":["SUI","#D52B1E"],"Bosnia and Herzegovina":["BIH","#002395"],
-    "Brazil":["BRA","#009C3B"],"Morocco":["MAR","#C1272D"],"Haiti":["HAI","#00209F"],
-    "Scotland":["SCO","#005EB8"],"USA":["USA","#0A3161"],"Paraguay":["PAR","#0038A8"],
-    "Australia":["AUS","#00843D"],"Türkiye":["TUR","#E30A17"],"Germany":["GER","#222222"],
-    "Curaçao":["CUW","#002B7F"],"Ivory Coast":["CIV","#F77F00"],"Ecuador":["ECU","#FFD100"],
-    "Netherlands":["NED","#AE1C28"],"Japan":["JPN","#BC002D"],"Tunisia":["TUN","#E70013"],
-    "Sweden":["SWE","#006AA7"],"Belgium":["BEL","#C8102E"],"Egypt":["EGY","#CE1126"],
-    "Iran":["IRN","#239F40"],"New Zealand":["NZL","#00247D"],"Spain":["ESP","#AA151B"],
-    "Cape Verde":["CPV","#003893"],"Saudi Arabia":["KSA","#006C35"],"Uruguay":["URU","#3B6FB6"],
-    "France":["FRA","#0055A4"],"Senegal":["SEN","#00853F"],"Norway":["NOR","#BA0C2F"],
-    "Iraq":["IRQ","#007A3D"],"Argentina":["ARG","#4F92D4"],"Algeria":["ALG","#006233"],
-    "Austria":["AUT","#ED2939"],"Jordan":["JOR","#007A3D"],"Portugal":["POR","#006600"],
-    "Uzbekistan":["UZB","#1EB53A"],"Colombia":["COL","#FCD116"],"DR Congo":["COD","#007FFF"],
-    "England":["ENG","#1E3C5A"],"Croatia":["CRO","#D81E05"],"Ghana":["GHA","#006B3F"],
-    "Panama":["PAN","#005293"]
+    "Mexico":["MEX","#006847","mx"],"South Africa":["RSA","#007749","za"],"South Korea":["KOR","#0047A0","kr"],
+    "Czechia":["CZE","#11457E","cz"],"Canada":["CAN","#D52B1E","ca"],"Qatar":["QAT","#8A1538","qa"],
+    "Switzerland":["SUI","#D52B1E","ch"],"Bosnia and Herzegovina":["BIH","#002395","ba"],
+    "Brazil":["BRA","#009C3B","br"],"Morocco":["MAR","#C1272D","ma"],"Haiti":["HAI","#00209F","ht"],
+    "Scotland":["SCO","#005EB8","gb-sct"],"USA":["USA","#0A3161","us"],"Paraguay":["PAR","#0038A8","py"],
+    "Australia":["AUS","#00843D","au"],"Türkiye":["TUR","#E30A17","tr"],"Germany":["GER","#222222","de"],
+    "Curaçao":["CUW","#002B7F","cw"],"Ivory Coast":["CIV","#F77F00","ci"],"Ecuador":["ECU","#FFD100","ec"],
+    "Netherlands":["NED","#AE1C28","nl"],"Japan":["JPN","#BC002D","jp"],"Tunisia":["TUN","#E70013","tn"],
+    "Sweden":["SWE","#006AA7","se"],"Belgium":["BEL","#C8102E","be"],"Egypt":["EGY","#CE1126","eg"],
+    "Iran":["IRN","#239F40","ir"],"New Zealand":["NZL","#00247D","nz"],"Spain":["ESP","#AA151B","es"],
+    "Cape Verde":["CPV","#003893","cv"],"Saudi Arabia":["KSA","#006C35","sa"],"Uruguay":["URU","#3B6FB6","uy"],
+    "France":["FRA","#0055A4","fr"],"Senegal":["SEN","#00853F","sn"],"Norway":["NOR","#BA0C2F","no"],
+    "Iraq":["IRQ","#007A3D","iq"],"Argentina":["ARG","#4F92D4","ar"],"Algeria":["ALG","#006233","dz"],
+    "Austria":["AUT","#ED2939","at"],"Jordan":["JOR","#007A3D","jo"],"Portugal":["POR","#006600","pt"],
+    "Uzbekistan":["UZB","#1EB53A","uz"],"Colombia":["COL","#FCD116","co"],"DR Congo":["COD","#007FFF","cd"],
+    "England":["ENG","#1E3C5A","gb-eng"],"Croatia":["CRO","#D81E05","hr"],"Ghana":["GHA","#006B3F","gh"],
+    "Panama":["PAN","#005293","pa"]
   };
   const LIGHT_BADGES = new Set(["ECU","COL"]);
 
@@ -183,8 +189,18 @@
   function isFav(n){ return favTeams.has(canon(n)); }
   function codeOf(n){ const t=TEAM[canon(n)]; return t?t[0]:"?"; }
   function colorOf(n){ const t=TEAM[canon(n)]; return t?t[1]:"#888780"; }
+  function iso2Of(n){ const t=TEAM[canon(n)]; return t?t[2]:null; }
   function labelOf(n){ const c=canon(n); if(TEAM[c]) return c+((ALIAS[n]&&n!==c)?"*":""); return n; }
-  function badge(n){ const code=codeOf(n),col=colorOf(n); const txt=LIGHT_BADGES.has(code)?"#2C2C2A":"#fff"; return `<span class="badge" style="background:${col};color:${txt}">${code}</span>`; }
+
+  // Colored letter badge — used for placeholder/unknown teams and as the
+  // fallback when a flag image fails to load.
+  function letterNode(code,col){ const s=document.createElement("span"); s.className="badge"; s.style.background=col; s.style.color=LIGHT_BADGES.has(code)?"#2C2C2A":"#fff"; s.textContent=code; return s; }
+  window.flagFallback=function(img){ img.replaceWith(letterNode(img.dataset.c,img.dataset.col)); };
+  function badge(n){
+    const iso=iso2Of(n), code=codeOf(n), col=colorOf(n);
+    if(!iso) return `<span class="badge" style="background:${col};color:${LIGHT_BADGES.has(code)?"#2C2C2A":"#fff"}">${code}</span>`;
+    return `<img class="badge flag" src="https://flagcdn.com/w40/${iso}.png" srcset="https://flagcdn.com/w80/${iso}.png 2x" width="30" height="22" alt="${code}" title="${code}" loading="lazy" data-c="${code}" data-col="${col}" onerror="flagFallback(this)">`;
+  }
 
   // Parse a venue date + "HH:MM UTC±N" string into the true UTC instant.
   // Local getters (getHours/getDate/…) then render it in the viewer's timezone.
@@ -308,6 +324,11 @@
     const sub=document.getElementById("subhead"); if(sub)sub.textContent+=" · "+TZ;
     const note=document.getElementById("note"); if(note)note.textContent=note.textContent.replace("your local timezone","your local time ("+TZ+")");
   }
+
+  // Live local-time line in the banner, ticking each second.
+  function updateClock(){ const el=document.getElementById("clock"); if(!el)return; const d=new Date(); let h=d.getHours();const ap=h>=12?"pm":"am";h=h%12||12; const t=`${h}:${pad(d.getMinutes())}:${pad(d.getSeconds())}${ap}`; el.textContent="🕒 "+t+(TZ?" "+TZ:""); }
+  updateClock(); setInterval(updateClock,1000);
+
   loadFavs(); load();
 </script>
 </body>
