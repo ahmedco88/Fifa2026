@@ -6,14 +6,52 @@
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
+  "display_override": ["standalone"],
   "orientation": "portrait",
+  "lang": "en",
+  "dir": "ltr",
   "theme_color": "#1E3C5A",
   "background_color": "#11151A",
   "categories": ["sports", "entertainment"],
+  "iarc_rating_id": "",
+  "prefer_related_applications": false,
+  "related_applications": [],
+  "launch_handler": { "client_mode": "navigate-existing" },
+  "handle_links": "preferred",
+  "edge_side_panel": { "preferred_width": 480 },
   "icons": [
     { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
     { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
     { "src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ],
-  "screenshots": []
+  "screenshots": [
+    {
+      "src": "screenshot-schedule.png",
+      "sizes": "1080x1920",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Match schedule grouped by day, with live scores and your favourite teams highlighted"
+    },
+    {
+      "src": "screenshot-bracket.png",
+      "sizes": "1080x1920",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Knockout bracket from the Round of 16 through to the Final"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Match schedule",
+      "short_name": "Schedule",
+      "description": "See every match grouped by day",
+      "url": "./?view=schedule"
+    },
+    {
+      "name": "Knockout bracket",
+      "short_name": "Bracket",
+      "description": "See the knockout rounds and results",
+      "url": "./?view=bracket"
+    }
+  ]
 }

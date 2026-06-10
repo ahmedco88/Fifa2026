@@ -562,11 +562,14 @@
 
   loadFavs(); load();
 
+  // Deep-link: ?view=bracket opens the knockout view (used by the app shortcuts).
+  try{ if(new URLSearchParams(location.search).get("view")==="bracket") setView("bracket"); }catch{}
+
   /* ---- PWA: service worker + install affordance ---- */
   if("serviceWorker" in navigator){
-    window.addEventListener("load", ()=>{
-      navigator.serviceWorker.register("sw.js").catch(()=>{});
-    });
+    // Register right away (script runs at end of body, so the DOM is ready).
+    // Explicit relative path + scope so it works under the GitHub Pages /Fifa2026/ subpath.
+    navigator.serviceWorker.register("./sw.js", { scope: "./" }).catch(()=>{});
   }
   (function(){
     const installBtn=document.getElementById("installBtn");
