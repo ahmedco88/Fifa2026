@@ -3,10 +3,17 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>World Cup 2026 Tracker</title>
+<title>WC 2026 Matches Tracker</title>
 <link rel="icon" type="image/svg+xml" href="favicon.svg" />
 <link rel="alternate icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ctext y='14' font-size='14'%3E%F0%9F%8F%86%3C/text%3E%3C/svg%3E" />
 <meta name="theme-color" content="#1E3C5A" />
+<meta name="description" content="Track all 104 FIFA World Cup 2026 matches — live scores, your favourite teams, reminders and calendar export, in your local time." />
+<!-- PWA: installable "Add to Home Screen" app. Relative paths so it works under the GitHub Pages /Fifa2026/ subpath. -->
+<link rel="manifest" href="manifest.webmanifest" />
+<link rel="apple-touch-icon" href="icon-192.png" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="WC2026" />
 <style>
   :root {
     --navy: #1E3C5A; --coral: #C96442; --teal: #00796D; --cream: #F5F0E8;
@@ -243,8 +250,9 @@
         <div class="about-item"><span class="about-ic">🔄</span><span class="about-tx"><b>Live scores</b>Scores update on their own while matches are being played. You can also tap <b>Refresh</b> any time.</span></div>
       </div>
       <p class="about-note">Times may lag a few minutes behind the live broadcast. Match data is from the open-source openfootball project.</p>
+      <p class="about-note" id="iosInstallHint" hidden>📱 <b>On iPhone:</b> tap the <b>Share</b> icon, then <b>Add to Home Screen</b> to install this app.</p>
     </div>
-    <div class="modal-foot"><button class="btn-primary" id="aboutOk">Got it 👍</button></div>
+    <div class="modal-foot"><button class="btn-ghost" id="installBtn" hidden>⬇ Install app</button><button class="btn-primary" id="aboutOk">Got it 👍</button></div>
   </div>
 </div>
 
@@ -553,6 +561,33 @@
   setInterval(checkReminders, 30000);
 
   loadFavs(); load();
+
+  /* ---- PWA: service worker + install affordance ---- */
+  if("serviceWorker" in navigator){
+    window.addEventListener("load", ()=>{
+      navigator.serviceWorker.register("sw.js").catch(()=>{});
+    });
+  }
+  (function(){
+    const installBtn=document.getElementById("installBtn");
+    const iosHint=document.getElementById("iosInstallHint");
+    let deferredPrompt=null;
+    window.addEventListener("beforeinstallprompt",(e)=>{
+      e.preventDefault(); deferredPrompt=e;
+      if(installBtn) installBtn.hidden=false;
+    });
+    if(installBtn) installBtn.onclick=async()=>{
+      if(!deferredPrompt) return;
+      deferredPrompt.prompt();
+      try{ await deferredPrompt.userChoice; }catch{}
+      deferredPrompt=null; installBtn.hidden=true;
+    };
+    window.addEventListener("appinstalled",()=>{ if(installBtn) installBtn.hidden=true; });
+    // iOS Safari has no beforeinstallprompt — show a manual hint instead (when not already installed).
+    const isiOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
+    const standalone=window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone;
+    if(iosHint && isiOS && !standalone) iosHint.hidden=false;
+  })();
 </script>
 </body>
 </html>
