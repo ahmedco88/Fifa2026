@@ -1,0 +1,8 @@
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "com.hamada.matchtracker2026",
+        "sha256_cert_fingerprints": ["D7:8F:6C:A1:8B:5F:1B:BD:F1:54:ED:ED:97:DC:FB:F7:CB:D8:48:E6:54:D9:B7:A9:95:80:47:28:F2:3D:9F:A1"]
+      }
+    }]
