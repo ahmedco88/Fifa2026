@@ -42,6 +42,28 @@
   :root[data-theme="dark"] .reminder-bar { background: #2A2017; }
   .pill.remind.active { background: var(--teal); border-color: var(--teal); color: #fff; }
 
+  .view-tabs { display: flex; gap: 6px; padding: .85rem 1rem 0; }
+  .vtab { flex: 1; border: 1.5px solid var(--line); background: #fff; color: var(--navy); border-radius: 9px; padding: 8px; font-size: 13px; font-weight: 600; cursor: pointer; }
+  .vtab.active { background: var(--navy); border-color: var(--navy); color: #fff; }
+  :root[data-theme="dark"] .vtab { background: var(--card); color: var(--ink); }
+  :root[data-theme="dark"] .vtab.active { background: var(--teal); border-color: var(--teal); color: #fff; }
+
+  /* Knockout bracket — horizontally scrollable columns, one per round */
+  .bracket { display: flex; gap: 14px; overflow-x: auto; padding: .25rem 1rem 1rem; -webkit-overflow-scrolling: touch; }
+  .bcol { flex: 0 0 auto; width: 196px; display: flex; flex-direction: column; gap: 10px; }
+  .bcol-head { font-size: 11px; text-transform: uppercase; letter-spacing: .5px; color: var(--muted); font-weight: 700; }
+  .bmatch { background: var(--card); border: 0.5px solid var(--line); border-radius: 10px; overflow: hidden; }
+  .brow { display: flex; align-items: center; gap: 7px; padding: 6px 8px; font-size: 13px; color: var(--navy); }
+  .brow + .brow { border-top: 1px solid var(--line); }
+  .brow.win { font-weight: 700; }
+  .brow.win .bname { color: var(--teal); }
+  .brow.fav .bname { color: var(--coral); }
+  .brow .badge { width: 24px; height: 18px; }
+  .bname { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .bscore { font-weight: 700; min-width: 30px; text-align: right; color: var(--navy); }
+  .bdate { font-size: 10px; color: var(--muted); padding: 3px 8px 0; }
+  :root[data-theme="dark"] .brow, :root[data-theme="dark"] .bscore { color: var(--ink); }
+
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--cream); color: var(--ink); line-height: 1.5; -webkit-font-smoothing: antialiased; }
   .wrap { max-width: 480px; margin: 0 auto; padding-bottom: 1rem; }
@@ -50,7 +72,8 @@
   .head-text { flex: 1; }
   .eyebrow { font-size: 11px; letter-spacing: 1px; text-transform: uppercase; opacity: .7; }
   .eyebrow.line2 { letter-spacing: .5px; opacity: .55; margin-top: 2px; }
-  h1 { font-size: 22px; font-weight: 600; margin: 4px 0 2px; }
+  h1 { font-size: 22px; font-weight: 700; margin: 0 0 2px; letter-spacing: .2px; }
+  .subtitle { font-size: 15px; font-weight: 600; opacity: .92; margin-top: 4px; }
 
   .today-row { padding: .5rem 1rem 0; }
   .today-btn { display: inline-flex; align-items: center; gap: 5px; width: auto; background: var(--teal); color: #fff; border: none; border-radius: 7px; padding: 5px 11px; font-size: 12px; font-weight: 600; cursor: pointer; }
@@ -137,9 +160,9 @@
       <rect x="12" y="47" width="22" height="4" rx="1.5" fill="#1F7A4D"/>
     </svg>
     <div class="head-text">
-      <div class="eyebrow">FIFA World Cup 2026 · 11 Jun – 19 Jul</div>
-      <h1>Match Tracker</h1>
+      <h1>FIFA World Cup 2026</h1>
       <div class="eyebrow line2" id="subhead">Canada · Mexico · USA · 104 matches</div>
+      <div class="subtitle">Match Tracker</div>
       <div class="eyebrow line2 clock" id="clock"></div>
     </div>
     <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode" title="Toggle dark mode">🌙</button>
@@ -150,7 +173,12 @@
     <button class="rb-x" id="reminderX" aria-label="Dismiss">×</button>
   </div>
 
-  <div class="controls">
+  <div class="view-tabs">
+    <button class="vtab active" data-view="schedule">📅 Schedule</button>
+    <button class="vtab" data-view="bracket">🏆 Bracket</button>
+  </div>
+
+  <div class="controls" id="controls">
     <span class="label">Filter by group</span>
     <div class="pills" id="teamPills"></div>
     <span class="label sep">My filters</span>
@@ -162,7 +190,7 @@
     </div>
   </div>
 
-  <div class="today-row"><button class="today-btn" id="todayBtn">📍 Today's matches</button></div>
+  <div class="today-row" id="todayRow"><button class="today-btn" id="todayBtn">📍 Today's matches</button></div>
 
   <div id="content"><div class="loading">Loading schedule…</div></div>
 
@@ -220,7 +248,7 @@
   const LIGHT_BADGES = new Set(["ECU","COL"]);
 
   let RAW = [], favTeams = new Set();
-  let showFavOnly=false, showUpcomingOnly=false, groupFilter=null;
+  let showFavOnly=false, showUpcomingOnly=false, groupFilter=null, view="schedule";
   const DAYS=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
   const MONTHS=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 
@@ -301,6 +329,53 @@
     content.querySelectorAll(".cal-btn").forEach(b=>{ b.onclick=()=>{const e=ICS_REG[b.dataset.cid]; if(e)downloadICS(e.m,e.dt);}; });
   }
 
+  // ---- Knockout bracket ----
+  const KO_ORDER=["Round of 32","Round of 16","Quarter-finals","Semi-finals","Third place","Final"];
+  function koRound(m){
+    if(m.group) return null;
+    const r=(m.round||"").toLowerCase(); if(!r) return null;
+    if(r.includes("32")) return "Round of 32";
+    if(r.includes("16")||r.includes("eighth")) return "Round of 16";
+    if(r.includes("quarter")) return "Quarter-finals";
+    if(r.includes("semi")) return "Semi-finals";
+    if(r.includes("third")||r.includes("3rd")) return "Third place";
+    if(r.includes("final")) return "Final";
+    return null;
+  }
+  function bracketCard(m){
+    const ft=m.score&&m.score.ft, pen=m.score&&(m.score.p||m.score.pen);
+    let w1=false,w2=false;
+    if(ft){ if(ft[0]>ft[1])w1=true; else if(ft[1]>ft[0])w2=true; else if(pen){ if(pen[0]>pen[1])w1=true; else if(pen[1]>pen[0])w2=true; } }
+    const sc=(i)=> ft ? (ft[i] + (pen?` (${pen[i]})`:"")) : "";
+    const row=(team,score,win)=>`<div class="brow ${win?'win':''} ${isFav(team)?'fav':''}">${badge(team)}<span class="bname">${labelOf(team)}</span><span class="bscore">${score}</span></div>`;
+    const dt=toLocal(m.date,m.time);
+    const when=dt?`${fmtDay(dt)} · ${fmtTime(dt)}${TZ?" "+TZ:""}`:"";
+    return `<div class="bmatch">${row(m.team1,sc(0),w1)}${row(m.team2,sc(1),w2)}${when?`<div class="bdate">${when}</div>`:""}</div>`;
+  }
+  function renderBracket(){
+    const content=document.getElementById("content");
+    const buckets={}; KO_ORDER.forEach(o=>buckets[o]=[]);
+    RAW.forEach(m=>{ const r=koRound(m); if(r) buckets[r].push(m); });
+    const cols=KO_ORDER.filter(o=>buckets[o].length);
+    if(!cols.length){ content.innerHTML='<div class="loading">The knockout bracket appears once the group stage finishes and the fixtures are set.</div>'; return; }
+    let html='<div class="bracket">';
+    for(const r of cols){
+      const ms=buckets[r].map(m=>({...m,dt:toLocal(m.date,m.time)})).sort((a,b)=>(a.dt&&b.dt)?a.dt-b.dt:0);
+      html+=`<div class="bcol"><div class="bcol-head">${r}</div>${ms.map(bracketCard).join("")}</div>`;
+    }
+    content.innerHTML=html+'</div>';
+  }
+  function rerender(){ if(view==="bracket") renderBracket(); else render(); }
+  function setView(v){
+    view=v;
+    document.querySelectorAll(".vtab").forEach(t=>t.classList.toggle("active",t.dataset.view===v));
+    const ko=v==="bracket";
+    document.getElementById("controls").style.display=ko?"none":"";
+    document.getElementById("todayRow").style.display=ko?"none":"";
+    rerender();
+  }
+  document.querySelectorAll(".vtab").forEach(t=>{ t.onclick=()=>setView(t.dataset.view); });
+
   function buildGroupPills(){
     const groups=[...new Set(RAW.map(m=>m.group).filter(Boolean))].sort();
     const el=document.getElementById("teamPills");
@@ -352,7 +427,7 @@
       if(!res.ok)throw new Error("HTTP "+res.status);
       const json=await res.json();
       RAW=json.matches||[];
-      buildGroupPills(); render();
+      buildGroupPills(); rerender();
       document.getElementById("refreshBtn").style.display="block";
       const stampTz=TZ?" "+TZ:"";
       const live=anyLive();
@@ -363,7 +438,6 @@
   document.getElementById("refreshBtn").onclick=()=>load();
 
   if(TZ){
-    const sub=document.getElementById("subhead"); if(sub)sub.textContent+=" · "+TZ;
     const note=document.getElementById("note"); if(note)note.textContent=note.textContent.replace("your local timezone","your local time ("+TZ+")");
   }
 
@@ -386,7 +460,7 @@
   initTheme();
 
   // Live local-time line in the banner, ticking each second.
-  function updateClock(){ const el=document.getElementById("clock"); if(!el)return; const d=new Date(); let h=d.getHours();const ap=h>=12?"pm":"am";h=h%12||12; const t=`${h}:${pad(d.getMinutes())}:${pad(d.getSeconds())}${ap}`; el.textContent="🕒 "+t+(TZ?" "+TZ:""); }
+  function updateClock(){ const el=document.getElementById("clock"); if(!el)return; const d=new Date(); let h=d.getHours();const ap=h>=12?"pm":"am";h=h%12||12; const t=`${h}:${pad(d.getMinutes())}:${pad(d.getSeconds())}${ap}`; el.textContent="🕒 "+fmtDay(d)+" · "+t+(TZ?" "+TZ:""); }
   updateClock(); setInterval(updateClock,1000);
 
   // Kick-off reminders for favourite teams. Because there's no server, this only
