@@ -1,6 +1,6 @@
 /* Service worker for WC 2026 Matches Tracker (PWA).
    Scope is the GitHub Pages subpath, so all URLs are relative. */
-const CACHE = "wc2026-v1";
+const CACHE = "wc2026-v2";
 const SHELL = [
   "./",
   "./index.html",
@@ -44,9 +44,9 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Navigations + match data: network-first, fall back to cache when offline.
+  // Navigations + match/score data: network-first, fall back to cache when offline.
   const isNav = req.mode === "navigate";
-  const isData = url.hostname === "raw.githubusercontent.com";
+  const isData = url.hostname === "raw.githubusercontent.com" || url.hostname === "site.api.espn.com";
   if (isNav || isData) {
     event.respondWith(
       fetch(req).then((res) => {
