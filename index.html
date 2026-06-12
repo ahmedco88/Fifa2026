@@ -58,8 +58,15 @@
   :root[data-theme="dark"] .vtab.active { background: var(--teal); border-color: var(--teal); color: #fff; }
 
   /* Knockout bracket — horizontally scrollable columns, one per round */
-  .bracket { display: flex; gap: 14px; overflow-x: auto; padding: .25rem 1rem 1rem; -webkit-overflow-scrolling: touch; }
-  .bcol { flex: 0 0 auto; width: 196px; display: flex; flex-direction: column; gap: 10px; }
+  .bracket-hint { font-size: 11px; color: var(--muted); padding: .1rem 1rem .4rem; display: flex; align-items: center; gap: 6px; }
+  .bracket-hint::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+  .bracket { display: flex; gap: 14px; overflow-x: auto; padding: .25rem 1rem 1rem; -webkit-overflow-scrolling: touch;
+             scroll-snap-type: x proximity; scrollbar-width: thin; scrollbar-color: var(--coral) var(--line); }
+  /* Keep the horizontal scrollbar visible so it's clear the rounds slide sideways. */
+  .bracket::-webkit-scrollbar { height: 8px; }
+  .bracket::-webkit-scrollbar-track { background: var(--line); border-radius: 4px; }
+  .bracket::-webkit-scrollbar-thumb { background: var(--coral); border-radius: 4px; }
+  .bcol { flex: 0 0 auto; width: 196px; display: flex; flex-direction: column; gap: 10px; scroll-snap-align: start; }
   .bcol-head { font-size: 11px; text-transform: uppercase; letter-spacing: .5px; color: var(--muted); font-weight: 700; }
   .bmatch { background: var(--card); border: 0.5px solid var(--line); border-radius: 10px; overflow: hidden; }
   .brow { display: flex; align-items: center; gap: 7px; padding: 6px 8px; font-size: 13px; color: var(--navy); }
@@ -224,7 +231,7 @@
 
   <footer>
     <p class="bio">Built by Ahmed Al-Obaidi — a busy doctor with a soft spot for technology and soccer.<br>Made in spare moments between shifts, for fellow fans who just want the matches in one place.</p>
-    <p>Designed by <a href="https://mrobaidi.com" target="_blank" rel="noopener">Ahmed Al-Obaidi</a></p>
+    <p><a href="https://mrobaidi.com" target="_blank" rel="noopener">See my other projects here →</a></p>
   </footer>
 </div>
 
@@ -408,7 +415,8 @@
     RAW.forEach(m=>{ const r=koRound(m); if(r) buckets[r].push(m); });
     const cols=KO_ORDER.filter(o=>buckets[o].length);
     if(!cols.length){ content.innerHTML='<div class="loading">The knockout bracket appears once the group stage finishes and the fixtures are set.</div>'; return; }
-    let html='<div class="bracket">';
+    let html=cols.length>2?'<div class="bracket-hint">Swipe sideways to see all rounds →</div>':'';
+    html+='<div class="bracket">';
     for(const r of cols){
       const ms=buckets[r].map(m=>({...m,dt:toLocal(m.date,m.time)})).sort((a,b)=>(a.dt&&b.dt)?a.dt-b.dt:0);
       html+=`<div class="bcol"><div class="bcol-head">${r}</div>${ms.map(bracketCard).join("")}</div>`;
