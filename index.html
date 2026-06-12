@@ -58,8 +58,17 @@
   :root[data-theme="dark"] .vtab.active { background: var(--teal); border-color: var(--teal); color: #fff; }
 
   /* Knockout bracket — horizontally scrollable columns, one per round */
-  .bracket-hint { font-size: 11px; color: var(--muted); padding: .1rem 1rem .4rem; display: flex; align-items: center; gap: 6px; }
-  .bracket-hint::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+  .bracket-bar { display: flex; align-items: center; gap: 10px; padding: .1rem 1rem .5rem; font-size: 11px; color: var(--muted); }
+  .bracket-bar .lbl { white-space: nowrap; text-transform: uppercase; letter-spacing: .5px; font-weight: 700; }
+  .bracket-bar .ln { flex: 1; height: 1px; background: var(--line); }
+  .bnav-btn { border: 1.5px solid var(--line); background: var(--card); color: var(--navy); width: 30px; height: 30px; border-radius: 8px; font-size: 18px; line-height: 1; cursor: pointer; display: flex; align-items: center; justify-content: center; flex: 0 0 auto; }
+  .bnav-btn:hover:not(:disabled) { border-color: var(--coral); color: var(--coral); }
+  .bnav-btn:disabled { opacity: .3; cursor: default; }
+  :root[data-theme="dark"] .bnav-btn { background: var(--card); color: var(--ink); }
+  /* Right-edge fade hints there's more to scroll; it vanishes once you reach the last round. */
+  .bracket-wrap { position: relative; }
+  .bracket-wrap::after { content: ""; position: absolute; top: 0; right: 0; bottom: 0; width: 40px; pointer-events: none; background: linear-gradient(to right, transparent, var(--cream)); transition: opacity .2s; }
+  .bracket-wrap.at-end::after { opacity: 0; }
   .bracket { display: flex; gap: 14px; overflow-x: auto; padding: .25rem 1rem 1rem; -webkit-overflow-scrolling: touch;
              scroll-snap-type: x proximity; scrollbar-width: thin; scrollbar-color: var(--coral) var(--line); }
   /* Keep the horizontal scrollbar visible so it's clear the rounds slide sideways. */
@@ -415,13 +424,24 @@
     RAW.forEach(m=>{ const r=koRound(m); if(r) buckets[r].push(m); });
     const cols=KO_ORDER.filter(o=>buckets[o].length);
     if(!cols.length){ content.innerHTML='<div class="loading">The knockout bracket appears once the group stage finishes and the fixtures are set.</div>'; return; }
-    let html=cols.length>2?'<div class="bracket-hint">Swipe sideways to see all rounds →</div>':'';
-    html+='<div class="bracket">';
+    const scrollable=cols.length>2;
+    let html=scrollable?'<div class="bracket-bar"><span class="lbl">All rounds</span><span class="ln"></span><button class="bnav-btn" data-dir="-1" aria-label="Scroll to earlier rounds">‹</button><button class="bnav-btn" data-dir="1" aria-label="Scroll to later rounds">›</button></div>':'';
+    html+='<div class="bracket-wrap"><div class="bracket">';
     for(const r of cols){
       const ms=buckets[r].map(m=>({...m,dt:toLocal(m.date,m.time)})).sort((a,b)=>(a.dt&&b.dt)?a.dt-b.dt:0);
       html+=`<div class="bcol"><div class="bcol-head">${r}</div>${ms.map(bracketCard).join("")}</div>`;
     }
-    content.innerHTML=html+'</div>';
+    content.innerHTML=html+'</div></div>';
+    if(scrollable){
+      const wrap=content.querySelector(".bracket-wrap"), br=content.querySelector(".bracket");
+      const prev=content.querySelector('.bnav-btn[data-dir="-1"]'), next=content.querySelector('.bnav-btn[data-dir="1"]');
+      const STEP=210; // one column (196) + gap (14)
+      function upd(){ const max=br.scrollWidth-br.clientWidth-1; prev.disabled=br.scrollLeft<=0; next.disabled=br.scrollLeft>=max; wrap.classList.toggle("at-end", br.scrollLeft>=max); }
+      prev.onclick=()=>br.scrollBy({left:-STEP,behavior:"smooth"});
+      next.onclick=()=>br.scrollBy({left:STEP,behavior:"smooth"});
+      br.addEventListener("scroll", upd, {passive:true});
+      upd();
+    }
   }
   function rerender(){ if(view==="bracket") renderBracket(); else render(); }
   function setView(v){
