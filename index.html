@@ -51,8 +51,8 @@
   :root[data-theme="dark"] .reminder-bar { background: #2A2017; }
   .pill.remind.active { background: var(--teal); border-color: var(--teal); color: #fff; }
 
-  .view-tabs { display: flex; gap: 6px; padding: .85rem 1rem 0; }
-  .vtab { flex: 1; border: 1.5px solid var(--line); background: #fff; color: var(--navy); border-radius: 9px; padding: 8px; font-size: 13px; font-weight: 600; cursor: pointer; }
+  .view-tabs { display: flex; gap: 5px; padding: .85rem 1rem 0; }
+  .vtab { flex: 1; border: 1.5px solid var(--line); background: #fff; color: var(--navy); border-radius: 9px; padding: 8px 4px; font-size: 12px; font-weight: 600; cursor: pointer; white-space: nowrap; }
   .vtab.active { background: var(--navy); border-color: var(--navy); color: #fff; }
   :root[data-theme="dark"] .vtab { background: var(--card); color: var(--ink); }
   :root[data-theme="dark"] .vtab.active { background: var(--teal); border-color: var(--teal); color: #fff; }
@@ -73,6 +73,8 @@
   .stand-team .name { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 130px; }
   .stand-team .badge { flex: none; }
   .stand-fav { background: rgba(255,193,7,.10); }
+  .stand-cap { padding: 0 1rem .9rem; font-size: 11px; color: var(--muted, #888780); }
+  .stand-tbl .c-player { text-align: left; }
 
   /* Knockout bracket — horizontally scrollable columns, one per round */
   .bracket-bar { display: flex; align-items: center; gap: 10px; padding: .1rem 1rem .5rem; font-size: 11px; color: var(--muted); }
@@ -232,6 +234,7 @@
   <div class="view-tabs">
     <button class="vtab active" data-view="schedule">📅 Schedule</button>
     <button class="vtab" data-view="standings">📊 Standings</button>
+    <button class="vtab" data-view="scorers">👟 Scorers</button>
     <button class="vtab" data-view="bracket">🏆 Bracket</button>
   </div>
 
@@ -278,6 +281,7 @@
       <div class="about-list">
         <div class="about-item"><span class="about-ic">📅</span><span class="about-tx"><b>Schedule</b>Every match, grouped by day. Kick-off times are shown in <b>your</b> local time automatically.</span></div>
         <div class="about-item"><span class="about-ic">📊</span><span class="about-tx"><b>Standings</b>Tap the <b>Standings</b> tab for the group tables — wins, draws, losses, goal difference and points, updated as results come in.</span></div>
+        <div class="about-item"><span class="about-ic">👟</span><span class="about-tx"><b>Scorers</b>Tap the <b>Scorers</b> tab for the tournament's top goalscorers, updated live as goals go in (own goals aren't counted).</span></div>
         <div class="about-item"><span class="about-ic">🏆</span><span class="about-tx"><b>Bracket</b>Tap the <b>Bracket</b> tab to see the knockout rounds — who's playing who, and who goes through.</span></div>
         <div class="about-item"><span class="about-ic">🔍</span><span class="about-tx"><b>Filter by group</b>Tap a group (A–L) to show only those matches.</span></div>
         <div class="about-item"><span class="about-ic">⭐</span><span class="about-tx"><b>My teams</b>Tap <b>⚙ Choose my teams</b> to pick your favourites. They get highlighted, and <b>★ My teams only</b> filters to just them.</span></div>
@@ -508,11 +512,11 @@
     content.innerHTML=html+'</div>';
   }
 
-  function rerender(){ if(view==="bracket") renderBracket(); else if(view==="standings") renderStandings(); else render(); }
+  function rerender(){ if(view==="bracket") renderBracket(); else if(view==="standings") renderStandings(); else if(view==="scorers") renderScorers(); else render(); }
   function setView(v){
     view=v;
     document.querySelectorAll(".vtab").forEach(t=>t.classList.toggle("active",t.dataset.view===v));
-    const hideControls=(v==="bracket"||v==="standings");
+    const hideControls=(v==="bracket"||v==="standings"||v==="scorers");
     document.getElementById("controls").style.display=hideControls?"none":"";
     document.getElementById("todayRow").style.display=hideControls?"none":"";
     rerender();
@@ -624,6 +628,80 @@
     }catch{}
   }
 
+  // ── Top scorers ───────────────────────────────────────────────────────────
+  // Live leaderboard from ESPN's keyless stats endpoint; falls back to the goal
+  // data already in openfootball (RAW) when ESPN is unreachable/offline.
+  const ESPN_STATS_URL="https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/statistics";
+  let ESPN_SCORERS=null;   // [{player,team,goals}] once a fetch succeeds, else null
+
+  // Reverse map FIFA code → canonical team name (built once) so ESPN's team
+  // abbreviation (e.g. "BIH","USA") resolves to our flag even when its spelling
+  // differs from openfootball's.
+  let CODE2NAME=null;
+  function codeToName(code){
+    if(!CODE2NAME){ CODE2NAME={}; for(const name in TEAM) CODE2NAME[TEAM[name][0]]=name; }
+    return code?CODE2NAME[code]:null;
+  }
+  function espnTeamName(t){   // ESPN athlete.team → our canonical team name
+    if(!t) return null;
+    const dn=t.displayName||"";
+    return codeToName(t.abbreviation) || (TEAM[canon(dn)]?canon(dn):null) || dn || null;
+  }
+
+  async function fetchEspnScorers(){
+    try{
+      const res=await fetch(ESPN_STATS_URL,{cache:"no-store"});
+      if(!res.ok) return;
+      const j=await res.json();
+      const cat=(j.stats||[]).find(s=>(s.displayName||s.name||"").toLowerCase()==="goals");
+      if(!cat||!cat.leaders) return;
+      const list=cat.leaders.map(L=>{
+        const a=L.athlete||{};
+        return { player:a.displayName, team:espnTeamName(a.team)||"", goals:Number(L.value)||0 };
+      }).filter(x=>x.player&&x.goals>0);
+      if(list.length) ESPN_SCORERS=list;   // keep last good list; don't wipe on a thin response
+    }catch{}
+  }
+
+  // Fallback: tally scorers from openfootball goals1/goals2 already in RAW.
+  // goals1 belong to team1, goals2 to team2; own goals are skipped (not credited).
+  function scorersFromRaw(){
+    const tally={};
+    for(const m of RAW){
+      for(const [arr,team] of [[m.goals1,m.team1],[m.goals2,m.team2]]){
+        if(!Array.isArray(arr)) continue;
+        for(const g of arr){
+          if(!g||!g.name||g.owngoal) continue;   // own goals not credited
+          const key=g.name+"|"+team;
+          (tally[key]||(tally[key]={player:g.name,team,goals:0})).goals++;
+        }
+      }
+    }
+    return Object.values(tally);
+  }
+
+  function renderScorers(){
+    const content=document.getElementById("content");
+    const live=Array.isArray(ESPN_SCORERS)&&ESPN_SCORERS.length>0;
+    const list=(live?ESPN_SCORERS:scorersFromRaw()).slice()
+      .sort((a,b)=> b.goals-a.goals || a.player.localeCompare(b.player));
+    if(!list.length){ content.innerHTML='<div class="loading">Top scorers will appear once goals are scored.</div>'; return; }
+    let html='<div class="stand-wrap"><div class="stand-group"><table class="stand-tbl"><thead><tr>'+
+      '<th class="c-pos"></th><th class="c-player">Player</th><th class="c-team">Team</th><th class="c-pts">Goals</th>'+
+      '</tr></thead><tbody>';
+    list.forEach((r,i)=>{
+      const code=codeOf(r.team);
+      html+=`<tr class="${isFav(r.team)?"stand-fav":""}">`+
+        `<td class="c-pos">${i+1}</td>`+
+        `<td class="c-player">${r.player}</td>`+
+        `<td class="c-team"><span class="stand-team">${badge(r.team)}<span class="name">${code!=="?"?code:labelOf(r.team)}</span></span></td>`+
+        `<td class="c-pts">${r.goals}</td></tr>`;
+    });
+    html+='</tbody></table></div>'+
+      `<div class="stand-cap">${live?"Live via ESPN.":"Via openfootball (updates ~daily)."} Own goals are not counted.</div></div>`;
+    content.innerHTML=html;
+  }
+
   async function load(silent){
     const content=document.getElementById("content");
     if(!silent) content.innerHTML='<div class="loading">Loading schedule…</div>';
@@ -634,7 +712,7 @@
       RAW=json.matches||[];
       buildGroupPills(); rerender();
       document.getElementById("refreshBtn").style.display="block";
-      await enrichLiveScores(); rerender();   // merge real-time scores, then repaint
+      await Promise.all([enrichLiveScores(), fetchEspnScorers()]); rerender();   // merge live scores + scorers, then repaint
       const stampTz=TZ?" "+TZ:"";
       const live=anyLive();
       document.getElementById("stamp").textContent="Updated "+fmtTime(new Date())+stampTz+(live?" · auto-refreshing live scores":" · tap refresh during matches");
@@ -717,7 +795,7 @@
   loadFavs(); load();
 
   // Deep-link: ?view=bracket opens the knockout view (used by the app shortcuts).
-  try{ const qv=new URLSearchParams(location.search).get("view"); if(qv==="bracket"||qv==="standings") setView(qv); }catch{}
+  try{ const qv=new URLSearchParams(location.search).get("view"); if(qv==="bracket"||qv==="standings"||qv==="scorers") setView(qv); }catch{}
 
   /* ---- PWA: service worker + install affordance ---- */
   if("serviceWorker" in navigator){
