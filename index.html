@@ -57,6 +57,23 @@
   :root[data-theme="dark"] .vtab { background: var(--card); color: var(--ink); }
   :root[data-theme="dark"] .vtab.active { background: var(--teal); border-color: var(--teal); color: #fff; }
 
+  /* Group standings — one compact table per group, computed from results */
+  .stand-wrap { padding: .5rem 1rem 0; }
+  .stand-group { margin-bottom: 1.4rem; }
+  .stand-gh { font-size: 1.05rem; font-weight: 800; color: var(--navy); margin: 0 0 .4rem; }
+  :root[data-theme="dark"] .stand-gh { color: var(--ink); }
+  .stand-tbl { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .stand-tbl th { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; color: var(--muted, #888780); text-align: center; padding: 4px 4px; border-bottom: 1.5px solid var(--line); }
+  .stand-tbl td { padding: 7px 4px; border-bottom: 1px solid var(--line); text-align: center; color: var(--navy); }
+  :root[data-theme="dark"] .stand-tbl td { color: var(--ink); }
+  .stand-tbl .c-pos { width: 22px; color: var(--muted, #888780); font-weight: 600; }
+  .stand-tbl .c-team { text-align: left; }
+  .stand-tbl .c-pts { font-weight: 800; }
+  .stand-team { display: flex; align-items: center; gap: 8px; }
+  .stand-team .name { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 130px; }
+  .stand-team .badge { flex: none; }
+  .stand-fav { background: rgba(255,193,7,.10); }
+
   /* Knockout bracket — horizontally scrollable columns, one per round */
   .bracket-bar { display: flex; align-items: center; gap: 10px; padding: .1rem 1rem .5rem; font-size: 11px; color: var(--muted); }
   .bracket-bar .lbl { white-space: nowrap; text-transform: uppercase; letter-spacing: .5px; font-weight: 700; }
@@ -214,6 +231,7 @@
 
   <div class="view-tabs">
     <button class="vtab active" data-view="schedule">📅 Schedule</button>
+    <button class="vtab" data-view="standings">📊 Standings</button>
     <button class="vtab" data-view="bracket">🏆 Bracket</button>
   </div>
 
@@ -259,6 +277,7 @@
       <p class="about-intro">Your pocket guide to the World Cup 2026 — all 104 matches, live scores, and your teams in one place. Here's what each part does:</p>
       <div class="about-list">
         <div class="about-item"><span class="about-ic">📅</span><span class="about-tx"><b>Schedule</b>Every match, grouped by day. Kick-off times are shown in <b>your</b> local time automatically.</span></div>
+        <div class="about-item"><span class="about-ic">📊</span><span class="about-tx"><b>Standings</b>Tap the <b>Standings</b> tab for the group tables — wins, draws, losses, goal difference and points, updated as results come in.</span></div>
         <div class="about-item"><span class="about-ic">🏆</span><span class="about-tx"><b>Bracket</b>Tap the <b>Bracket</b> tab to see the knockout rounds — who's playing who, and who goes through.</span></div>
         <div class="about-item"><span class="about-ic">🔍</span><span class="about-tx"><b>Filter by group</b>Tap a group (A–L) to show only those matches.</span></div>
         <div class="about-item"><span class="about-ic">⭐</span><span class="about-tx"><b>My teams</b>Tap <b>⚙ Choose my teams</b> to pick your favourites. They get highlighted, and <b>★ My teams only</b> filters to just them.</span></div>
@@ -443,13 +462,59 @@
       upd();
     }
   }
-  function rerender(){ if(view==="bracket") renderBracket(); else render(); }
+  // Build the group tables purely from match results the app already has.
+  // 3 pts win / 1 draw / 0 loss; tiebreak Pts → GD → goals scored → name.
+  function renderStandings(){
+    const content=document.getElementById("content");
+    const tables={};            // "Group A" -> { teamName -> stats }
+    const order=[];             // keep groups in first-seen order, then sorted
+    for(const m of RAW){
+      if(!m.group) continue;    // group-stage matches only
+      const g=m.group;
+      if(!tables[g]){ tables[g]={}; order.push(g); }
+      const tbl=tables[g];
+      const a=canon(m.team1), b=canon(m.team2);
+      for(const t of [a,b]) if(!tbl[t]) tbl[t]={team:t,mp:0,w:0,d:0,l:0,gf:0,ga:0,pts:0};
+      const ft=m.score&&m.score.ft;
+      if(!ft||ft[0]==null||ft[1]==null) continue;   // not played yet
+      const ga=Number(ft[0]), gb=Number(ft[1]);
+      if(Number.isNaN(ga)||Number.isNaN(gb)) continue;
+      const A=tbl[a], B=tbl[b];
+      A.mp++; B.mp++; A.gf+=ga; A.ga+=gb; B.gf+=gb; B.ga+=ga;
+      if(ga>gb){ A.w++; B.l++; A.pts+=3; }
+      else if(ga<gb){ B.w++; A.l++; B.pts+=3; }
+      else { A.d++; B.d++; A.pts++; B.pts++; }
+    }
+    if(!order.length){ content.innerHTML='<div class="loading">Standings will appear once the group fixtures are loaded.</div>'; return; }
+    const gd=r=>r.gf-r.ga, sign=n=>n>0?"+"+n:""+n;
+    let html='<div class="stand-wrap">';
+    for(const g of order.sort()){
+      const rows=Object.values(tables[g]).sort((x,y)=>
+        y.pts-x.pts || gd(y)-gd(x) || y.gf-x.gf || x.team.localeCompare(y.team));
+      html+=`<div class="stand-group"><h3 class="stand-gh">${g}</h3>`+
+        '<table class="stand-tbl"><thead><tr>'+
+        '<th class="c-pos"></th><th class="c-team">Team</th><th>W-D-L</th><th>GD</th><th class="c-pts">Pts</th>'+
+        '</tr></thead><tbody>';
+      rows.forEach((r,i)=>{
+        html+=`<tr class="${isFav(r.team)?"stand-fav":""}">`+
+          `<td class="c-pos">${i+1}</td>`+
+          `<td class="c-team"><span class="stand-team">${badge(r.team)}<span class="name">${labelOf(r.team)}</span></span></td>`+
+          `<td>${r.w}-${r.d}-${r.l}</td>`+
+          `<td>${sign(gd(r))}</td>`+
+          `<td class="c-pts">${r.pts}</td></tr>`;
+      });
+      html+='</tbody></table></div>';
+    }
+    content.innerHTML=html+'</div>';
+  }
+
+  function rerender(){ if(view==="bracket") renderBracket(); else if(view==="standings") renderStandings(); else render(); }
   function setView(v){
     view=v;
     document.querySelectorAll(".vtab").forEach(t=>t.classList.toggle("active",t.dataset.view===v));
-    const ko=v==="bracket";
-    document.getElementById("controls").style.display=ko?"none":"";
-    document.getElementById("todayRow").style.display=ko?"none":"";
+    const hideControls=(v==="bracket"||v==="standings");
+    document.getElementById("controls").style.display=hideControls?"none":"";
+    document.getElementById("todayRow").style.display=hideControls?"none":"";
     rerender();
   }
   document.querySelectorAll(".vtab").forEach(t=>{ t.onclick=()=>setView(t.dataset.view); });
@@ -652,7 +717,7 @@
   loadFavs(); load();
 
   // Deep-link: ?view=bracket opens the knockout view (used by the app shortcuts).
-  try{ if(new URLSearchParams(location.search).get("view")==="bracket") setView("bracket"); }catch{}
+  try{ const qv=new URLSearchParams(location.search).get("view"); if(qv==="bracket"||qv==="standings") setView(qv); }catch{}
 
   /* ---- PWA: service worker + install affordance ---- */
   if("serviceWorker" in navigator){
