@@ -1,6 +1,6 @@
 /* Service worker for WC 2026 Matches Tracker (PWA).
    Scope is the GitHub Pages subpath, so all URLs are relative. */
-const CACHE = "wc2026-v2";
+const CACHE = "wc2026-v3";
 const SHELL = [
   "./",
   "./index.html",
@@ -22,6 +22,18 @@ self.addEventListener("activate", (event) => {
     caches.keys().then((keys) =>
       Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k)))
     ).then(() => self.clients.claim())
+  );
+});
+
+// Tapping a scheduled match reminder focuses the app (or opens it if closed).
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const target = (event.notification.data && event.notification.data.url) || "./";
+  event.waitUntil(
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((cs) => {
+      for (const c of cs) { if ("focus" in c) return c.focus(); }
+      if (self.clients.openWindow) return self.clients.openWindow(target);
+    })
   );
 });
 

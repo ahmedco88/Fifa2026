@@ -119,8 +119,14 @@
   h1 { font-size: 22px; font-weight: 700; margin: 0 0 2px; letter-spacing: .2px; }
   .subtitle { font-size: 15px; font-weight: 600; opacity: .92; margin-top: 4px; }
 
-  .today-row { padding: .5rem 1rem 0; }
+  .today-row { padding: .5rem 1rem 0; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
   .today-btn { display: inline-flex; align-items: center; gap: 5px; width: auto; background: var(--teal); color: #fff; border: none; border-radius: 7px; padding: 5px 11px; font-size: 12px; font-weight: 600; cursor: pointer; }
+  .refresh-icon { flex: none; width: 32px; height: 32px; border-radius: 50%; border: 1px solid var(--line); background: #fff; color: var(--navy); font-size: 16px; line-height: 1; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
+  .refresh-icon:active { transform: rotate(90deg); transition: transform .2s; }
+  :root[data-theme="dark"] .refresh-icon { background: var(--card); color: var(--ink); }
+  .more-btn { display: block; width: 100%; margin: 10px 0 2px; padding: 11px; background: #fff; border: 1px solid var(--line); border-radius: 10px; color: var(--muted); font-size: 13px; font-weight: 600; cursor: pointer; }
+  .more-btn:hover { background: var(--cream); }
+  :root[data-theme="dark"] .more-btn { background: var(--card); color: var(--muted); }
   .day-head.is-today { color: var(--coral); }
   .day-head.is-today::before { content: "TODAY"; font-size: 9px; background: var(--coral); color: #fff; padding: 2px 6px; border-radius: 4px; letter-spacing: .5px; }
 
@@ -131,7 +137,18 @@
   .pill { border: 1.5px solid var(--line); background: #fff; color: var(--navy); border-radius: 20px; padding: 6px 13px; font-size: 13px; font-weight: 500; cursor: pointer; transition: all .15s; }
   .pill.active { background: var(--coral); border-color: var(--coral); color: #fff; }
   .pill.fav.active { background: var(--teal); border-color: var(--teal); }
-  .toggle-row { display: flex; gap: 7px; flex-wrap: wrap; }
+  .toggle-row { display: flex; gap: 7px; flex-wrap: wrap; align-items: center; }
+  /* Segmented control: the three "show only" filters as one connected toggle group. */
+  .seg { display: inline-flex; align-items: stretch; border: 1.5px solid var(--line); border-radius: 20px; overflow: hidden; background: #fff; }
+  .seg-btn { border: none; border-right: 1.5px solid var(--line); background: none; color: var(--navy); font-size: 13px; font-weight: 600; padding: 6px 12px; cursor: pointer; white-space: nowrap; transition: background .15s, color .15s; }
+  .seg-btn:last-child { border-right: none; }
+  .seg-btn.active { background: var(--teal); color: #fff; }
+  :root[data-theme="dark"] .seg { background: var(--card); }
+  :root[data-theme="dark"] .seg-btn { color: var(--ink); }
+  :root[data-theme="dark"] .seg-btn.active { background: var(--teal); color: #fff; }
+  /* "Choose my teams" is an action, not a filter — distinct dashed/coral treatment. */
+  .pill.action { background: transparent; border-style: dashed; border-color: var(--coral); color: var(--coral); }
+  :root[data-theme="dark"] .pill.action { background: transparent; color: var(--coral); }
 
   .day-head { font-size: 13px; font-weight: 600; color: var(--navy); margin: 1.25rem 0 .5rem; padding: 0 1rem; display: flex; align-items: center; gap: 8px; }
   .day-head::after { content: ""; flex: 1; height: 1px; background: var(--line); }
@@ -157,6 +174,9 @@
   .status.live { background: #FCEBEB; color: #A32D2D; }
   .status.ft { background: #E1F5EE; color: #0F6E56; }
   .cal-btn { font-size: 11px; color: var(--teal); background: none; border: none; cursor: pointer; padding: 2px 4px; font-weight: 600; }
+  .m-foot-actions { display: flex; align-items: center; gap: 8px; }
+  .bell-btn { font-size: 14px; background: none; border: none; cursor: pointer; padding: 2px 4px; line-height: 1; opacity: .3; filter: grayscale(1); transition: opacity .15s, filter .15s; }
+  .bell-btn.on { opacity: 1; filter: none; }
 
   .loading, .err { text-align: center; padding: 2rem 1rem; color: var(--muted); font-size: 14px; }
   .err { color: #A32D2D; }
@@ -243,14 +263,16 @@
     <div class="pills" id="teamPills"></div>
     <span class="label sep">My filters</span>
     <div class="toggle-row">
-      <button class="pill fav" id="favBtn">★ My teams only</button>
-      <button class="pill" id="upcomingBtn">Upcoming only</button>
-      <button class="pill remind" id="remindBtn" title="Get a heads-up before your teams kick off">🔔 Reminders</button>
-      <button class="pill" id="pickBtn">⚙ Choose my teams</button>
+      <div class="seg" role="group" aria-label="Show only">
+        <button class="seg-btn" id="favBtn" aria-pressed="false" title="Show only your favourite teams' matches">★ My teams</button>
+        <button class="seg-btn" id="upcomingBtn" aria-pressed="true" title="Hide matches that have finished">⏱ Upcoming</button>
+        <button class="seg-btn" id="remindBtn" aria-pressed="false" title="Show only matches you've belled for a reminder">🔔 My reminders</button>
+      </div>
+      <button class="pill action" id="pickBtn">⚙ Choose my teams</button>
     </div>
   </div>
 
-  <div class="today-row" id="todayRow"><button class="today-btn" id="todayBtn">📍 Today's matches</button></div>
+  <div class="today-row" id="todayRow"><button class="today-btn" id="todayBtn">📍 Today's matches</button><button class="refresh-icon" id="refreshTop" aria-label="Refresh scores" title="Refresh scores">↻</button></div>
 
   <div id="content"><div class="loading">Loading schedule…</div></div>
 
@@ -285,7 +307,7 @@
         <div class="about-item"><span class="about-ic">🏆</span><span class="about-tx"><b>Bracket</b>Tap the <b>Bracket</b> tab to see the knockout rounds — who's playing who, and who goes through.</span></div>
         <div class="about-item"><span class="about-ic">🔍</span><span class="about-tx"><b>Filter by group</b>Tap a group (A–L) to show only those matches.</span></div>
         <div class="about-item"><span class="about-ic">⭐</span><span class="about-tx"><b>My teams</b>Tap <b>⚙ Choose my teams</b> to pick your favourites. They get highlighted, and <b>★ My teams only</b> filters to just them.</span></div>
-        <div class="about-item"><span class="about-ic">🔔</span><span class="about-tx"><b>Reminders</b>Turn on to get a heads-up (and a pop-up notification, if you allow it) just before your teams kick off. Works while the app is open.</span></div>
+        <div class="about-item"><span class="about-ic">🔔</span><span class="about-tx"><b>Match reminders</b>Tap the <b>🔔</b> on any upcoming match to be reminded 15 min before kick-off — only the matches you pick. On Android/Chrome it can alert you even when the app is closed (allow notifications when asked); on iPhone the heads-up shows while the app is open. <b>🔔 My reminders</b> filters to just your belled matches.</span></div>
         <div class="about-item"><span class="about-ic">⏱️</span><span class="about-tx"><b>Upcoming only</b>Hide matches that have already finished.</span></div>
         <div class="about-item"><span class="about-ic">📍</span><span class="about-tx"><b>Today's matches</b>Jump straight to today's games.</span></div>
         <div class="about-item"><span class="about-ic">📆</span><span class="about-tx"><b>Add to calendar</b>Tap <b>Add</b> on any match to save it to your phone or computer's calendar.</span></div>
@@ -337,7 +359,8 @@
   const LIGHT_BADGES = new Set(["ECU","COL"]);
 
   let RAW = [], favTeams = new Set();
-  let showFavOnly=false, showUpcomingOnly=false, groupFilter=null, view="schedule";
+  let showFavOnly=false, showUpcomingOnly=true, showRemindOnly=false, groupFilter=null, view="schedule";
+  let daysShown=7;   // schedule shows ~a week of match-days; "Next week's matches" reveals +7
   const DAYS=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
   const MONTHS=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 
@@ -390,11 +413,20 @@
     if(groupFilter) rows=rows.filter(r=>r.group===groupFilter);
     if(showFavOnly) rows=rows.filter(r=>isFav(r.team1)||isFav(r.team2));
     if(showUpcomingOnly) rows=rows.filter(r=>matchState(r.dt,r.score,r._live)!=="ft");
-    if(!rows.length){ content.innerHTML='<div class="loading">No matches for this filter.</div>'; return; }
+    if(showRemindOnly) rows=rows.filter(r=>belledMatches.has(matchKey(r)));
+    if(!rows.length){ content.innerHTML=`<div class="loading">${showRemindOnly?"No belled matches yet — tap 🔔 on a match to get a reminder.":"No matches for this filter."}</div>`; return; }
+
+    // Show about a week of match-days at a time; a "Next week's matches" button reveals +7 more.
+    // Keeps the list short instead of one endless scroll. daysShown resets when filters change.
+    const dayKeys=[], seenDay=new Set();
+    for(const r of rows){ const k=fmtDay(r.dt); if(!seenDay.has(k)){ seenDay.add(k); dayKeys.push(k); } }
+    const allowed=new Set(dayKeys.slice(0,daysShown));
+    const hasMore=dayKeys.length>daysShown;
+    const visible=rows.filter(r=>allowed.has(fmtDay(r.dt)));
 
     let html="",lastDay="",open=false;
     const todayKey = fmtDay(new Date());
-    for(const r of rows){
+    for(const r of visible){
       const dayKey=fmtDay(r.dt);
       if(dayKey!==lastDay){ if(open)html+="</div>"; const isT = dayKey===todayKey; html+=`<div class="day-head${isT?' is-today':''}"${isT?' id="todayAnchor"':''}>${dayKey}</div><div class="matches">`; open=true; lastDay=dayKey; }
       const fav=isFav(r.team1)||isFav(r.team2);
@@ -403,6 +435,8 @@
       const stTag=st==="live"?'<span class="status live">● Live</span>':st==="ft"?'<span class="status ft">FT</span>':`<span class="status">${fmtTime(r.dt)}${TZ?" "+TZ:""}</span>`;
       const grp=r.group?r.group.replace("Group ","Grp "):(r.round||"");
       const cid="ics"+(icsId++); ICS_REG[cid]={m:r,dt:r.dt};
+      const belled=belledMatches.has(matchKey(r));
+      const bell=st==="upcoming"?`<button class="bell-btn ${belled?'on':''}" data-cid="${cid}" aria-label="Remind me 15 min before kick-off" aria-pressed="${belled}" title="Remind me 15 min before kick-off">🔔</button>`:"";
       html+=`<div class="match ${fav?'fav':''}">
         <div class="m-top"><span class="grp-tag">${grp}</span><span>${r.ground||""}</span></div>
         <div class="m-teams">
@@ -410,12 +444,16 @@
           ${scoreDisp?`<span class="score">${scoreDisp}</span>`:'<span class="vs">v</span>'}
           <div class="team-side right"><span class="team-name ${isFav(r.team2)?'fav':''}">${labelOf(r.team2)}</span>${badge(r.team2)}</div>
         </div>
-        <div class="m-foot">${stTag}<button class="cal-btn" data-cid="${cid}">📅 Add</button></div>
+        <div class="m-foot">${stTag}<div class="m-foot-actions">${bell}<button class="cal-btn" data-cid="${cid}">📅 Add</button></div></div>
       </div>`;
     }
     if(open)html+="</div>";
+    if(hasMore) html+=`<button class="more-btn" id="moreBtn">Next week's matches ↓</button>`;
     content.innerHTML=html;
     content.querySelectorAll(".cal-btn").forEach(b=>{ b.onclick=()=>{const e=ICS_REG[b.dataset.cid]; if(e)downloadICS(e.m,e.dt);}; });
+    content.querySelectorAll(".bell-btn").forEach(b=>{ b.onclick=()=>{const e=ICS_REG[b.dataset.cid]; if(e)toggleBell(matchKey(e.m));}; });
+    const moreBtn=document.getElementById("moreBtn");
+    if(moreBtn) moreBtn.onclick=()=>{ daysShown+=7; render(); };
   }
 
   // ---- Knockout bracket ----
@@ -527,7 +565,7 @@
     const groups=[...new Set(RAW.map(m=>m.group).filter(Boolean))].sort();
     const el=document.getElementById("teamPills");
     el.innerHTML=`<button class="pill active" data-g="ALL">All</button>`+groups.map(g=>`<button class="pill" data-g="${g}">${g}</button>`).join("");
-    el.querySelectorAll(".pill").forEach(b=>{ b.onclick=()=>{ el.querySelectorAll(".pill").forEach(x=>x.classList.remove("active")); b.classList.add("active"); groupFilter=b.dataset.g==="ALL"?null:b.dataset.g; render(); }; });
+    el.querySelectorAll(".pill").forEach(b=>{ b.onclick=()=>{ el.querySelectorAll(".pill").forEach(x=>x.classList.remove("active")); b.classList.add("active"); groupFilter=b.dataset.g==="ALL"?null:b.dataset.g; daysShown=7; render(); }; });
   }
 
   function buildPicker(){
@@ -550,7 +588,7 @@
   document.getElementById("aboutOverlay").onclick=(e)=>{ if(e.target.id==="aboutOverlay")closeAbout(); };
   document.getElementById("clearPicks").onclick=()=>{ document.querySelectorAll("#pickGrid .pick.sel").forEach(b=>b.classList.remove("sel")); };
   document.getElementById("savePicks").onclick=()=>{ favTeams=new Set([...document.querySelectorAll("#pickGrid .pick.sel")].map(b=>b.dataset.team)); saveFavs(); closePicker(); render(); };
-  document.getElementById("favBtn").onclick=function(){ showFavOnly=!showFavOnly; this.classList.toggle("active",showFavOnly); render(); };
+  document.getElementById("favBtn").onclick=function(){ showFavOnly=!showFavOnly; this.classList.toggle("active",showFavOnly); this.setAttribute("aria-pressed",showFavOnly); daysShown=7; render(); };
 
   function jumpToToday(){
     let el=document.getElementById("todayAnchor");
@@ -564,7 +602,7 @@
     else { const s=document.getElementById("stamp"); s.textContent="No upcoming matches found for today."; }
   }
   document.getElementById("todayBtn").onclick=jumpToToday;
-  document.getElementById("upcomingBtn").onclick=function(){ showUpcomingOnly=!showUpcomingOnly; this.classList.toggle("active",showUpcomingOnly); render(); };
+  document.getElementById("upcomingBtn").onclick=function(){ showUpcomingOnly=!showUpcomingOnly; this.classList.toggle("active",showUpcomingOnly); this.setAttribute("aria-pressed",showUpcomingOnly); daysShown=7; render(); };
 
   // Auto-refresh scores while any match is live, so the page stays current
   // without the user tapping refresh. Polls once a minute during live windows.
@@ -716,10 +754,11 @@
       const stampTz=TZ?" "+TZ:"";
       const live=anyLive();
       document.getElementById("stamp").textContent="Updated "+fmtTime(new Date())+stampTz+(live?" · auto-refreshing live scores":" · tap refresh during matches");
-      schedulePoll(); checkReminders();
+      schedulePoll(); checkReminders(); scheduleReminders();
     }catch(e){ if(!silent) content.innerHTML='<div class="err">Couldn\'t load schedule.<br>Check connection and tap refresh.</div>'; }
   }
   document.getElementById("refreshBtn").onclick=()=>load();
+  document.getElementById("refreshTop").onclick=()=>load();
 
   if(TZ){
     const note=document.getElementById("note"); if(note)note.textContent=note.textContent.replace("your local timezone","your local time ("+TZ+")");
@@ -747,14 +786,19 @@
   function updateClock(){ const el=document.getElementById("clock"); if(!el)return; const d=new Date(); let h=d.getHours();const ap=h>=12?"pm":"am";h=h%12||12; const t=`${h}:${pad(d.getMinutes())}:${pad(d.getSeconds())}${ap}`; el.textContent="🕒 "+fmtDay(d)+" · "+t+(TZ?" "+TZ:""); }
   updateClock(); setInterval(updateClock,1000);
 
-  // Kick-off reminders for favourite teams. Because there's no server, this only
-  // fires while the page is open: an in-page banner always shows, plus a browser
-  // notification if the user granted permission.
-  const REMIND_KEY = "wc2026_reminders";
+  // Per-match kick-off reminders. The user "bells" individual matches; each belled,
+  // upcoming match is scheduled to alert 15 min before kick-off. On browsers that
+  // support Notification Triggers (Chrome/Edge/Android) the alert fires even when the
+  // app is CLOSED — scheduled via the service worker, no server involved. On others
+  // (iPhone/Firefox) the in-page banner shows while the app is open. All on-device.
+  const BELL_KEY = "wc2026_match_reminders";
   const REMIND_LEAD = 15;          // minutes before kick-off to alert
-  let remindersOn = false;
-  const notified = new Set();      // match keys already alerted (avoid repeats)
+  const CAN_SCHEDULE = ("Notification" in window) && (typeof window.TimestampTrigger === "function");
+  let belledMatches = new Set();   // match keys the user wants reminders for
+  const notified = new Set();      // keys already banner-alerted this session
   function matchKey(m){ return `${m.date}|${m.team1}|${m.team2}`; }
+  function loadBelled(){ try{const s=localStorage.getItem(BELL_KEY); belledMatches = s?new Set(JSON.parse(s)):new Set();}catch{belledMatches=new Set();} }
+  function saveBelled(){ try{localStorage.setItem(BELL_KEY, JSON.stringify([...belledMatches]));}catch{} }
 
   function showReminderBanner(msg){
     const bar=document.getElementById("reminderBar");
@@ -766,33 +810,59 @@
   function fireReminder(m,mins){
     const msg=`${labelOf(m.team1)} v ${labelOf(m.team2)} ${mins>1?`kicks off in ${Math.round(mins)} min`:"is kicking off now"}`;
     showReminderBanner(msg);
-    try{ if("Notification" in window && Notification.permission==="granted") new Notification("⚽ World Cup 2026", {body:msg, icon:"favicon.svg"}); }catch{}
+    // On scheduling browsers the OS notification is delivered by the trigger — avoid a duplicate.
+    if(!CAN_SCHEDULE){ try{ if("Notification" in window && Notification.permission==="granted") new Notification("⚽ World Cup 2026", {body:msg, icon:"favicon.svg"}); }catch{} }
   }
   function checkReminders(){
-    if(!remindersOn || !RAW.length) return;
+    if(!belledMatches.size || !RAW.length) return;
     const now=Date.now();
     for(const m of RAW){
-      if(!(isFav(m.team1)||isFav(m.team2))) continue;
+      if(!belledMatches.has(matchKey(m))) continue;
       const dt=toLocal(m.date,m.time); if(!dt) continue;
       const mins=(dt.getTime()-now)/60000;
       if(mins<=REMIND_LEAD && mins>-2){ const k=matchKey(m); if(!notified.has(k)){ notified.add(k); fireReminder(m,mins); } }
     }
   }
-  function setReminders(on){
-    remindersOn=on;
-    document.getElementById("remindBtn").classList.toggle("active",on);
-    try{ localStorage.setItem(REMIND_KEY, on?"1":""); }catch{}
+  // Schedule OS-level notifications for belled upcoming matches (fires even when closed).
+  // Re-runs on every change: clears our prior schedules, then re-adds current belled ones.
+  async function scheduleReminders(){
+    if(!CAN_SCHEDULE || !("serviceWorker" in navigator)) return;
+    let reg; try{ reg = await navigator.serviceWorker.ready; }catch{ return; }
+    try{ const pend=await reg.getNotifications({includeTriggered:true}); pend.forEach(n=>{ if(n.tag&&n.tag.indexOf("wc-rem:")===0) n.close(); }); }catch{}
+    if(Notification.permission!=="granted") return;
+    const now=Date.now(); let count=0;
+    for(const m of RAW){
+      if(!belledMatches.has(matchKey(m))) continue;
+      const dt=toLocal(m.date,m.time); if(!dt) continue;
+      const at=dt.getTime()-REMIND_LEAD*60000;
+      if(at<=now || count++>60) continue;     // skip past matches; sane cap
+      try{ await reg.showNotification("⚽ World Cup 2026", {
+        tag:"wc-rem:"+matchKey(m),
+        body:`${labelOf(m.team1)} v ${labelOf(m.team2)} kicks off in ${REMIND_LEAD} min`,
+        icon:"icon-192.png", badge:"favicon.svg", data:{url:location.href},
+        showTrigger:new TimestampTrigger(at)
+      }); }catch{}
+    }
   }
-  document.getElementById("remindBtn").onclick=async function(){
-    if(remindersOn){ setReminders(false); return; }
-    if("Notification" in window && Notification.permission==="default"){ try{ await Notification.requestPermission(); }catch{} }
-    setReminders(true); checkReminders();
-  };
+  // Toggle a match's reminder. First time the user bells anything, ask permission.
+  async function toggleBell(key){
+    if(belledMatches.has(key)){ belledMatches.delete(key); }
+    else {
+      if("Notification" in window && Notification.permission==="default"){ try{ await Notification.requestPermission(); }catch{} }
+      belledMatches.add(key);
+    }
+    saveBelled(); scheduleReminders();
+    if(view==="schedule") render();   // refresh bell state (+ "My reminders" filter)
+  }
+
+  // The "🔔 My reminders" pill filters the Schedule to just your belled matches.
+  document.getElementById("remindBtn").onclick=function(){ showRemindOnly=!showRemindOnly; this.classList.toggle("active",showRemindOnly); this.setAttribute("aria-pressed",showRemindOnly); daysShown=7; render(); };
   document.getElementById("reminderX").onclick=()=>document.getElementById("reminderBar").classList.remove("show");
-  try{ if(localStorage.getItem(REMIND_KEY)==="1") setReminders(true); }catch{}
   setInterval(checkReminders, 30000);
 
-  loadFavs(); load();
+  loadFavs(); loadBelled();
+  if(showUpcomingOnly) document.getElementById("upcomingBtn").classList.add("active");
+  load();
 
   // Deep-link: ?view=bracket opens the knockout view (used by the app shortcuts).
   try{ const qv=new URLSearchParams(location.search).get("view"); if(qv==="bracket"||qv==="standings"||qv==="scorers") setView(qv); }catch{}
