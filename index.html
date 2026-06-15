@@ -137,6 +137,8 @@
   .pill { border: 1.5px solid var(--line); background: #fff; color: var(--navy); border-radius: 20px; padding: 6px 13px; font-size: 13px; font-weight: 500; cursor: pointer; transition: all .15s; }
   .pill.active { background: var(--coral); border-color: var(--coral); color: #fff; }
   .pill.fav.active { background: var(--teal); border-color: var(--teal); }
+  .group-select { background: #fff; border: 1.5px solid var(--line); border-radius: 20px; padding: 6px 12px; font-size: 13px; font-weight: 600; color: var(--navy); cursor: pointer; max-width: 200px; }
+  :root[data-theme="dark"] .group-select { background: var(--card); color: var(--ink); }
   .toggle-row { display: flex; gap: 7px; flex-wrap: wrap; align-items: center; }
   /* Segmented control: the three "show only" filters as one connected toggle group. */
   .seg { display: inline-flex; align-items: stretch; border: 1.5px solid var(--line); border-radius: 20px; overflow: hidden; background: #fff; }
@@ -156,8 +158,9 @@
   .matches { padding: 0 1rem; }
   .match { background: var(--card); border: 0.5px solid var(--line); border-radius: 12px; padding: .7rem .9rem; margin-bottom: 9px; }
   .match.fav { border-left: 4px solid var(--coral); }
-  .m-top { display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: var(--muted); }
-  .grp-tag { font-weight: 600; }
+  .m-top { display: grid; grid-template-columns: 1fr minmax(0,auto) 1fr; align-items: center; font-size: 11px; color: var(--muted); }
+  .grp-tag { font-weight: 600; justify-self: start; }
+  .m-venue { justify-self: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
   .m-teams { display: flex; align-items: center; justify-content: space-between; margin: 7px 0; gap: 8px; }
   .team-side { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; }
   .team-side.right { justify-content: flex-end; }
@@ -169,13 +172,15 @@
   img.badge.flag { object-fit: cover; background: var(--line); box-shadow: inset 0 0 0 1px rgba(0,0,0,.08); }
   .clock { font-variant-numeric: tabular-nums; }
 
-  .m-foot { display: flex; justify-content: space-between; align-items: center; margin-top: 4px; }
+  .m-foot { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; margin-top: 4px; }
+  .m-foot .status { justify-self: start; }
+  .m-foot-c { justify-self: center; }
+  .m-foot .cal-btn { justify-self: end; }
   .status { font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 5px; background: var(--cream); color: var(--navy); text-transform: uppercase; letter-spacing: .5px; }
   .status.live { background: #FCEBEB; color: #A32D2D; }
   .status.ft { background: #E1F5EE; color: #0F6E56; }
   .cal-btn { font-size: 11px; color: var(--teal); background: none; border: none; cursor: pointer; padding: 2px 4px; font-weight: 600; }
-  .m-foot-actions { display: flex; align-items: center; gap: 8px; }
-  .bell-btn { font-size: 14px; background: none; border: none; cursor: pointer; padding: 2px 4px; line-height: 1; opacity: .3; filter: grayscale(1); transition: opacity .15s, filter .15s; }
+  .bell-btn { font-size: 19px; background: none; border: none; cursor: pointer; padding: 0 4px; line-height: 1; opacity: .3; filter: grayscale(1); transition: opacity .15s, filter .15s; }
   .bell-btn.on { opacity: 1; filter: none; }
 
   .loading, .err { text-align: center; padding: 2rem 1rem; color: var(--muted); font-size: 14px; }
@@ -406,6 +411,11 @@
   }
   const ICS_REG={}; let icsId=0;
 
+  // The feed only carries the host city in `ground`; map the 16 venues to a country.
+  const CA_VENUES=new Set(["Toronto","Vancouver"]);
+  const MX_VENUES=new Set(["Mexico City","Guadalajara (Zapopan)","Monterrey (Guadalupe)"]);
+  function venueOf(g){ if(!g) return ""; const c=CA_VENUES.has(g)?"Canada":MX_VENUES.has(g)?"Mexico":"USA"; return `${g} · ${c}`; }
+
   function render(){
     const content=document.getElementById("content");
     let rows=RAW.map(mt=>({...mt,dt:toLocal(mt.date,mt.time)})).filter(r=>r.dt);
@@ -438,13 +448,13 @@
       const belled=belledMatches.has(matchKey(r));
       const bell=st==="upcoming"?`<button class="bell-btn ${belled?'on':''}" data-cid="${cid}" aria-label="Remind me 15 min before kick-off" aria-pressed="${belled}" title="Remind me 15 min before kick-off">🔔</button>`:"";
       html+=`<div class="match ${fav?'fav':''}">
-        <div class="m-top"><span class="grp-tag">${grp}</span><span>${r.ground||""}</span></div>
+        <div class="m-top"><span class="grp-tag">${grp}</span><span class="m-venue">📍 ${venueOf(r.ground)}</span><span></span></div>
         <div class="m-teams">
           <div class="team-side">${badge(r.team1)}<span class="team-name ${isFav(r.team1)?'fav':''}">${labelOf(r.team1)}</span></div>
           ${scoreDisp?`<span class="score">${scoreDisp}</span>`:'<span class="vs">v</span>'}
           <div class="team-side right"><span class="team-name ${isFav(r.team2)?'fav':''}">${labelOf(r.team2)}</span>${badge(r.team2)}</div>
         </div>
-        <div class="m-foot">${stTag}<div class="m-foot-actions">${bell}<button class="cal-btn" data-cid="${cid}">📅 Add</button></div></div>
+        <div class="m-foot">${stTag}<span class="m-foot-c">${bell}</span><button class="cal-btn" data-cid="${cid}">📅 Add</button></div>
       </div>`;
     }
     if(open)html+="</div>";
@@ -564,8 +574,10 @@
   function buildGroupPills(){
     const groups=[...new Set(RAW.map(m=>m.group).filter(Boolean))].sort();
     const el=document.getElementById("teamPills");
-    el.innerHTML=`<button class="pill active" data-g="ALL">All</button>`+groups.map(g=>`<button class="pill" data-g="${g}">${g}</button>`).join("");
-    el.querySelectorAll(".pill").forEach(b=>{ b.onclick=()=>{ el.querySelectorAll(".pill").forEach(x=>x.classList.remove("active")); b.classList.add("active"); groupFilter=b.dataset.g==="ALL"?null:b.dataset.g; daysShown=7; render(); }; });
+    el.innerHTML=`<select id="groupSelect" class="group-select" aria-label="Filter by group"><option value="ALL">All groups</option>${groups.map(g=>`<option value="${g}">${g}</option>`).join("")}</select>`;
+    const sel=document.getElementById("groupSelect");
+    sel.value=groupFilter||"ALL";
+    sel.onchange=()=>{ groupFilter=sel.value==="ALL"?null:sel.value; daysShown=7; render(); };
   }
 
   function buildPicker(){
