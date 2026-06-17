@@ -218,6 +218,17 @@
   .hof-row:last-child { margin-bottom: 0; }
   :root[data-theme="dark"] .hof-row { color: var(--ink); }
   .hof-lbl, .hof-score { color: var(--muted); }
+  .subtabs { display: flex; gap: 6px; margin-bottom: .7rem; }
+  .subtab { flex: 1; border: 1.5px solid var(--line); background: var(--card); color: var(--navy); border-radius: 8px; padding: 6px; font-size: 12px; font-weight: 600; cursor: pointer; }
+  .subtab.active { background: var(--navy); color: #fff; border-color: var(--navy); }
+  :root[data-theme="dark"] .subtab { color: var(--ink); }
+  :root[data-theme="dark"] .subtab.active { background: var(--teal); border-color: var(--teal); }
+  .title-row { display: grid; grid-template-columns: auto 1fr auto; gap: 0 12px; align-items: center; padding: 10px 0; border-bottom: 0.5px solid var(--line); }
+  .title-rank { font-size: 13px; font-weight: 600; color: var(--muted); min-width: 16px; text-align: center; }
+  .title-team { font-size: 15px; font-weight: 700; color: var(--navy); }
+  :root[data-theme="dark"] .title-team { color: var(--ink); }
+  .title-years { display: block; font-size: 11px; color: var(--muted); margin-top: 1px; }
+  .title-count { font-size: 20px; font-weight: 800; color: var(--teal); }
   .stamp { font-size: 11px; color: var(--muted); text-align: center; padding: .5rem; }
   .note { font-size: 11px; color: var(--muted); padding: .5rem 1rem 1rem; line-height: 1.5; }
 
@@ -403,6 +414,7 @@
   let showFavOnly=false, showUpcomingOnly=true, showRemindOnly=false, groupFilter=null, view="schedule";
   let daysShown=7;   // schedule shows ~a week of match-days; "Next week's matches" reveals +7
   const expanded=new Set();   // match keys whose scorer breakdown is open (in-memory only)
+  let historySub="cups";      // History tab sub-view: "cups" | "titles"
   const DAYS=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
   const MONTHS=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 
@@ -862,18 +874,40 @@
     {y:1934,host:"Italy",w:"Italy",r:"Czechoslovakia",s:"2–1 (a.e.t.)",gb:"Oldřich Nejedlý (5)"},
     {y:1930,host:"Uruguay",w:"Uruguay",r:"Argentina",s:"4–2",gb:"Guillermo Stábile (8)"}
   ];
+  // Count titles per country (West Germany counts as Germany, per FIFA).
+  function titleCounts(){
+    const norm=n=> n==="West Germany"?"Germany":n;
+    const map={};
+    for(const c of WC_HISTORY){ const w=norm(c.w); (map[w]||(map[w]={team:w,count:0,years:[]})); map[w].count++; map[w].years.push(c.y); }
+    return Object.values(map).map(t=>({...t,years:t.years.slice().sort((a,b)=>a-b)}))
+      .sort((a,b)=> b.count-a.count || a.team.localeCompare(b.team));
+  }
   function renderHistory(){
     const content=document.getElementById("content");
-    let html='<div class="hof-wrap"><div class="stand-gh">Past World Cups</div>';
-    for(const c of WC_HISTORY){
-      html+=`<div class="hof-item">`+
-        `<div class="hof-head"><span class="hof-year">${c.y}</span><span class="hof-host">Host: ${c.host}</span></div>`+
-        `<div class="hof-row">🏆 <span class="hof-lbl">Winner:</span> <b>${c.w}</b></div>`+
-        `<div class="hof-row">🥈 <span class="hof-lbl">Runner-up:</span> ${c.r} <span class="hof-score">(${c.s})</span></div>`+
-        `<div class="hof-row">👟 <span class="hof-lbl">Golden Boot:</span> ${c.gb}</div>`+
-        `</div>`;
+    let html='<div class="hof-wrap"><div class="subtabs">'+
+      `<button class="subtab ${historySub==='cups'?'active':''}" data-sub="cups">Past cups</button>`+
+      `<button class="subtab ${historySub==='titles'?'active':''}" data-sub="titles">Most titles</button>`+
+      '</div>';
+    if(historySub==='titles'){
+      html+='<div class="stand-gh">Most World Cup titles</div>';
+      titleCounts().forEach((t,i)=>{
+        html+=`<div class="title-row"><div class="title-rank">${i+1}</div>`+
+          `<div class="title-main"><span class="title-team">${t.team}</span><span class="title-years">${t.years.join(", ")}</span></div>`+
+          `<div class="title-count">${t.count}</div></div>`;
+      });
+    } else {
+      html+='<div class="stand-gh">Past World Cups</div>';
+      for(const c of WC_HISTORY){
+        html+=`<div class="hof-item">`+
+          `<div class="hof-head"><span class="hof-year">${c.y}</span><span class="hof-host">Host: ${c.host}</span></div>`+
+          `<div class="hof-row">🏆 <span class="hof-lbl">Winner:</span> <b>${c.w}</b></div>`+
+          `<div class="hof-row">🥈 <span class="hof-lbl">Runner-up:</span> ${c.r} <span class="hof-score">(${c.s})</span></div>`+
+          `<div class="hof-row">👟 <span class="hof-lbl">Golden Boot:</span> ${c.gb}</div>`+
+          `</div>`;
+      }
     }
     content.innerHTML=html+'</div>';
+    content.querySelectorAll(".subtab").forEach(b=>{ b.onclick=()=>{ historySub=b.dataset.sub; renderHistory(); }; });
   }
 
   async function load(silent){
