@@ -196,6 +196,7 @@
   .loading, .err { text-align: center; padding: 2rem 1rem; color: var(--muted); font-size: 14px; }
   .err { color: #A32D2D; }
   .refresh { display: block; margin: 1rem auto 0; border: 1px solid var(--teal); background: #fff; color: var(--teal); border-radius: 8px; padding: 8px 18px; font-size: 13px; font-weight: 600; cursor: pointer; }
+  .nextup { margin: .55rem 1rem 0; font-size: 12px; font-weight: 600; color: var(--teal); text-align: center; }
   .stamp { font-size: 11px; color: var(--muted); text-align: center; padding: .5rem; }
   .note { font-size: 11px; color: var(--muted); padding: .5rem 1rem 1rem; line-height: 1.5; }
 
@@ -257,6 +258,7 @@
     </div>
     <div class="head-actions">
       <button class="head-btn" id="themeToggle" aria-label="Toggle dark mode" title="Toggle dark mode">🌙</button>
+      <button class="head-btn" id="shareBtn" aria-label="Share this app" title="Share this app">📤</button>
       <button class="head-btn" id="aboutBtn" aria-label="About and help" title="About &amp; help">ℹ️</button>
     </div>
   </header>
@@ -272,6 +274,8 @@
     <button class="vtab" data-view="scorers">👟 Scorers</button>
     <button class="vtab" data-view="bracket">🏆 Bracket</button>
   </div>
+
+  <div class="nextup" id="nextUp" style="display:none"></div>
 
   <div class="controls" id="controls">
     <span class="label">Filter by group</span>
@@ -828,8 +832,32 @@
   initTheme();
 
   // Live local-time line in the banner, ticking each second.
-  function updateClock(){ const el=document.getElementById("clock"); if(!el)return; const d=new Date(); let h=d.getHours();const ap=h>=12?"pm":"am";h=h%12||12; const t=`${h}:${pad(d.getMinutes())}:${pad(d.getSeconds())}${ap}`; el.textContent="🕒 "+fmtDay(d)+" · "+t+(TZ?" "+TZ:""); }
+  function updateClock(){ const el=document.getElementById("clock"); if(!el)return; const d=new Date(); let h=d.getHours();const ap=h>=12?"pm":"am";h=h%12||12; const t=`${h}:${pad(d.getMinutes())}:${pad(d.getSeconds())}${ap}`; el.textContent="🕒 "+fmtDay(d)+" · "+t+(TZ?" "+TZ:""); updateNextUp(); }
+
+  // Countdown line: the soonest upcoming match (or a live one), refreshed each second.
+  function fmtCountdown(ms){ if(ms<0)ms=0; const s=Math.floor(ms/1000), d=Math.floor(s/86400), h=Math.floor(s%86400/3600), m=Math.floor(s%3600/60); if(d>0)return `${d}d ${h}h`; if(h>0)return `${h}h ${m}m`; if(m>0)return `${m}m`; return `${s%60}s`; }
+  function updateNextUp(){
+    const el=document.getElementById("nextUp"); if(!el) return;
+    if(!RAW.length){ el.style.display="none"; return; }
+    const now=Date.now(); let live=null, next=null, nextT=Infinity;
+    for(const m of RAW){ const dt=toLocal(m.date,m.time); if(!dt) continue; const t=dt.getTime(); const st=matchState(dt,m.score,m._live);
+      if(st==="live"){ if(!live) live=m; }
+      else if(st==="upcoming" && t>=now && t<nextT){ next=m; nextT=t; }
+    }
+    if(live){ el.textContent=`🔴 Now: ${labelOf(live.team1)} v ${labelOf(live.team2)} (live)`; el.style.display=""; return; }
+    if(!next){ el.style.display="none"; return; }
+    el.textContent=`⏱ Next: ${labelOf(next.team1)} v ${labelOf(next.team2)}, kicks off in ${fmtCountdown(nextT-now)}`;
+    el.style.display="";
+  }
   updateClock(); setInterval(updateClock,1000);
+
+  // Share the app via the native share sheet, with a clipboard-copy fallback.
+  document.getElementById("shareBtn").onclick=async function(){
+    const url=location.origin+location.pathname;
+    const data={ title:"FIFA World Cup 2026 Match Tracker", text:"Track every World Cup 2026 match: live scores, standings, top scorers and reminders.", url };
+    try{ if(navigator.share){ await navigator.share(data); return; } }catch{ return; }
+    try{ await navigator.clipboard.writeText(url); showReminderBanner("Link copied to clipboard"); }catch{}
+  };
 
   // Per-match kick-off reminders. The user "bells" individual matches; each belled,
   // upcoming match is scheduled to alert 15 min before kick-off. On browsers that
