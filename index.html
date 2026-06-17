@@ -183,6 +183,7 @@
   .goals-panel { display: none; margin-top: 9px; padding-top: 9px; border-top: 0.5px solid var(--line); grid-template-columns: 1fr 1fr; gap: 5px 12px; font-size: 12px; color: var(--navy); }
   .match.expanded .goals-panel { display: grid; }
   :root[data-theme="dark"] .goals-panel { color: var(--ink); }
+  .g-ball { font-size: 11px; margin-right: 4px; }
   .g-min { color: var(--muted); font-variant-numeric: tabular-nums; margin-right: 4px; }
   .g-tag { color: var(--muted); font-size: 11px; }
   .status { font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 5px; background: var(--cream); color: var(--navy); text-transform: uppercase; letter-spacing: .5px; }
@@ -426,7 +427,7 @@
   const MX_VENUES=new Set(["Mexico City","Guadalajara (Zapopan)","Monterrey (Guadalupe)"]);
   function venueOf(g){ if(!g) return ""; const c=CA_VENUES.has(g)?"Canada":MX_VENUES.has(g)?"Mexico":"USA"; return `${g} · ${c}`; }
   // One goal line in the expandable scorer breakdown: minute + scorer (+ pen/OG marker).
-  function goalLine(g){ if(!g||!g.name) return ""; const tag=g.owngoal?' <span class="g-tag">(OG)</span>':(g.penalty?' <span class="g-tag">(pen)</span>':''); return `<div class="g-line"><span class="g-min">${g.minute||""}'</span>${g.name}${tag}</div>`; }
+  function goalLine(g){ if(!g||!g.name) return ""; const tag=g.owngoal?' <span class="g-tag">(OG)</span>':(g.penalty?' <span class="g-tag">(pen)</span>':''); return `<div class="g-line"><span class="g-ball">⚽</span><span class="g-min">${g.minute||""}'</span>${g.name}${tag}</div>`; }
 
   function render(){
     const content=document.getElementById("content");
