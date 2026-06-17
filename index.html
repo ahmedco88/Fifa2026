@@ -144,10 +144,12 @@
   .seg { display: inline-flex; align-items: stretch; border: 1.5px solid var(--line); border-radius: 20px; overflow: hidden; background: #fff; }
   .seg-btn { border: none; border-right: 1.5px solid var(--line); background: none; color: var(--navy); font-size: 13px; font-weight: 600; padding: 6px 12px; cursor: pointer; white-space: nowrap; transition: background .15s, color .15s; }
   .seg-btn:last-child { border-right: none; }
-  .seg-btn.active { background: var(--teal); color: #fff; }
+  .seg-btn:disabled { opacity: .4; cursor: default; }
+  .seg-btn.active { background: #E1F5EE; color: var(--navy); }
+  .seg-btn.active::after { content: ""; display: inline-block; width: 7px; height: 7px; margin-left: 6px; border-radius: 50%; background: var(--teal); vertical-align: middle; }
   :root[data-theme="dark"] .seg { background: var(--card); }
   :root[data-theme="dark"] .seg-btn { color: var(--ink); }
-  :root[data-theme="dark"] .seg-btn.active { background: var(--teal); color: #fff; }
+  :root[data-theme="dark"] .seg-btn.active { background: #143A30; color: var(--ink); }
   /* "Choose my teams" is an action, not a filter — distinct dashed/coral treatment. */
   .pill.action { background: transparent; border-style: dashed; border-color: var(--coral); color: var(--coral); }
   :root[data-theme="dark"] .pill.action { background: transparent; color: var(--coral); }
@@ -369,7 +371,7 @@
   const DAYS=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
   const MONTHS=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 
-  function loadFavs(){ try{const s=localStorage.getItem(STORAGE_KEY); favTeams = s?new Set(JSON.parse(s)):new Set(["Australia","Iraq","France","Brazil"]);}catch{favTeams=new Set(["Australia","Iraq","France","Brazil"]);} }
+  function loadFavs(){ try{const s=localStorage.getItem(STORAGE_KEY); favTeams = s?new Set(JSON.parse(s)):new Set();}catch{favTeams=new Set();} }
   function saveFavs(){ try{localStorage.setItem(STORAGE_KEY,JSON.stringify([...favTeams]));}catch{} }
 
   function canon(n){ return ALIAS[n]||n; }
@@ -568,6 +570,8 @@
     document.getElementById("controls").style.display=hideControls?"none":"";
     document.getElementById("todayRow").style.display=hideControls?"none":"";
     rerender();
+    // Opening Scorers refreshes the match data (openfootball) so the leaderboard is current.
+    if(v==="scorers") load(true);
   }
   document.querySelectorAll(".vtab").forEach(t=>{ t.onclick=()=>setView(t.dataset.view); });
 
@@ -599,7 +603,15 @@
   document.getElementById("aboutOk").onclick=closeAbout;
   document.getElementById("aboutOverlay").onclick=(e)=>{ if(e.target.id==="aboutOverlay")closeAbout(); };
   document.getElementById("clearPicks").onclick=()=>{ document.querySelectorAll("#pickGrid .pick.sel").forEach(b=>b.classList.remove("sel")); };
-  document.getElementById("savePicks").onclick=()=>{ favTeams=new Set([...document.querySelectorAll("#pickGrid .pick.sel")].map(b=>b.dataset.team)); saveFavs(); closePicker(); render(); };
+  document.getElementById("savePicks").onclick=()=>{ favTeams=new Set([...document.querySelectorAll("#pickGrid .pick.sel")].map(b=>b.dataset.team)); saveFavs(); updateFavBtn(); closePicker(); render(); };
+  // "My teams" filter only makes sense once teams are picked — grey it out when none.
+  function updateFavBtn(){
+    const b=document.getElementById("favBtn"); if(!b) return;
+    const none=favTeams.size===0;
+    b.disabled=none;
+    b.title=none?"Pick teams first — tap ⚙ Choose my teams":"Show only your favourite teams' matches";
+    if(none && showFavOnly){ showFavOnly=false; b.classList.remove("active"); b.setAttribute("aria-pressed","false"); }
+  }
   document.getElementById("favBtn").onclick=function(){ showFavOnly=!showFavOnly; this.classList.toggle("active",showFavOnly); this.setAttribute("aria-pressed",showFavOnly); daysShown=7; render(); };
 
   function jumpToToday(){
@@ -732,8 +744,11 @@
 
   function renderScorers(){
     const content=document.getElementById("content");
-    const live=Array.isArray(ESPN_SCORERS)&&ESPN_SCORERS.length>0;
-    const list=(live?ESPN_SCORERS:scorersFromRaw()).slice()
+    // Primary = openfootball per-match goals (accurate, current). ESPN's pre-aggregated
+    // leaderboard lags badly, so it's only a fallback when we have no goal data yet.
+    const fromRaw=scorersFromRaw();
+    const usingRaw=fromRaw.length>0;
+    const list=(usingRaw?fromRaw:(ESPN_SCORERS||[])).slice()
       .sort((a,b)=> b.goals-a.goals || a.player.localeCompare(b.player));
     if(!list.length){ content.innerHTML='<div class="loading">Top scorers will appear once goals are scored.</div>'; return; }
     let html='<div class="stand-wrap"><div class="stand-group"><table class="stand-tbl"><thead><tr>'+
@@ -748,7 +763,7 @@
         `<td class="c-pts">${r.goals}</td></tr>`;
     });
     html+='</tbody></table></div>'+
-      `<div class="stand-cap">${live?"Live via ESPN.":"Via openfootball (updates ~daily)."} Own goals are not counted.</div></div>`;
+      `<div class="stand-cap">${usingRaw?"From match results.":"Provisional (via ESPN)."} Own goals are not counted.</div></div>`;
     content.innerHTML=html;
   }
 
@@ -872,7 +887,7 @@
   document.getElementById("reminderX").onclick=()=>document.getElementById("reminderBar").classList.remove("show");
   setInterval(checkReminders, 30000);
 
-  loadFavs(); loadBelled();
+  loadFavs(); loadBelled(); updateFavBtn();
   if(showUpcomingOnly) document.getElementById("upcomingBtn").classList.add("active");
   load();
 
