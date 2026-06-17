@@ -299,7 +299,6 @@
     <div class="head-actions">
       <button class="head-btn" id="themeToggle" aria-label="Toggle dark mode" data-i18n-title="ttTheme" title="Toggle dark mode">🌙</button>
       <button class="head-btn" id="langToggle" aria-label="Language" data-i18n-title="ttLang" title="العربية">ع</button>
-      <button class="head-btn" id="shareBtn" aria-label="Share this app" data-i18n-title="ttShare" title="Share this app">📤</button>
       <button class="head-btn" id="aboutBtn" aria-label="About and help" data-i18n-title="ttAbout" title="About &amp; help">ℹ️</button>
     </div>
   </header>
@@ -1119,12 +1118,6 @@
   updateClock(); setInterval(updateClock,1000);
 
   // Share the app via the native share sheet, with a clipboard-copy fallback.
-  document.getElementById("shareBtn").onclick=async function(){
-    const url=location.origin+location.pathname;
-    const data={ title:"FIFA World Cup 2026 Match Tracker", text:"Track every World Cup 2026 match: live scores, standings, top scorers and reminders.", url };
-    try{ if(navigator.share){ await navigator.share(data); return; } }catch{ return; }
-    try{ await navigator.clipboard.writeText(url); showReminderBanner(t("linkCopied")); }catch{}
-  };
 
   // Per-match kick-off reminders. The user "bells" individual matches; each belled,
   // upcoming match is scheduled to alert 15 min before kick-off. On browsers that
