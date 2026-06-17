@@ -178,6 +178,13 @@
   .m-foot .status { justify-self: start; }
   .m-foot-c { justify-self: center; }
   .m-foot .cal-btn { justify-self: end; }
+  .gx-btn { background: none; border: none; cursor: pointer; color: var(--muted); font-size: 15px; line-height: 1; padding: 0 6px; transition: transform .15s; }
+  .match.expanded .gx-btn { transform: rotate(180deg); }
+  .goals-panel { display: none; margin-top: 9px; padding-top: 9px; border-top: 0.5px solid var(--line); grid-template-columns: 1fr 1fr; gap: 5px 12px; font-size: 12px; color: var(--navy); }
+  .match.expanded .goals-panel { display: grid; }
+  :root[data-theme="dark"] .goals-panel { color: var(--ink); }
+  .g-min { color: var(--muted); font-variant-numeric: tabular-nums; margin-right: 4px; }
+  .g-tag { color: var(--muted); font-size: 11px; }
   .status { font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 5px; background: var(--cream); color: var(--navy); text-transform: uppercase; letter-spacing: .5px; }
   .status.live { background: #FCEBEB; color: #A32D2D; }
   .status.ft { background: #E1F5EE; color: #0F6E56; }
@@ -368,6 +375,7 @@
   let RAW = [], favTeams = new Set();
   let showFavOnly=false, showUpcomingOnly=true, showRemindOnly=false, groupFilter=null, view="schedule";
   let daysShown=7;   // schedule shows ~a week of match-days; "Next week's matches" reveals +7
+  const expanded=new Set();   // match keys whose scorer breakdown is open (in-memory only)
   const DAYS=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
   const MONTHS=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 
@@ -417,6 +425,8 @@
   const CA_VENUES=new Set(["Toronto","Vancouver"]);
   const MX_VENUES=new Set(["Mexico City","Guadalajara (Zapopan)","Monterrey (Guadalupe)"]);
   function venueOf(g){ if(!g) return ""; const c=CA_VENUES.has(g)?"Canada":MX_VENUES.has(g)?"Mexico":"USA"; return `${g} · ${c}`; }
+  // One goal line in the expandable scorer breakdown: minute + scorer (+ pen/OG marker).
+  function goalLine(g){ if(!g||!g.name) return ""; const tag=g.owngoal?' <span class="g-tag">(OG)</span>':(g.penalty?' <span class="g-tag">(pen)</span>':''); return `<div class="g-line"><span class="g-min">${g.minute||""}'</span>${g.name}${tag}</div>`; }
 
   function render(){
     const content=document.getElementById("content");
@@ -449,14 +459,20 @@
       const cid="ics"+(icsId++); ICS_REG[cid]={m:r,dt:r.dt};
       const belled=belledMatches.has(matchKey(r));
       const bell=st==="upcoming"?`<button class="bell-btn ${belled?'on':''}" data-cid="${cid}" aria-label="Remind me 15 min before kick-off" aria-pressed="${belled}" title="Remind me 15 min before kick-off">🔔</button>`:"";
-      html+=`<div class="match ${fav?'fav':''}">
+      const g1=Array.isArray(r.goals1)?r.goals1:[], g2=Array.isArray(r.goals2)?r.goals2:[];
+      const hasGoals=(g1.length+g2.length)>0;
+      // Footer centre is shared: bell for upcoming matches, a ▾ expand arrow for ones with goals.
+      const center=bell||(hasGoals?`<button class="gx-btn" data-cid="${cid}" aria-label="Show goal scorers" title="Show goal scorers">▾</button>`:"");
+      const expd=expanded.has(matchKey(r));
+      html+=`<div class="match ${fav?'fav':''}${expd?' expanded':''}">
         <div class="m-top"><span class="grp-tag">${grp}</span><span class="m-venue">📍 ${venueOf(r.ground)}</span><span></span></div>
         <div class="m-teams">
           <div class="team-side">${badge(r.team1)}<span class="team-name ${isFav(r.team1)?'fav':''}">${labelOf(r.team1)}</span></div>
           ${scoreDisp?`<span class="score">${scoreDisp}</span>`:'<span class="vs">v</span>'}
           <div class="team-side right"><span class="team-name ${isFav(r.team2)?'fav':''}">${labelOf(r.team2)}</span>${badge(r.team2)}</div>
         </div>
-        <div class="m-foot">${stTag}<span class="m-foot-c">${bell}</span><button class="cal-btn" data-cid="${cid}">📅 Add</button></div>
+        <div class="m-foot">${stTag}<span class="m-foot-c">${center}</span><button class="cal-btn" data-cid="${cid}">📅 Add</button></div>
+        ${hasGoals?`<div class="goals-panel"><div class="g-col">${g1.map(goalLine).join("")}</div><div class="g-col">${g2.map(goalLine).join("")}</div></div>`:""}
       </div>`;
     }
     if(open)html+="</div>";
@@ -464,6 +480,7 @@
     content.innerHTML=html;
     content.querySelectorAll(".cal-btn").forEach(b=>{ b.onclick=()=>{const e=ICS_REG[b.dataset.cid]; if(e)downloadICS(e.m,e.dt);}; });
     content.querySelectorAll(".bell-btn").forEach(b=>{ b.onclick=()=>{const e=ICS_REG[b.dataset.cid]; if(e)toggleBell(matchKey(e.m));}; });
+    content.querySelectorAll(".gx-btn").forEach(b=>{ b.onclick=()=>{ const e=ICS_REG[b.dataset.cid]; if(!e)return; const k=matchKey(e.m), card=b.closest(".match"); if(expanded.has(k)){expanded.delete(k);card&&card.classList.remove("expanded");}else{expanded.add(k);card&&card.classList.add("expanded");} }; });
     const moreBtn=document.getElementById("moreBtn");
     if(moreBtn) moreBtn.onclick=()=>{ daysShown+=7; render(); };
   }
