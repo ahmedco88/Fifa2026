@@ -121,6 +121,8 @@
 
   .today-row { padding: .5rem 1rem 0; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
   .today-btn { display: inline-flex; align-items: center; gap: 5px; width: auto; background: var(--teal); color: #fff; border: none; border-radius: 7px; padding: 5px 11px; font-size: 12px; font-weight: 600; cursor: pointer; }
+  .today-btn.ghost { background: transparent; color: var(--teal); border: 1px solid var(--teal); }
+  .tr-right { display: flex; align-items: center; gap: 8px; }
   .refresh-icon { flex: none; width: 32px; height: 32px; border-radius: 50%; border: 1px solid var(--line); background: #fff; color: var(--navy); font-size: 16px; line-height: 1; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
   .refresh-icon:active { transform: rotate(90deg); transition: transform .2s; }
   :root[data-theme="dark"] .refresh-icon { background: var(--card); color: var(--ink); }
@@ -197,6 +199,24 @@
   .err { color: #A32D2D; }
   .refresh { display: block; margin: 1rem auto 0; border: 1px solid var(--teal); background: #fff; color: var(--teal); border-radius: 8px; padding: 8px 18px; font-size: 13px; font-weight: 600; cursor: pointer; }
   .nextup { margin: .55rem 1rem 0; font-size: 12px; font-weight: 600; color: var(--teal); text-align: center; }
+  .stats-h { padding: .2rem 1rem .4rem; font-size: 1.05rem; font-weight: 800; color: var(--navy); }
+  :root[data-theme="dark"] .stats-h { color: var(--ink); }
+  .stats-panel { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; padding: 0 1rem; }
+  .stat { background: var(--card); border: 0.5px solid var(--line); border-radius: 8px; padding: 8px 6px; text-align: center; }
+  .stat-n { font-size: 19px; font-weight: 800; color: var(--navy); }
+  :root[data-theme="dark"] .stat-n { color: var(--ink); }
+  .stat-l { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .3px; }
+  .stats-extra { padding: .5rem 1rem 0; font-size: 12px; color: var(--muted); }
+  @media (max-width: 430px) { .stats-panel { grid-template-columns: repeat(2, 1fr); } }
+  /* Hall of Fame (History tab) */
+  .hof-wrap { padding: .4rem 1rem 1rem; }
+  .hof-item { display: grid; grid-template-columns: auto 1fr; gap: 0 14px; padding: 11px 0; border-bottom: 0.5px solid var(--line); align-items: start; }
+  .hof-year { font-size: 20px; font-weight: 800; color: var(--teal); font-variant-numeric: tabular-nums; }
+  .hof-win { font-size: 15px; font-weight: 700; color: var(--navy); }
+  :root[data-theme="dark"] .hof-win { color: var(--ink); }
+  .hof-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .hof-gb { font-size: 12px; color: var(--navy); margin-top: 3px; }
+  :root[data-theme="dark"] .hof-gb { color: var(--ink); }
   .stamp { font-size: 11px; color: var(--muted); text-align: center; padding: .5rem; }
   .note { font-size: 11px; color: var(--muted); padding: .5rem 1rem 1rem; line-height: 1.5; }
 
@@ -272,7 +292,7 @@
     <button class="vtab active" data-view="schedule">📅 Schedule</button>
     <button class="vtab" data-view="standings">📊 Standings</button>
     <button class="vtab" data-view="scorers">👟 Scorers</button>
-    <button class="vtab" data-view="bracket">🏆 Bracket</button>
+    <button class="vtab" data-view="history">🏅 History</button>
   </div>
 
   <div class="nextup" id="nextUp" style="display:none"></div>
@@ -291,7 +311,7 @@
     </div>
   </div>
 
-  <div class="today-row" id="todayRow"><button class="today-btn" id="todayBtn">📍 Today's matches</button><button class="refresh-icon" id="refreshTop" aria-label="Refresh scores" title="Refresh scores">↻</button></div>
+  <div class="today-row" id="todayRow"><button class="today-btn" id="todayBtn">📍 Today's matches</button><div class="tr-right"><button class="today-btn ghost" id="bracketBtn">🏆 Bracket</button><button class="refresh-icon" id="refreshTop" aria-label="Refresh scores" title="Refresh scores">↻</button></div></div>
 
   <div id="content"><div class="loading">Loading schedule…</div></div>
 
@@ -323,7 +343,8 @@
         <div class="about-item"><span class="about-ic">📅</span><span class="about-tx"><b>Schedule</b>Every match, grouped by day. Kick-off times are shown in <b>your</b> local time automatically.</span></div>
         <div class="about-item"><span class="about-ic">📊</span><span class="about-tx"><b>Standings</b>Tap the <b>Standings</b> tab for the group tables — wins, draws, losses, goal difference and points, updated as results come in.</span></div>
         <div class="about-item"><span class="about-ic">👟</span><span class="about-tx"><b>Scorers</b>Tap the <b>Scorers</b> tab for the tournament's top goalscorers, updated live as goals go in (own goals aren't counted).</span></div>
-        <div class="about-item"><span class="about-ic">🏆</span><span class="about-tx"><b>Bracket</b>Tap the <b>Bracket</b> tab to see the knockout rounds — who's playing who, and who goes through.</span></div>
+        <div class="about-item"><span class="about-ic">🏆</span><span class="about-tx"><b>Bracket</b>Tap the <b>🏆 Bracket</b> button on the Schedule to see the knockout rounds, who's playing who, and who goes through.</span></div>
+        <div class="about-item"><span class="about-ic">🏅</span><span class="about-tx"><b>History</b>Tap the <b>History</b> tab for past World Cups (1930 to 2022): hosts, winners, and Golden Boot top scorers.</span></div>
         <div class="about-item"><span class="about-ic">🔍</span><span class="about-tx"><b>Filter by group</b>Tap a group (A–L) to show only those matches.</span></div>
         <div class="about-item"><span class="about-ic">⭐</span><span class="about-tx"><b>My teams</b>Tap <b>⚙ Choose my teams</b> to pick your favourites. They get highlighted, and <b>★ My teams only</b> filters to just them.</span></div>
         <div class="about-item"><span class="about-ic">🔔</span><span class="about-tx"><b>Match reminders</b>Tap the <b>🔔</b> on any upcoming match to be reminded 15 min before kick-off — only the matches you pick. On Android/Chrome it can alert you even when the app is closed (allow notifications when asked); on iPhone the heads-up shows while the app is open. <b>🔔 My reminders</b> filters to just your belled matches.</span></div>
@@ -584,11 +605,11 @@
     content.innerHTML=html+'</div>';
   }
 
-  function rerender(){ if(view==="bracket") renderBracket(); else if(view==="standings") renderStandings(); else if(view==="scorers") renderScorers(); else render(); }
+  function rerender(){ if(view==="bracket") renderBracket(); else if(view==="standings") renderStandings(); else if(view==="scorers") renderScorers(); else if(view==="history") renderHistory(); else render(); }
   function setView(v){
     view=v;
     document.querySelectorAll(".vtab").forEach(t=>t.classList.toggle("active",t.dataset.view===v));
-    const hideControls=(v==="bracket"||v==="standings"||v==="scorers");
+    const hideControls=(v==="bracket"||v==="standings"||v==="scorers"||v==="history");
     document.getElementById("controls").style.display=hideControls?"none":"";
     document.getElementById("todayRow").style.display=hideControls?"none":"";
     rerender();
@@ -764,6 +785,21 @@
     return Object.values(tally);
   }
 
+  // Tournament-so-far stats, computed from match results already in RAW.
+  function tournamentStats(){
+    let played=0, goals=0, biggest=null, bigMargin=0;
+    for(const m of RAW){ const ft=m.score&&m.score.ft; if(!ft||ft[0]==null||ft[1]==null) continue;
+      const a=Number(ft[0]), b=Number(ft[1]); if(Number.isNaN(a)||Number.isNaN(b)) continue;
+      played++; goals+=a+b;
+      const margin=Math.abs(a-b); if(margin>bigMargin){ bigMargin=margin; biggest={m,a,b}; }
+    }
+    let hatTricks=0; const htList=[];
+    for(const m of RAW){ for(const arr of [m.goals1,m.goals2]){ if(!Array.isArray(arr)) continue;
+      const c={}; for(const g of arr){ if(!g||!g.name||g.owngoal) continue; c[g.name]=(c[g.name]||0)+1; }
+      for(const name in c){ if(c[name]>=3){ hatTricks++; htList.push(`${name} (${c[name]})`); } } } }
+    return {played, goals, gpm: played?(goals/played).toFixed(1):"0", biggest, bigMargin, hatTricks, htList};
+  }
+
   function renderScorers(){
     const content=document.getElementById("content");
     // Primary = openfootball per-match goals (accurate, current). ESPN's pre-aggregated
@@ -772,8 +808,19 @@
     const usingRaw=fromRaw.length>0;
     const list=(usingRaw?fromRaw:(ESPN_SCORERS||[])).slice()
       .sort((a,b)=> b.goals-a.goals || a.player.localeCompare(b.player));
-    if(!list.length){ content.innerHTML='<div class="loading">Top scorers will appear once goals are scored.</div>'; return; }
-    let html='<div class="stand-wrap"><div class="stand-group"><table class="stand-tbl"><thead><tr>'+
+    const s=tournamentStats();
+    const stat=(n,l)=>`<div class="stat"><div class="stat-n">${n}</div><div class="stat-l">${l}</div></div>`;
+    let html='<div class="stand-wrap">';
+    if(s.played>0){
+      html+='<div class="stats-h">Tournament so far</div><div class="stats-panel">'+
+        stat(s.played,"Matches")+stat(s.goals,"Goals")+stat(s.gpm,"Goals / match")+stat(s.hatTricks,"Hat-tricks")+'</div>';
+      const extra=[];
+      if(s.biggest && s.bigMargin>0) extra.push(`Biggest win: ${labelOf(s.biggest.m.team1)} ${s.biggest.a}–${s.biggest.b} ${labelOf(s.biggest.m.team2)}`);
+      if(s.htList.length) extra.push(`Hat-trick: ${s.htList.join(", ")}`);
+      if(extra.length) html+=`<div class="stats-extra">${extra.join(" · ")}</div>`;
+    }
+    if(!list.length){ content.innerHTML=html+'<div class="loading">Top scorers will appear once goals are scored.</div></div>'; return; }
+    html+='<div class="stand-group"><div class="stand-gh">Top scorers</div><table class="stand-tbl"><thead><tr>'+
       '<th class="c-pos"></th><th class="c-player">Player</th><th class="c-team">Team</th><th class="c-pts">Goals</th>'+
       '</tr></thead><tbody>';
     list.forEach((r,i)=>{
@@ -787,6 +834,43 @@
     html+='</tbody></table></div>'+
       `<div class="stand-cap">${usingRaw?"From match results.":"Provisional (via ESPN)."} Own goals are not counted.</div></div>`;
     content.innerHTML=html;
+  }
+
+  // Past World Cups (1930 to 2022), verified from Wikipedia. Static, offline.
+  const WC_HISTORY=[
+    {y:2022,host:"Qatar",w:"Argentina",r:"France",s:"3–3, 4–2 pens",gb:"Kylian Mbappé (8)"},
+    {y:2018,host:"Russia",w:"France",r:"Croatia",s:"4–2",gb:"Harry Kane (6)"},
+    {y:2014,host:"Brazil",w:"Germany",r:"Argentina",s:"1–0 (a.e.t.)",gb:"James Rodríguez (6)"},
+    {y:2010,host:"South Africa",w:"Spain",r:"Netherlands",s:"1–0 (a.e.t.)",gb:"Thomas Müller (5)"},
+    {y:2006,host:"Germany",w:"Italy",r:"France",s:"1–1, 5–3 pens",gb:"Miroslav Klose (5)"},
+    {y:2002,host:"South Korea / Japan",w:"Brazil",r:"Germany",s:"2–0",gb:"Ronaldo (8)"},
+    {y:1998,host:"France",w:"France",r:"Brazil",s:"3–0",gb:"Davor Šuker (6)"},
+    {y:1994,host:"USA",w:"Brazil",r:"Italy",s:"0–0, 3–2 pens",gb:"Salenko & Stoichkov (6)"},
+    {y:1990,host:"Italy",w:"West Germany",r:"Argentina",s:"1–0",gb:"Salvatore Schillaci (6)"},
+    {y:1986,host:"Mexico",w:"Argentina",r:"West Germany",s:"3–2",gb:"Gary Lineker (6)"},
+    {y:1982,host:"Spain",w:"Italy",r:"West Germany",s:"3–1",gb:"Paolo Rossi (6)"},
+    {y:1978,host:"Argentina",w:"Argentina",r:"Netherlands",s:"3–1 (a.e.t.)",gb:"Mario Kempes (6)"},
+    {y:1974,host:"West Germany",w:"West Germany",r:"Netherlands",s:"2–1",gb:"Grzegorz Lato (7)"},
+    {y:1970,host:"Mexico",w:"Brazil",r:"Italy",s:"4–1",gb:"Gerd Müller (10)"},
+    {y:1966,host:"England",w:"England",r:"West Germany",s:"4–2 (a.e.t.)",gb:"Eusébio (9)"},
+    {y:1962,host:"Chile",w:"Brazil",r:"Czechoslovakia",s:"3–1",gb:"Six players tied (4)"},
+    {y:1958,host:"Sweden",w:"Brazil",r:"Sweden",s:"5–2",gb:"Just Fontaine (13)"},
+    {y:1954,host:"Switzerland",w:"West Germany",r:"Hungary",s:"3–2",gb:"Sándor Kocsis (11)"},
+    {y:1950,host:"Brazil",w:"Uruguay",r:"Brazil",s:"2–1",gb:"Ademir (9)"},
+    {y:1938,host:"France",w:"Italy",r:"Hungary",s:"4–2",gb:"Leônidas (7)"},
+    {y:1934,host:"Italy",w:"Italy",r:"Czechoslovakia",s:"2–1 (a.e.t.)",gb:"Oldřich Nejedlý (5)"},
+    {y:1930,host:"Uruguay",w:"Uruguay",r:"Argentina",s:"4–2",gb:"Guillermo Stábile (8)"}
+  ];
+  function renderHistory(){
+    const content=document.getElementById("content");
+    let html='<div class="hof-wrap"><div class="stand-gh">Past World Cups</div>';
+    for(const c of WC_HISTORY){
+      html+=`<div class="hof-item"><div class="hof-year">${c.y}</div><div class="hof-main">`+
+        `<div class="hof-win">🏆 ${c.w}</div>`+
+        `<div class="hof-sub">${c.host} · beat ${c.r} ${c.s}</div>`+
+        `<div class="hof-gb">🥇 Golden Boot: ${c.gb}</div></div></div>`;
+    }
+    content.innerHTML=html+'</div>';
   }
 
   async function load(silent){
@@ -808,6 +892,7 @@
   }
   document.getElementById("refreshBtn").onclick=()=>load();
   document.getElementById("refreshTop").onclick=()=>load();
+  document.getElementById("bracketBtn").onclick=()=>setView("bracket");
 
   if(TZ){
     const note=document.getElementById("note"); if(note)note.textContent=note.textContent.replace("your local timezone","your local time ("+TZ+")");
@@ -938,7 +1023,7 @@
   load();
 
   // Deep-link: ?view=bracket opens the knockout view (used by the app shortcuts).
-  try{ const qv=new URLSearchParams(location.search).get("view"); if(qv==="bracket"||qv==="standings"||qv==="scorers") setView(qv); }catch{}
+  try{ const qv=new URLSearchParams(location.search).get("view"); if(qv==="bracket"||qv==="standings"||qv==="scorers"||qv==="history") setView(qv); }catch{}
 
   /* ---- PWA: service worker + install affordance ---- */
   if("serviceWorker" in navigator){
