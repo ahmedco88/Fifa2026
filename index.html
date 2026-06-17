@@ -208,15 +208,16 @@
   .stat-l { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .3px; }
   .stats-extra { padding: .5rem 1rem 0; font-size: 12px; color: var(--muted); }
   @media (max-width: 430px) { .stats-panel { grid-template-columns: repeat(2, 1fr); } }
-  /* Hall of Fame (History tab) */
+  /* Hall of Fame (History tab) — labelled cards */
   .hof-wrap { padding: .4rem 1rem 1rem; }
-  .hof-item { display: grid; grid-template-columns: auto 1fr; gap: 0 14px; padding: 11px 0; border-bottom: 0.5px solid var(--line); align-items: start; }
+  .hof-item { background: var(--card); border: 0.5px solid var(--line); border-radius: 12px; padding: 11px 13px; margin-bottom: 9px; }
+  .hof-head { display: flex; align-items: baseline; gap: 8px; margin-bottom: 6px; }
   .hof-year { font-size: 20px; font-weight: 800; color: var(--teal); font-variant-numeric: tabular-nums; }
-  .hof-win { font-size: 15px; font-weight: 700; color: var(--navy); }
-  :root[data-theme="dark"] .hof-win { color: var(--ink); }
-  .hof-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
-  .hof-gb { font-size: 12px; color: var(--navy); margin-top: 3px; }
-  :root[data-theme="dark"] .hof-gb { color: var(--ink); }
+  .hof-host { font-size: 12px; color: var(--muted); }
+  .hof-row { font-size: 13px; color: var(--navy); margin-bottom: 2px; }
+  .hof-row:last-child { margin-bottom: 0; }
+  :root[data-theme="dark"] .hof-row { color: var(--ink); }
+  .hof-lbl, .hof-score { color: var(--muted); }
   .stamp { font-size: 11px; color: var(--muted); text-align: center; padding: .5rem; }
   .note { font-size: 11px; color: var(--muted); padding: .5rem 1rem 1rem; line-height: 1.5; }
 
@@ -865,10 +866,12 @@
     const content=document.getElementById("content");
     let html='<div class="hof-wrap"><div class="stand-gh">Past World Cups</div>';
     for(const c of WC_HISTORY){
-      html+=`<div class="hof-item"><div class="hof-year">${c.y}</div><div class="hof-main">`+
-        `<div class="hof-win">🏆 ${c.w}</div>`+
-        `<div class="hof-sub">${c.host} · beat ${c.r} ${c.s}</div>`+
-        `<div class="hof-gb">🥇 Golden Boot: ${c.gb}</div></div></div>`;
+      html+=`<div class="hof-item">`+
+        `<div class="hof-head"><span class="hof-year">${c.y}</span><span class="hof-host">Host: ${c.host}</span></div>`+
+        `<div class="hof-row">🏆 <span class="hof-lbl">Winner:</span> <b>${c.w}</b></div>`+
+        `<div class="hof-row">🥈 <span class="hof-lbl">Runner-up:</span> ${c.r} <span class="hof-score">(${c.s})</span></div>`+
+        `<div class="hof-row">👟 <span class="hof-lbl">Golden Boot:</span> ${c.gb}</div>`+
+        `</div>`;
     }
     content.innerHTML=html+'</div>';
   }
