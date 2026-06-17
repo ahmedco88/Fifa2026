@@ -140,6 +140,9 @@
   .pill.active { background: var(--coral); border-color: var(--coral); color: #fff; }
   .pill.fav.active { background: var(--teal); border-color: var(--teal); }
   .group-select { background: #fff; border: 1.5px solid var(--line); border-radius: 20px; padding: 6px 12px; font-size: 13px; font-weight: 600; color: var(--navy); cursor: pointer; max-width: 200px; }
+  .filter-row { display: flex; gap: 14px; flex-wrap: wrap; }
+  .filter-col { display: flex; flex-direction: column; flex: 1 1 140px; min-width: 0; }
+  .filter-col .group-select { width: 100%; max-width: 100%; }
   :root[data-theme="dark"] .group-select { background: var(--card); color: var(--ink); }
   .toggle-row { display: flex; gap: 7px; flex-wrap: wrap; align-items: center; }
   /* Segmented control: the three "show only" filters as one connected toggle group. */
@@ -318,8 +321,16 @@
   <div class="nextup" id="nextUp" style="display:none"></div>
 
   <div class="controls" id="controls">
-    <span class="label" data-i18n="filterByGroup">Filter by group</span>
-    <div class="pills" id="teamPills"></div>
+    <div class="filter-row">
+      <div class="filter-col">
+        <span class="label" data-i18n="filterByGroup">Filter by group</span>
+        <div class="pills" id="teamPills"></div>
+      </div>
+      <div class="filter-col">
+        <span class="label" data-i18n="filterByTeam">Filter by team</span>
+        <div id="teamSelWrap"></div>
+      </div>
+    </div>
     <span class="label sep" data-i18n="myFilters">My filters</span>
     <div class="toggle-row">
       <div class="seg" role="group" aria-label="Show only">
@@ -392,6 +403,7 @@
       title:"FIFA World Cup 2026", subhead:"Canada · Mexico · USA · 104 matches", subtitle:"Match Tracker",
       "tab.schedule":"📅 Schedule","tab.standings":"📊 Standings","tab.scorers":"👟 Scorers","tab.history":"🏅 History",
       filterByGroup:"Filter by group", allGroups:"All groups", groupWord:"Group",
+      filterByTeam:"Filter by team", allTeams:"All teams",
       myFilters:"My filters", myTeams:"★ My teams", upcoming:"⏱ Upcoming", myReminders:"🔔 My reminders",
       chooseMyTeams:"⚙ Choose my teams", todayMatches:"📍 Today's matches", bracketBtn:"🏆 Bracket",
       refreshScores:"↻ Refresh scores",
@@ -444,6 +456,7 @@
       title:"كأس العالم 2026", subhead:"Canada · Mexico · USA · 104 مباراة", subtitle:"متتبّع المباريات",
       "tab.schedule":"📅 المباريات","tab.standings":"📊 الترتيب","tab.scorers":"👟 الهدّافون","tab.history":"🏅 السجل",
       filterByGroup:"التصفية حسب المجموعة", allGroups:"كل المجموعات", groupWord:"المجموعة",
+      filterByTeam:"التصفية حسب المنتخب", allTeams:"كل المنتخبات",
       myFilters:"عوامل التصفية", myTeams:"★ فرقي", upcoming:"⏱ القادمة", myReminders:"🔔 تنبيهاتي",
       chooseMyTeams:"⚙ اختر فرقي", todayMatches:"📍 مباريات اليوم", bracketBtn:"🏆 الأدوار الإقصائية",
       refreshScores:"↻ تحديث النتائج",
@@ -507,7 +520,7 @@
     document.documentElement.dir = (l==="ar") ? "rtl" : "ltr";
     const b=document.getElementById("langToggle"); if(b){ b.textContent = (l==="ar")?"EN":"ع"; b.title=t("ttLang"); }
     applyStaticI18n();
-    if(typeof buildGroupPills==="function" && RAW.length) buildGroupPills();
+    if(typeof buildGroupPills==="function" && RAW.length){ buildGroupPills(); buildTeamFilter(); }
     if(typeof updateFavBtn==="function") updateFavBtn();
     if(typeof rerender==="function") rerender();
     if(typeof updateClock==="function") updateClock();
@@ -547,7 +560,7 @@
   const LIGHT_BADGES = new Set(["ECU","COL"]);
 
   let RAW = [], favTeams = new Set();
-  let showFavOnly=false, showUpcomingOnly=true, showRemindOnly=false, groupFilter=null, view="schedule";
+  let showFavOnly=false, showUpcomingOnly=true, showRemindOnly=false, groupFilter=null, teamFilter=null, view="schedule";
   let daysShown=7;   // schedule shows ~a week of match-days; "Next week's matches" reveals +7
   const expanded=new Set();   // match keys whose scorer breakdown is open (in-memory only)
   let historySub="cups";      // History tab sub-view: "cups" | "titles"
@@ -615,6 +628,7 @@
     let rows=RAW.map(mt=>({...mt,dt:toLocal(mt.date,mt.time)})).filter(r=>r.dt);
     rows.sort((a,b)=>a.dt-b.dt);
     if(groupFilter) rows=rows.filter(r=>r.group===groupFilter);
+    if(teamFilter) rows=rows.filter(r=>canon(r.team1)===teamFilter||canon(r.team2)===teamFilter);
     if(showFavOnly) rows=rows.filter(r=>isFav(r.team1)||isFav(r.team2));
     if(showUpcomingOnly) rows=rows.filter(r=>matchState(r.dt,r.score,r._live)!=="ft");
     if(showRemindOnly) rows=rows.filter(r=>belledMatches.has(matchKey(r)));
@@ -781,6 +795,21 @@
     const sel=document.getElementById("groupSelect");
     sel.value=groupFilter||"ALL";
     sel.onchange=()=>{ groupFilter=sel.value==="ALL"?null:sel.value; daysShown=7; render(); };
+  }
+
+  // "Filter by team" dropdown — show one team's matches (past, present and future).
+  function buildTeamFilter(){
+    const el=document.getElementById("teamSelWrap"); if(!el) return;
+    const names=[...new Set(RAW.flatMap(m=>[canon(m.team1),canon(m.team2)]))].filter(n=>TEAM[n]).sort();
+    el.innerHTML=`<select id="teamSelect" class="group-select" aria-label="${t("filterByTeam")}"><option value="ALL">${t("allTeams")}</option>${names.map(n=>`<option value="${n}">${labelOf(n)}</option>`).join("")}</select>`;
+    const sel=document.getElementById("teamSelect");
+    sel.value=teamFilter||"ALL";
+    sel.onchange=()=>{
+      teamFilter=sel.value==="ALL"?null:sel.value; daysShown=7;
+      // Picking a team shows its whole journey, so drop the Upcoming-only filter.
+      if(teamFilter && showUpcomingOnly){ showUpcomingOnly=false; const ub=document.getElementById("upcomingBtn"); if(ub){ ub.classList.remove("active"); ub.setAttribute("aria-pressed","false"); } }
+      render();
+    };
   }
 
   function buildPicker(){
@@ -1061,7 +1090,7 @@
       if(!res.ok)throw new Error("HTTP "+res.status);
       const json=await res.json();
       RAW=json.matches||[];
-      buildGroupPills(); rerender();
+      buildGroupPills(); buildTeamFilter(); rerender();
       document.getElementById("refreshBtn").style.display="block";
       await Promise.all([enrichLiveScores(), fetchEspnScorers()]); rerender();   // merge live scores + scorers, then repaint
       const stampTz=TZ?" "+TZ:"";
