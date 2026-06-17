@@ -260,6 +260,14 @@
   .about-tx b { color: var(--ink); font-weight: 600; }
   .about-tx > b:first-child { display: block; margin-bottom: 1px; }
   .about-note { font-size: 11px; color: var(--muted); line-height: 1.5; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line); }
+
+  /* Arabic / RTL: most flex+grid mirrors automatically; fix the physical-direction bits. */
+  [dir="rtl"] .match.fav { border-left: 0; border-right: 4px solid var(--coral); }
+  [dir="rtl"] .stand-tbl .c-team, [dir="rtl"] .stand-tbl .c-player { text-align: right; }
+  [dir="rtl"] .g-ball, [dir="rtl"] .g-min { margin-right: 0; margin-left: 4px; }
+  [dir="rtl"] .seg-btn { border-right: none; border-left: 1.5px solid var(--line); }
+  [dir="rtl"] .seg-btn:last-child { border-left: none; }
+  [dir="rtl"] body, [dir="rtl"] input, [dir="rtl"] button, [dir="rtl"] select { font-family: "Segoe UI", Tahoma, Arial, sans-serif; }
 </style>
 </head>
 <body>
@@ -283,15 +291,16 @@
       <rect x="12" y="47" width="22" height="4" rx="1.5" fill="#1F7A4D"/>
     </svg>
     <div class="head-text">
-      <h1>FIFA World Cup 2026</h1>
-      <div class="eyebrow line2" id="subhead">Canada · Mexico · USA · 104 matches</div>
-      <div class="subtitle">Match Tracker</div>
+      <h1 data-i18n="title">FIFA World Cup 2026</h1>
+      <div class="eyebrow line2" id="subhead" data-i18n="subhead">Canada · Mexico · USA · 104 matches</div>
+      <div class="subtitle" data-i18n="subtitle">Match Tracker</div>
       <div class="eyebrow line2 clock" id="clock"></div>
     </div>
     <div class="head-actions">
-      <button class="head-btn" id="themeToggle" aria-label="Toggle dark mode" title="Toggle dark mode">🌙</button>
-      <button class="head-btn" id="shareBtn" aria-label="Share this app" title="Share this app">📤</button>
-      <button class="head-btn" id="aboutBtn" aria-label="About and help" title="About &amp; help">ℹ️</button>
+      <button class="head-btn" id="themeToggle" aria-label="Toggle dark mode" data-i18n-title="ttTheme" title="Toggle dark mode">🌙</button>
+      <button class="head-btn" id="langToggle" aria-label="Language" data-i18n-title="ttLang" title="العربية">ع</button>
+      <button class="head-btn" id="shareBtn" aria-label="Share this app" data-i18n-title="ttShare" title="Share this app">📤</button>
+      <button class="head-btn" id="aboutBtn" aria-label="About and help" data-i18n-title="ttAbout" title="About &amp; help">ℹ️</button>
     </div>
   </header>
 
@@ -301,81 +310,209 @@
   </div>
 
   <div class="view-tabs">
-    <button class="vtab active" data-view="schedule">📅 Schedule</button>
-    <button class="vtab" data-view="standings">📊 Standings</button>
-    <button class="vtab" data-view="scorers">👟 Scorers</button>
-    <button class="vtab" data-view="history">🏅 History</button>
+    <button class="vtab active" data-view="schedule" data-i18n="tab.schedule">📅 Schedule</button>
+    <button class="vtab" data-view="standings" data-i18n="tab.standings">📊 Standings</button>
+    <button class="vtab" data-view="scorers" data-i18n="tab.scorers">👟 Scorers</button>
+    <button class="vtab" data-view="history" data-i18n="tab.history">🏅 History</button>
   </div>
 
   <div class="nextup" id="nextUp" style="display:none"></div>
 
   <div class="controls" id="controls">
-    <span class="label">Filter by group</span>
+    <span class="label" data-i18n="filterByGroup">Filter by group</span>
     <div class="pills" id="teamPills"></div>
-    <span class="label sep">My filters</span>
+    <span class="label sep" data-i18n="myFilters">My filters</span>
     <div class="toggle-row">
       <div class="seg" role="group" aria-label="Show only">
-        <button class="seg-btn" id="favBtn" aria-pressed="false" title="Show only your favourite teams' matches">★ My teams</button>
-        <button class="seg-btn" id="upcomingBtn" aria-pressed="true" title="Hide matches that have finished">⏱ Upcoming</button>
-        <button class="seg-btn" id="remindBtn" aria-pressed="false" title="Show only matches you've belled for a reminder">🔔 My reminders</button>
+        <button class="seg-btn" id="favBtn" aria-pressed="false" data-i18n="myTeams" title="Show only your favourite teams' matches">★ My teams</button>
+        <button class="seg-btn" id="upcomingBtn" aria-pressed="true" data-i18n="upcoming" data-i18n-title="ttUpcoming" title="Hide matches that have finished">⏱ Upcoming</button>
+        <button class="seg-btn" id="remindBtn" aria-pressed="false" data-i18n="myReminders" data-i18n-title="ttRemind" title="Show only matches you've belled for a reminder">🔔 My reminders</button>
       </div>
-      <button class="pill action" id="pickBtn">⚙ Choose my teams</button>
+      <button class="pill action" id="pickBtn" data-i18n="chooseMyTeams">⚙ Choose my teams</button>
     </div>
   </div>
 
-  <div class="today-row" id="todayRow"><button class="today-btn" id="todayBtn">📍 Today's matches</button><div class="tr-right"><button class="today-btn ghost" id="bracketBtn">🏆 Bracket</button><button class="refresh-icon" id="refreshTop" aria-label="Refresh scores" title="Refresh scores">↻</button></div></div>
+  <div class="today-row" id="todayRow"><button class="today-btn" id="todayBtn" data-i18n="todayMatches">📍 Today's matches</button><div class="tr-right"><button class="today-btn ghost" id="bracketBtn" data-i18n="bracketBtn">🏆 Bracket</button><button class="refresh-icon" id="refreshTop" aria-label="Refresh scores" data-i18n-title="ttRefresh" title="Refresh scores">↻</button></div></div>
 
-  <div id="content"><div class="loading">Loading schedule…</div></div>
+  <div id="content"><div class="loading" data-i18n="loading">Loading schedule…</div></div>
 
-  <button class="refresh" id="refreshBtn" style="display:none;">↻ Refresh scores</button>
+  <button class="refresh" id="refreshBtn" style="display:none;" data-i18n="refreshScores">↻ Refresh scores</button>
   <div class="stamp" id="stamp"></div>
 
-  <div class="note" id="note">⚠ Times shown in your local timezone, converted from each venue's local kick-off. Live scores update automatically as matches are played — may lag a minute or two behind the live broadcast.</div>
+  <div class="note" id="note" data-i18n="note">⚠ Times shown in your local timezone, converted from each venue's local kick-off. Live scores update automatically as matches are played, and may lag a minute or two behind the live broadcast.</div>
 
   <footer>
-    <p class="bio">Built by Ahmed Al-Obaidi — a busy doctor with a soft spot for technology and soccer.<br>Made in spare moments between shifts, for fellow fans who just want the matches in one place.</p>
-    <p><a href="https://mrobaidi.com" target="_blank" rel="noopener">See my other projects here →</a></p>
+    <p class="bio" data-i18n-html="bio">Built by Ahmed Al-Obaidi, a busy doctor with a soft spot for technology and soccer.<br>Made in spare moments between shifts, for fellow fans who just want the matches in one place.</p>
+    <p><a href="https://mrobaidi.com" target="_blank" rel="noopener" data-i18n="otherProjects">See my other projects here →</a></p>
   </footer>
 </div>
 
 <div class="overlay" id="overlay">
   <div class="modal">
-    <div class="modal-head"><h2>Choose teams to follow</h2><button class="modal-x" id="modalX">×</button></div>
+    <div class="modal-head"><h2 data-i18n="pickTitle">Choose teams to follow</h2><button class="modal-x" id="modalX">×</button></div>
     <div class="modal-body"><div class="pick-grid" id="pickGrid"></div></div>
-    <div class="modal-foot"><button class="btn-ghost" id="clearPicks">Clear</button><button class="btn-primary" id="savePicks">Save my teams</button></div>
+    <div class="modal-foot"><button class="btn-ghost" id="clearPicks" data-i18n="clear">Clear</button><button class="btn-primary" id="savePicks" data-i18n="saveTeams">Save my teams</button></div>
   </div>
 </div>
 
 <div class="overlay" id="aboutOverlay">
   <div class="modal">
-    <div class="modal-head"><h2>About &amp; how to use</h2><button class="modal-x" id="aboutX">×</button></div>
+    <div class="modal-head"><h2 data-i18n="aboutTitle">About &amp; how to use</h2><button class="modal-x" id="aboutX">×</button></div>
     <div class="modal-body">
-      <p class="about-intro">Your pocket guide to the World Cup 2026 — all 104 matches, live scores, and your teams in one place. Here's what each part does:</p>
+      <p class="about-intro" data-i18n="aboutIntro">Your pocket guide to the World Cup 2026: all 104 matches, live scores, and your teams in one place. Here's what each part does:</p>
       <div class="about-list">
-        <div class="about-item"><span class="about-ic">📅</span><span class="about-tx"><b>Schedule</b>Every match, grouped by day. Kick-off times are shown in <b>your</b> local time automatically.</span></div>
-        <div class="about-item"><span class="about-ic">📊</span><span class="about-tx"><b>Standings</b>Tap the <b>Standings</b> tab for the group tables — wins, draws, losses, goal difference and points, updated as results come in.</span></div>
-        <div class="about-item"><span class="about-ic">👟</span><span class="about-tx"><b>Scorers</b>Tap the <b>Scorers</b> tab for the tournament's top goalscorers, updated live as goals go in (own goals aren't counted).</span></div>
-        <div class="about-item"><span class="about-ic">🏆</span><span class="about-tx"><b>Bracket</b>Tap the <b>🏆 Bracket</b> button on the Schedule to see the knockout rounds, who's playing who, and who goes through.</span></div>
-        <div class="about-item"><span class="about-ic">🏅</span><span class="about-tx"><b>History</b>Tap the <b>History</b> tab for past World Cups (1930 to 2022): hosts, winners, and Golden Boot top scorers.</span></div>
-        <div class="about-item"><span class="about-ic">🔍</span><span class="about-tx"><b>Filter by group</b>Tap a group (A–L) to show only those matches.</span></div>
-        <div class="about-item"><span class="about-ic">⭐</span><span class="about-tx"><b>My teams</b>Tap <b>⚙ Choose my teams</b> to pick your favourites. They get highlighted, and <b>★ My teams only</b> filters to just them.</span></div>
-        <div class="about-item"><span class="about-ic">🔔</span><span class="about-tx"><b>Match reminders</b>Tap the <b>🔔</b> on any upcoming match to be reminded 15 min before kick-off — only the matches you pick. On Android/Chrome it can alert you even when the app is closed (allow notifications when asked); on iPhone the heads-up shows while the app is open. <b>🔔 My reminders</b> filters to just your belled matches.</span></div>
-        <div class="about-item"><span class="about-ic">⏱️</span><span class="about-tx"><b>Upcoming only</b>Hide matches that have already finished.</span></div>
-        <div class="about-item"><span class="about-ic">📍</span><span class="about-tx"><b>Today's matches</b>Jump straight to today's games.</span></div>
-        <div class="about-item"><span class="about-ic">📆</span><span class="about-tx"><b>Add to calendar</b>Tap <b>Add</b> on any match to save it to your phone or computer's calendar.</span></div>
-        <div class="about-item"><span class="about-ic">🌙</span><span class="about-tx"><b>Dark mode</b>Tap the moon / sun (top right) to switch themes. Your choice is remembered.</span></div>
-        <div class="about-item"><span class="about-ic">🔄</span><span class="about-tx"><b>Live scores</b>Scores update on their own while matches are being played. You can also tap <b>Refresh</b> any time.</span></div>
+        <div class="about-item"><span class="about-ic">📅</span><span class="about-tx" data-i18n-html="about.schedule"><b>Schedule</b>Every match, grouped by day. Kick-off times are shown in <b>your</b> local time automatically.</span></div>
+        <div class="about-item"><span class="about-ic">📊</span><span class="about-tx" data-i18n-html="about.standings"><b>Standings</b>Tap the <b>Standings</b> tab for the group tables: wins, draws, losses, goal difference and points, updated as results come in.</span></div>
+        <div class="about-item"><span class="about-ic">👟</span><span class="about-tx" data-i18n-html="about.scorers"><b>Scorers</b>Tap the <b>Scorers</b> tab for the tournament's top goalscorers, updated live as goals go in (own goals aren't counted).</span></div>
+        <div class="about-item"><span class="about-ic">🏆</span><span class="about-tx" data-i18n-html="about.bracket"><b>Bracket</b>Tap the <b>🏆 Bracket</b> button on the Schedule to see the knockout rounds, who's playing who, and who goes through.</span></div>
+        <div class="about-item"><span class="about-ic">🏅</span><span class="about-tx" data-i18n-html="about.history"><b>History</b>Tap the <b>History</b> tab for past World Cups (1930 to 2022): hosts, winners, and Golden Boot top scorers.</span></div>
+        <div class="about-item"><span class="about-ic">🔍</span><span class="about-tx" data-i18n-html="about.filter"><b>Filter by group</b>Tap a group (A to L) to show only those matches.</span></div>
+        <div class="about-item"><span class="about-ic">⭐</span><span class="about-tx" data-i18n-html="about.myteams"><b>My teams</b>Tap <b>⚙ Choose my teams</b> to pick your favourites. They get highlighted, and <b>★ My teams</b> filters to just them.</span></div>
+        <div class="about-item"><span class="about-ic">🔔</span><span class="about-tx" data-i18n-html="about.reminders"><b>Match reminders</b>Tap the <b>🔔</b> on any upcoming match to be reminded 15 min before kick-off, only the matches you pick.</span></div>
+        <div class="about-item"><span class="about-ic">⏱️</span><span class="about-tx" data-i18n-html="about.upcoming"><b>Upcoming only</b>Hide matches that have already finished.</span></div>
+        <div class="about-item"><span class="about-ic">📍</span><span class="about-tx" data-i18n-html="about.today"><b>Today's matches</b>Jump straight to today's games.</span></div>
+        <div class="about-item"><span class="about-ic">📆</span><span class="about-tx" data-i18n-html="about.calendar"><b>Add to calendar</b>Tap <b>Add</b> on any match to save it to your phone or computer's calendar.</span></div>
+        <div class="about-item"><span class="about-ic">🌙</span><span class="about-tx" data-i18n-html="about.dark"><b>Dark mode</b>Tap the moon / sun (top) to switch themes. Your choice is remembered.</span></div>
+        <div class="about-item"><span class="about-ic">🔄</span><span class="about-tx" data-i18n-html="about.live"><b>Live scores</b>Scores update on their own while matches are being played. You can also tap <b>Refresh</b> any time.</span></div>
       </div>
-      <p class="about-note">Times may lag a minute or two behind the live broadcast. Schedule from the open-source openfootball project; live scores via ESPN's public feed.</p>
-      <p class="about-note" id="iosInstallHint" hidden>📱 <b>On iPhone:</b> tap the <b>Share</b> icon, then <b>Add to Home Screen</b> to install this app.</p>
+      <p class="about-note" data-i18n="aboutNote">Times may lag a minute or two behind the live broadcast. Schedule from the open-source openfootball project; live scores via ESPN's public feed.</p>
+      <p class="about-note" id="iosInstallHint" data-i18n-html="iosHint" hidden>📱 <b>On iPhone:</b> tap the <b>Share</b> icon, then <b>Add to Home Screen</b> to install this app.</p>
     </div>
-    <div class="modal-foot"><button class="btn-ghost" id="installBtn" hidden>⬇ Install app</button><button class="btn-primary" id="aboutOk">Got it 👍</button></div>
+    <div class="modal-foot"><button class="btn-ghost" id="installBtn" data-i18n="install" hidden>⬇ Install app</button><button class="btn-primary" id="aboutOk" data-i18n="aboutOk">Got it 👍</button></div>
   </div>
 </div>
 
 <script>
   const DATA_URL = "https://raw.githubusercontent.com/openfootball/worldcup.json/master/2026/worldcup.json";
   const STORAGE_KEY = "wc2026_fav_teams";
+
+  // ── i18n (English / Arabic). UI labels only; team/player/city names + digits stay as-is. ──
+  const LANG_KEY = "wc2026_lang";
+  const I18N = {
+    en: {
+      title:"FIFA World Cup 2026", subhead:"Canada · Mexico · USA · 104 matches", subtitle:"Match Tracker",
+      "tab.schedule":"📅 Schedule","tab.standings":"📊 Standings","tab.scorers":"👟 Scorers","tab.history":"🏅 History",
+      filterByGroup:"Filter by group", allGroups:"All groups", groupWord:"Group",
+      myFilters:"My filters", myTeams:"★ My teams", upcoming:"⏱ Upcoming", myReminders:"🔔 My reminders",
+      chooseMyTeams:"⚙ Choose my teams", todayMatches:"📍 Today's matches", bracketBtn:"🏆 Bracket",
+      refreshScores:"↻ Refresh scores",
+      ttTheme:"Toggle dark mode", ttShare:"Share this app", ttAbout:"About & help", ttLang:"العربية", ttRefresh:"Refresh scores",
+      ttFavOn:"Show only your favourite teams' matches", ttFavOff:"Pick teams first, tap ⚙ Choose my teams",
+      ttUpcoming:"Hide matches that have finished", ttRemind:"Show only matches you've belled for a reminder",
+      ttBell:"Remind me 15 min before kick-off", ttExpand:"Show goal scorers",
+      note:"⚠ Times shown in your local timezone, converted from each venue's local kick-off. Live scores update automatically as matches are played, and may lag a minute or two behind the live broadcast.",
+      bio:"Built by Ahmed Al-Obaidi, a busy doctor with a soft spot for technology and soccer.<br>Made in spare moments between shifts, for fellow fans who just want the matches in one place.",
+      otherProjects:"See my other projects here →",
+      pickTitle:"Choose teams to follow", clear:"Clear", saveTeams:"Save my teams",
+      aboutTitle:"About & how to use",
+      aboutIntro:"Your pocket guide to the World Cup 2026: all 104 matches, live scores, and your teams in one place. Here's what each part does:",
+      "about.schedule":"<b>Schedule</b>Every match, grouped by day. Kick-off times are shown in <b>your</b> local time automatically.",
+      "about.standings":"<b>Standings</b>Tap the <b>Standings</b> tab for the group tables: wins, draws, losses, goal difference and points, updated as results come in.",
+      "about.scorers":"<b>Scorers</b>Tap the <b>Scorers</b> tab for the tournament's top goalscorers, updated live as goals go in (own goals aren't counted).",
+      "about.bracket":"<b>Bracket</b>Tap the <b>🏆 Bracket</b> button on the Schedule to see the knockout rounds, who's playing who, and who goes through.",
+      "about.history":"<b>History</b>Tap the <b>History</b> tab for past World Cups (1930 to 2022): hosts, winners, and Golden Boot top scorers.",
+      "about.filter":"<b>Filter by group</b>Tap a group (A to L) to show only those matches.",
+      "about.myteams":"<b>My teams</b>Tap <b>⚙ Choose my teams</b> to pick your favourites. They get highlighted, and <b>★ My teams</b> filters to just them.",
+      "about.reminders":"<b>Match reminders</b>Tap the <b>🔔</b> on any upcoming match to be reminded 15 min before kick-off, only the matches you pick. On Android/Chrome it can alert you even when the app is closed (allow notifications when asked); on iPhone the heads-up shows while the app is open.",
+      "about.upcoming":"<b>Upcoming only</b>Hide matches that have already finished.",
+      "about.today":"<b>Today's matches</b>Jump straight to today's games.",
+      "about.calendar":"<b>Add to calendar</b>Tap <b>Add</b> on any match to save it to your phone or computer's calendar.",
+      "about.dark":"<b>Dark mode</b>Tap the moon / sun (top) to switch themes. Your choice is remembered.",
+      "about.live":"<b>Live scores</b>Scores update on their own while matches are being played. You can also tap <b>Refresh</b> any time.",
+      aboutNote:"Times may lag a minute or two behind the live broadcast. Schedule from the open-source openfootball project; live scores via ESPN's public feed.",
+      iosHint:"📱 <b>On iPhone:</b> tap the <b>Share</b> icon, then <b>Add to Home Screen</b> to install this app.",
+      install:"⬇ Install app", aboutOk:"Got it 👍",
+      vs:"v", statusLive:"● Live", statusFt:"FT", add:"📅 Add", nextWeek:"Next week's matches ↓",
+      loading:"Loading schedule…", noMatches:"No matches for this filter.",
+      noBelled:"No belled matches yet, tap 🔔 on a match to get a reminder.",
+      scorersEmpty:"Top scorers will appear once goals are scored.",
+      colTeam:"Team", colWdl:"W-D-L", colGd:"GD", colPts:"Pts", colPlayer:"Player", colGoals:"Goals",
+      topScorers:"Top scorers", fromResults:"From match results.", provisional:"Provisional (via ESPN).",
+      ownGoalsNote:"Own goals are not counted.",
+      statsTitle:"Tournament so far", statMatches:"Matches", statGoals:"Goals", statGpm:"Goals / match", statHat:"Hat-tricks",
+      biggestWin:"Biggest win", hatTrickLabel:"Hat-trick",
+      pastCups:"Past cups", mostTitles:"Most titles", pastTitle:"Past World Cups", titlesTitle:"Most World Cup titles",
+      hostLbl:"Host:", winnerLbl:"Winner:", runnerLbl:"Runner-up:", goldenBootLbl:"Golden Boot:",
+      "round.r32":"Round of 32","round.r16":"Round of 16","round.qf":"Quarter-finals","round.sf":"Semi-finals","round.third":"Third place","round.final":"Final",
+      allRounds:"All rounds", bracketEmpty:"The knockout bracket appears once the group stage finishes and the fixtures are set.",
+      nextLabel:"Next:", kicksOffIn:"kicks off in", nowLabel:"Now:", liveWord:"(live)",
+      cdD:"d", cdH:"h", cdM:"m", cdS:"s",
+      remindIn:"kicks off in", remindMinUnit:"min", remindNow:"is kicking off now",
+      updated:"Updated", autoRefresh:"auto-refreshing live scores", tapRefresh:"tap refresh during matches",
+      noToday:"No upcoming matches found for today.", linkCopied:"Link copied to clipboard"
+    },
+    ar: {
+      title:"كأس العالم 2026", subhead:"Canada · Mexico · USA · 104 مباراة", subtitle:"متتبّع المباريات",
+      "tab.schedule":"📅 المباريات","tab.standings":"📊 الترتيب","tab.scorers":"👟 الهدّافون","tab.history":"🏅 السجل",
+      filterByGroup:"التصفية حسب المجموعة", allGroups:"كل المجموعات", groupWord:"المجموعة",
+      myFilters:"عوامل التصفية", myTeams:"★ فرقي", upcoming:"⏱ القادمة", myReminders:"🔔 تنبيهاتي",
+      chooseMyTeams:"⚙ اختر فرقي", todayMatches:"📍 مباريات اليوم", bracketBtn:"🏆 الأدوار الإقصائية",
+      refreshScores:"↻ تحديث النتائج",
+      ttTheme:"تبديل الوضع الليلي", ttShare:"مشاركة التطبيق", ttAbout:"عن التطبيق والمساعدة", ttLang:"English", ttRefresh:"تحديث النتائج",
+      ttFavOn:"إظهار مباريات منتخباتي المفضّلة فقط", ttFavOff:"اختر منتخباتك أولًا، اضغط ⚙ اختر فرقي",
+      ttUpcoming:"إخفاء المباريات المنتهية", ttRemind:"إظهار المباريات التي فعّلت لها تنبيهًا فقط",
+      ttBell:"ذكّرني قبل انطلاق المباراة بـ15 دقيقة", ttExpand:"عرض مسجّلي الأهداف",
+      note:"⚠ الأوقات معروضة بتوقيتك المحلي، محوّلة من توقيت كل ملعب. تتحدّث النتائج تلقائيًا أثناء اللعب، وقد تتأخر دقيقة أو دقيقتين عن البث المباشر.",
+      bio:"صُنع بواسطة أحمد العبيدي، طبيب مشغول يحب التقنية وكرة القدم.<br>أُنجز في أوقات الفراغ بين المناوبات، لمحبي الكرة الذين يريدون كل المباريات في مكان واحد.",
+      otherProjects:"شاهد مشاريعي الأخرى هنا ←",
+      pickTitle:"اختر المنتخبات التي تتابعها", clear:"مسح", saveTeams:"حفظ فرقي",
+      aboutTitle:"عن التطبيق وطريقة الاستخدام",
+      aboutIntro:"دليلك المختصر لكأس العالم 2026: كل المباريات الـ104، النتائج المباشرة، ومنتخباتك في مكان واحد. إليك وظيفة كل قسم:",
+      "about.schedule":"<b>المباريات</b>كل مباراة، مرتّبة حسب اليوم. تُعرض أوقات الانطلاق بتوقيتك المحلي تلقائيًا.",
+      "about.standings":"<b>الترتيب</b>اضغط تبويب <b>الترتيب</b> لجداول المجموعات: الفوز والتعادل والخسارة وفارق الأهداف والنقاط، تتحدّث مع ورود النتائج.",
+      "about.scorers":"<b>الهدّافون</b>اضغط تبويب <b>الهدّافون</b> لأبرز هدّافي البطولة، يتحدّث مباشرةً مع تسجيل الأهداف (لا تُحتسب الأهداف العكسية).",
+      "about.bracket":"<b>الأدوار الإقصائية</b>اضغط زر <b>🏆 الأدوار الإقصائية</b> في صفحة المباريات لرؤية الأدوار الإقصائية ومن يلعب ضد من ومن يتأهّل.",
+      "about.history":"<b>السجل</b>اضغط تبويب <b>السجل</b> لكؤوس العالم السابقة (1930 إلى 2022): المضيفون والأبطال وهدّافو الحذاء الذهبي.",
+      "about.filter":"<b>التصفية حسب المجموعة</b>اضغط مجموعة (من A إلى L) لعرض مبارياتها فقط.",
+      "about.myteams":"<b>فرقي</b>اضغط <b>⚙ اختر فرقي</b> لاختيار منتخباتك المفضّلة. تُميَّز بلون، و<b>★ فرقي</b> يصفّي المباريات لها فقط.",
+      "about.reminders":"<b>تنبيهات المباريات</b>اضغط <b>🔔</b> على أي مباراة قادمة ليصلك تنبيه قبل انطلاقها بـ15 دقيقة، للمباريات التي تختارها فقط. على أندرويد/كروم قد يصلك التنبيه حتى والتطبيق مغلق (اسمح بالإشعارات عند السؤال)؛ على آيفون يظهر التنبيه أثناء فتح التطبيق.",
+      "about.upcoming":"<b>القادمة فقط</b>إخفاء المباريات المنتهية.",
+      "about.today":"<b>مباريات اليوم</b>الانتقال مباشرةً إلى مباريات اليوم.",
+      "about.calendar":"<b>أضف إلى التقويم</b>اضغط <b>إضافة</b> على أي مباراة لحفظها في تقويم هاتفك أو حاسوبك.",
+      "about.dark":"<b>الوضع الليلي</b>اضغط القمر / الشمس (بالأعلى) لتبديل المظهر. يُحفظ اختيارك.",
+      "about.live":"<b>النتائج المباشرة</b>تتحدّث النتائج تلقائيًا أثناء اللعب. يمكنك أيضًا الضغط على <b>تحديث</b> في أي وقت.",
+      aboutNote:"قد تتأخر الأوقات دقيقة أو دقيقتين عن البث المباشر. الجدول من مشروع openfootball المفتوح المصدر؛ النتائج المباشرة عبر تغذية ESPN العامة.",
+      iosHint:"📱 <b>على آيفون:</b> اضغط أيقونة <b>المشاركة</b>، ثم <b>إضافة إلى الشاشة الرئيسية</b> لتثبيت التطبيق.",
+      install:"⬇ تثبيت التطبيق", aboutOk:"تمام 👍",
+      vs:"ضد", statusLive:"● مباشر", statusFt:"انتهت", add:"📅 إضافة", nextWeek:"مباريات الأسبوع التالي ↓",
+      loading:"جارٍ تحميل الجدول…", noMatches:"لا مباريات ضمن هذه التصفية.",
+      noBelled:"لا مباريات محفوظة بعد، اضغط 🔔 على مباراة ليصلك تنبيه.",
+      scorersEmpty:"يظهر الهدّافون بعد تسجيل الأهداف.",
+      colTeam:"المنتخب", colWdl:"ف-ت-خ", colGd:"الفارق", colPts:"نقاط", colPlayer:"اللاعب", colGoals:"الأهداف",
+      topScorers:"الهدّافون", fromResults:"من نتائج المباريات.", provisional:"مبدئي (عبر ESPN).",
+      ownGoalsNote:"لا تُحتسب الأهداف العكسية.",
+      statsTitle:"البطولة حتى الآن", statMatches:"مباريات", statGoals:"أهداف", statGpm:"أهداف/مباراة", statHat:"هاتريك",
+      biggestWin:"أكبر فوز", hatTrickLabel:"هاتريك",
+      pastCups:"الكؤوس السابقة", mostTitles:"الأكثر تتويجًا", pastTitle:"كؤوس العالم السابقة", titlesTitle:"الأكثر تتويجًا بكأس العالم",
+      hostLbl:"المضيف:", winnerLbl:"البطل:", runnerLbl:"الوصيف:", goldenBootLbl:"الحذاء الذهبي:",
+      "round.r32":"دور الـ32","round.r16":"دور الـ16","round.qf":"ربع النهائي","round.sf":"نصف النهائي","round.third":"تحديد المركز الثالث","round.final":"النهائي",
+      allRounds:"كل الأدوار", bracketEmpty:"تظهر الأدوار الإقصائية بعد انتهاء دور المجموعات وتحديد المواجهات.",
+      nextLabel:"التالي:", kicksOffIn:"تبدأ خلال", nowLabel:"الآن:", liveWord:"(مباشر)",
+      cdD:"ي", cdH:"س", cdM:"د", cdS:"ث",
+      remindIn:"تبدأ خلال", remindMinUnit:"دقيقة", remindNow:"على وشك الانطلاق الآن",
+      updated:"آخر تحديث", autoRefresh:"يتم تحديث النتائج تلقائيًا", tapRefresh:"اضغط تحديث أثناء المباريات",
+      noToday:"لا مباريات قادمة لهذا اليوم.", linkCopied:"تم نسخ الرابط"
+    }
+  };
+  let LANG = "en";
+  try{ const sv=localStorage.getItem(LANG_KEY); if(sv==="ar"||sv==="en") LANG=sv; }catch{}
+  function t(k){ return (I18N[LANG] && I18N[LANG][k]!=null) ? I18N[LANG][k] : (I18N.en[k]!=null?I18N.en[k]:k); }
+  function applyStaticI18n(){
+    document.querySelectorAll("[data-i18n]").forEach(el=>{ el.textContent=t(el.dataset.i18n); });
+    document.querySelectorAll("[data-i18n-html]").forEach(el=>{ el.innerHTML=t(el.dataset.i18nHtml); });
+    document.querySelectorAll("[data-i18n-title]").forEach(el=>{ el.title=t(el.dataset.i18nTitle); });
+  }
+  function setLang(l){
+    LANG = l; try{ localStorage.setItem(LANG_KEY,l); }catch{}
+    document.documentElement.lang = l;
+    document.documentElement.dir = (l==="ar") ? "rtl" : "ltr";
+    const b=document.getElementById("langToggle"); if(b){ b.textContent = (l==="ar")?"EN":"ع"; b.title=t("ttLang"); }
+    applyStaticI18n();
+    if(typeof buildGroupPills==="function" && RAW.length) buildGroupPills();
+    if(typeof updateFavBtn==="function") updateFavBtn();
+    if(typeof rerender==="function") rerender();
+    if(typeof updateClock==="function") updateClock();
+  }
 
   // Short label for the viewer's local timezone (e.g. "AEST", "GMT+10", "PST").
   function tzLabel(){ try{ const s=new Date().toLocaleTimeString(undefined,{timeZoneName:"short"}); const m=s.match(/[A-Z]{2,5}$|GMT[+-]\d+(?::\d+)?$/); return m?m[0]:""; }catch{ return ""; } }
@@ -417,6 +554,8 @@
   let historySub="cups";      // History tab sub-view: "cups" | "titles"
   const DAYS=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
   const MONTHS=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  const DAYS_AR=["الأحد","الإثنين","الثلاثاء","الأربعاء","الخميس","الجمعة","السبت"];
+  const MONTHS_AR=["يناير","فبراير","مارس","أبريل","مايو","يونيو","يوليو","أغسطس","سبتمبر","أكتوبر","نوفمبر","ديسمبر"];
 
   function loadFavs(){ try{const s=localStorage.getItem(STORAGE_KEY); favTeams = s?new Set(JSON.parse(s)):new Set();}catch{favTeams=new Set();} }
   function saveFavs(){ try{localStorage.setItem(STORAGE_KEY,JSON.stringify([...favTeams]));}catch{} }
@@ -441,8 +580,13 @@
   // Parse a venue date + "HH:MM UTC±N" string into the true UTC instant.
   // Local getters (getHours/getDate/…) then render it in the viewer's timezone.
   function toLocal(d,t){ const m=t.match(/(\d{1,2}):(\d{2})\s*UTC([+-]\d{1,2})/); if(!m)return null; const[_,hh,mm,off]=m; const[y,mo,dd]=d.split("-").map(Number); return new Date(Date.UTC(y,mo-1,dd,Number(hh)-Number(off),Number(mm))); }
-  function fmtDay(dt){ return `${DAYS[dt.getDay()]} ${dt.getDate()} ${MONTHS[dt.getMonth()]}`; }
-  function fmtTime(dt){ let h=dt.getHours(),m=dt.getMinutes();const ap=h>=12?"pm":"am";h=h%12||12;return `${h}:${String(m).padStart(2,"0")}${ap}`; }
+  function fmtDay(dt){ const d=LANG==="ar"?DAYS_AR:DAYS, mo=LANG==="ar"?MONTHS_AR:MONTHS; return `${d[dt.getDay()]} ${dt.getDate()} ${mo[dt.getMonth()]}`; }
+  function fmtTime(dt){ let h=dt.getHours(),m=dt.getMinutes();const ap=LANG==="ar"?(h>=12?"م":"ص"):(h>=12?"pm":"am");h=h%12||12;return `${h}:${String(m).padStart(2,"0")}${LANG==="ar"?" ":""}${ap}`; }
+  // Localized group / knockout-round labels (keep the group LETTER as-is).
+  const ROUND_KEYS={"Round of 32":"round.r32","Round of 16":"round.r16","Quarter-finals":"round.qf","Semi-finals":"round.sf","Third place":"round.third","Final":"round.final"};
+  function roundLabel(r){ return ROUND_KEYS[r]?t(ROUND_KEYS[r]):(r||""); }
+  function groupLabelShort(g){ if(!g) return ""; const m=g.match(/^Group\s+(.+)$/i); return m?(LANG==="ar"?t("groupWord")+" "+m[1]:"Grp "+m[1]):g; }
+  function groupLabelFull(g){ if(!g) return ""; const m=g.match(/^Group\s+(.+)$/i); return m?(t("groupWord")+" "+m[1]):g; }
   function matchState(dt,score,live){ if(live)return"live"; if(score&&score.ft)return"ft"; const diff=dt.getTime()-Date.now(); if(diff<0&&diff>-2.5*3600*1000)return"live"; return"upcoming"; }
 
   function pad(n){ return String(n).padStart(2,"0"); }
@@ -475,7 +619,7 @@
     if(showFavOnly) rows=rows.filter(r=>isFav(r.team1)||isFav(r.team2));
     if(showUpcomingOnly) rows=rows.filter(r=>matchState(r.dt,r.score,r._live)!=="ft");
     if(showRemindOnly) rows=rows.filter(r=>belledMatches.has(matchKey(r)));
-    if(!rows.length){ content.innerHTML=`<div class="loading">${showRemindOnly?"No belled matches yet — tap 🔔 on a match to get a reminder.":"No matches for this filter."}</div>`; return; }
+    if(!rows.length){ content.innerHTML=`<div class="loading">${showRemindOnly?t("noBelled"):t("noMatches")}</div>`; return; }
 
     // Show about a week of match-days at a time; a "Next week's matches" button reveals +7 more.
     // Keeps the list short instead of one endless scroll. daysShown resets when filters change.
@@ -493,29 +637,29 @@
       const fav=isFav(r.team1)||isFav(r.team2);
       const st=matchState(r.dt,r.score,r._live);
       const scoreDisp=(r.score&&r.score.ft)?`${r.score.ft[0]}–${r.score.ft[1]}`:"";
-      const stTag=st==="live"?'<span class="status live">● Live</span>':st==="ft"?'<span class="status ft">FT</span>':`<span class="status">${fmtTime(r.dt)}${TZ?" "+TZ:""}</span>`;
-      const grp=r.group?r.group.replace("Group ","Grp "):(r.round||"");
+      const stTag=st==="live"?`<span class="status live">${t("statusLive")}</span>`:st==="ft"?`<span class="status ft">${t("statusFt")}</span>`:`<span class="status">${fmtTime(r.dt)}${TZ?" "+TZ:""}</span>`;
+      const grp=r.group?groupLabelShort(r.group):roundLabel(r.round||"");
       const cid="ics"+(icsId++); ICS_REG[cid]={m:r,dt:r.dt};
       const belled=belledMatches.has(matchKey(r));
-      const bell=st==="upcoming"?`<button class="bell-btn ${belled?'on':''}" data-cid="${cid}" aria-label="Remind me 15 min before kick-off" aria-pressed="${belled}" title="Remind me 15 min before kick-off">🔔</button>`:"";
+      const bell=st==="upcoming"?`<button class="bell-btn ${belled?'on':''}" data-cid="${cid}" aria-label="${t("ttBell")}" aria-pressed="${belled}" title="${t("ttBell")}">🔔</button>`:"";
       const g1=Array.isArray(r.goals1)?r.goals1:[], g2=Array.isArray(r.goals2)?r.goals2:[];
       const hasGoals=(g1.length+g2.length)>0;
       // Footer centre is shared: bell for upcoming matches, a ▾ expand arrow for ones with goals.
-      const center=bell||(hasGoals?`<button class="gx-btn" data-cid="${cid}" aria-label="Show goal scorers" title="Show goal scorers">▾</button>`:"");
+      const center=bell||(hasGoals?`<button class="gx-btn" data-cid="${cid}" aria-label="${t("ttExpand")}" title="${t("ttExpand")}">▾</button>`:"");
       const expd=expanded.has(matchKey(r));
       html+=`<div class="match ${fav?'fav':''}${expd?' expanded':''}">
         <div class="m-top"><span class="grp-tag">${grp}</span><span class="m-venue">📍 ${venueOf(r.ground)}</span><span></span></div>
         <div class="m-teams">
           <div class="team-side">${badge(r.team1)}<span class="team-name ${isFav(r.team1)?'fav':''}">${labelOf(r.team1)}</span></div>
-          ${scoreDisp?`<span class="score">${scoreDisp}</span>`:'<span class="vs">v</span>'}
+          ${scoreDisp?`<span class="score">${scoreDisp}</span>`:`<span class="vs">${t("vs")}</span>`}
           <div class="team-side right"><span class="team-name ${isFav(r.team2)?'fav':''}">${labelOf(r.team2)}</span>${badge(r.team2)}</div>
         </div>
-        <div class="m-foot">${stTag}<span class="m-foot-c">${center}</span><button class="cal-btn" data-cid="${cid}">📅 Add</button></div>
+        <div class="m-foot">${stTag}<span class="m-foot-c">${center}</span><button class="cal-btn" data-cid="${cid}">${t("add")}</button></div>
         ${hasGoals?`<div class="goals-panel"><div class="g-col">${g1.map(goalLine).join("")}</div><div class="g-col">${g2.map(goalLine).join("")}</div></div>`:""}
       </div>`;
     }
     if(open)html+="</div>";
-    if(hasMore) html+=`<button class="more-btn" id="moreBtn">Next week's matches ↓</button>`;
+    if(hasMore) html+=`<button class="more-btn" id="moreBtn">${t("nextWeek")}</button>`;
     content.innerHTML=html;
     content.querySelectorAll(".cal-btn").forEach(b=>{ b.onclick=()=>{const e=ICS_REG[b.dataset.cid]; if(e)downloadICS(e.m,e.dt);}; });
     content.querySelectorAll(".bell-btn").forEach(b=>{ b.onclick=()=>{const e=ICS_REG[b.dataset.cid]; if(e)toggleBell(matchKey(e.m));}; });
@@ -552,13 +696,13 @@
     const buckets={}; KO_ORDER.forEach(o=>buckets[o]=[]);
     RAW.forEach(m=>{ const r=koRound(m); if(r) buckets[r].push(m); });
     const cols=KO_ORDER.filter(o=>buckets[o].length);
-    if(!cols.length){ content.innerHTML='<div class="loading">The knockout bracket appears once the group stage finishes and the fixtures are set.</div>'; return; }
+    if(!cols.length){ content.innerHTML=`<div class="loading">${t("bracketEmpty")}</div>`; return; }
     const scrollable=cols.length>2;
-    let html=scrollable?'<div class="bracket-bar"><span class="lbl">All rounds</span><span class="ln"></span><button class="bnav-btn" data-dir="-1" aria-label="Scroll to earlier rounds">‹</button><button class="bnav-btn" data-dir="1" aria-label="Scroll to later rounds">›</button></div>':'';
+    let html=scrollable?`<div class="bracket-bar"><span class="lbl">${t("allRounds")}</span><span class="ln"></span><button class="bnav-btn" data-dir="-1" aria-label="Scroll to earlier rounds">‹</button><button class="bnav-btn" data-dir="1" aria-label="Scroll to later rounds">›</button></div>`:'';
     html+='<div class="bracket-wrap"><div class="bracket">';
     for(const r of cols){
       const ms=buckets[r].map(m=>({...m,dt:toLocal(m.date,m.time)})).sort((a,b)=>(a.dt&&b.dt)?a.dt-b.dt:0);
-      html+=`<div class="bcol"><div class="bcol-head">${r}</div>${ms.map(bracketCard).join("")}</div>`;
+      html+=`<div class="bcol"><div class="bcol-head">${roundLabel(r)}</div>${ms.map(bracketCard).join("")}</div>`;
     }
     content.innerHTML=html+'</div></div>';
     if(scrollable){
@@ -601,9 +745,9 @@
     for(const g of order.sort()){
       const rows=Object.values(tables[g]).sort((x,y)=>
         y.pts-x.pts || gd(y)-gd(x) || y.gf-x.gf || x.team.localeCompare(y.team));
-      html+=`<div class="stand-group"><h3 class="stand-gh">${g}</h3>`+
+      html+=`<div class="stand-group"><h3 class="stand-gh">${groupLabelFull(g)}</h3>`+
         '<table class="stand-tbl"><thead><tr>'+
-        '<th class="c-pos"></th><th class="c-team">Team</th><th>W-D-L</th><th>GD</th><th class="c-pts">Pts</th>'+
+        `<th class="c-pos"></th><th class="c-team">${t("colTeam")}</th><th>${t("colWdl")}</th><th>${t("colGd")}</th><th class="c-pts">${t("colPts")}</th>`+
         '</tr></thead><tbody>';
       rows.forEach((r,i)=>{
         html+=`<tr class="${isFav(r.team)?"stand-fav":""}">`+
@@ -634,7 +778,7 @@
   function buildGroupPills(){
     const groups=[...new Set(RAW.map(m=>m.group).filter(Boolean))].sort();
     const el=document.getElementById("teamPills");
-    el.innerHTML=`<select id="groupSelect" class="group-select" aria-label="Filter by group"><option value="ALL">All groups</option>${groups.map(g=>`<option value="${g}">${g}</option>`).join("")}</select>`;
+    el.innerHTML=`<select id="groupSelect" class="group-select" aria-label="${t("filterByGroup")}"><option value="ALL">${t("allGroups")}</option>${groups.map(g=>`<option value="${g}">${groupLabelFull(g)}</option>`).join("")}</select>`;
     const sel=document.getElementById("groupSelect");
     sel.value=groupFilter||"ALL";
     sel.onchange=()=>{ groupFilter=sel.value==="ALL"?null:sel.value; daysShown=7; render(); };
@@ -665,7 +809,7 @@
     const b=document.getElementById("favBtn"); if(!b) return;
     const none=favTeams.size===0;
     b.disabled=none;
-    b.title=none?"Pick teams first — tap ⚙ Choose my teams":"Show only your favourite teams' matches";
+    b.title=none?t("ttFavOff"):t("ttFavOn");
     if(none && showFavOnly){ showFavOnly=false; b.classList.remove("active"); b.setAttribute("aria-pressed","false"); }
   }
   document.getElementById("favBtn").onclick=function(){ showFavOnly=!showFavOnly; this.classList.toggle("active",showFavOnly); this.setAttribute("aria-pressed",showFavOnly); daysShown=7; render(); };
@@ -679,7 +823,7 @@
       if(rows.length){ const k=fmtDay(rows[0].dt); const heads=[...document.querySelectorAll(".day-head")]; el=heads.find(h=>h.textContent.includes(k)); }
     }
     if(el) el.scrollIntoView({behavior:"smooth",block:"start"});
-    else { const s=document.getElementById("stamp"); s.textContent="No upcoming matches found for today."; }
+    else { const s=document.getElementById("stamp"); s.textContent=t("noToday"); }
   }
   document.getElementById("todayBtn").onclick=jumpToToday;
   document.getElementById("upcomingBtn").onclick=function(){ showUpcomingOnly=!showUpcomingOnly; this.classList.toggle("active",showUpcomingOnly); this.setAttribute("aria-pressed",showUpcomingOnly); daysShown=7; render(); };
@@ -825,16 +969,16 @@
     const stat=(n,l)=>`<div class="stat"><div class="stat-n">${n}</div><div class="stat-l">${l}</div></div>`;
     let html='<div class="stand-wrap">';
     if(s.played>0){
-      html+='<div class="stats-h">Tournament so far</div><div class="stats-panel">'+
-        stat(s.played,"Matches")+stat(s.goals,"Goals")+stat(s.gpm,"Goals / match")+stat(s.hatTricks,"Hat-tricks")+'</div>';
+      html+=`<div class="stats-h">${t("statsTitle")}</div><div class="stats-panel">`+
+        stat(s.played,t("statMatches"))+stat(s.goals,t("statGoals"))+stat(s.gpm,t("statGpm"))+stat(s.hatTricks,t("statHat"))+'</div>';
       const extra=[];
-      if(s.biggest && s.bigMargin>0) extra.push(`Biggest win: ${labelOf(s.biggest.m.team1)} ${s.biggest.a}–${s.biggest.b} ${labelOf(s.biggest.m.team2)}`);
-      if(s.htList.length) extra.push(`Hat-trick: ${s.htList.join(", ")}`);
+      if(s.biggest && s.bigMargin>0) extra.push(`${t("biggestWin")}: ${labelOf(s.biggest.m.team1)} ${s.biggest.a}–${s.biggest.b} ${labelOf(s.biggest.m.team2)}`);
+      if(s.htList.length) extra.push(`${t("hatTrickLabel")}: ${s.htList.join(", ")}`);
       if(extra.length) html+=`<div class="stats-extra">${extra.join(" · ")}</div>`;
     }
-    if(!list.length){ content.innerHTML=html+'<div class="loading">Top scorers will appear once goals are scored.</div></div>'; return; }
-    html+='<div class="stand-group"><div class="stand-gh">Top scorers</div><table class="stand-tbl"><thead><tr>'+
-      '<th class="c-pos"></th><th class="c-player">Player</th><th class="c-team">Team</th><th class="c-pts">Goals</th>'+
+    if(!list.length){ content.innerHTML=html+`<div class="loading">${t("scorersEmpty")}</div></div>`; return; }
+    html+=`<div class="stand-group"><div class="stand-gh">${t("topScorers")}</div><table class="stand-tbl"><thead><tr>`+
+      `<th class="c-pos"></th><th class="c-player">${t("colPlayer")}</th><th class="c-team">${t("colTeam")}</th><th class="c-pts">${t("colGoals")}</th>`+
       '</tr></thead><tbody>';
     list.forEach((r,i)=>{
       const code=codeOf(r.team);
@@ -845,7 +989,7 @@
         `<td class="c-pts">${r.goals}</td></tr>`;
     });
     html+='</tbody></table></div>'+
-      `<div class="stand-cap">${usingRaw?"From match results.":"Provisional (via ESPN)."} Own goals are not counted.</div></div>`;
+      `<div class="stand-cap">${usingRaw?t("fromResults"):t("provisional")} ${t("ownGoalsNote")}</div></div>`;
     content.innerHTML=html;
   }
 
@@ -885,24 +1029,24 @@
   function renderHistory(){
     const content=document.getElementById("content");
     let html='<div class="hof-wrap"><div class="subtabs">'+
-      `<button class="subtab ${historySub==='cups'?'active':''}" data-sub="cups">Past cups</button>`+
-      `<button class="subtab ${historySub==='titles'?'active':''}" data-sub="titles">Most titles</button>`+
+      `<button class="subtab ${historySub==='cups'?'active':''}" data-sub="cups">${t("pastCups")}</button>`+
+      `<button class="subtab ${historySub==='titles'?'active':''}" data-sub="titles">${t("mostTitles")}</button>`+
       '</div>';
     if(historySub==='titles'){
-      html+='<div class="stand-gh">Most World Cup titles</div>';
-      titleCounts().forEach((t,i)=>{
+      html+=`<div class="stand-gh">${t("titlesTitle")}</div>`;
+      titleCounts().forEach((row,i)=>{
         html+=`<div class="title-row"><div class="title-rank">${i+1}</div>`+
-          `<div class="title-main"><span class="title-team">${t.team}</span><span class="title-years">${t.years.join(", ")}</span></div>`+
-          `<div class="title-count">${t.count}</div></div>`;
+          `<div class="title-main"><span class="title-team">${row.team}</span><span class="title-years">${row.years.join(", ")}</span></div>`+
+          `<div class="title-count">${row.count}</div></div>`;
       });
     } else {
-      html+='<div class="stand-gh">Past World Cups</div>';
+      html+=`<div class="stand-gh">${t("pastTitle")}</div>`;
       for(const c of WC_HISTORY){
         html+=`<div class="hof-item">`+
-          `<div class="hof-head"><span class="hof-year">${c.y}</span><span class="hof-host">Host: ${c.host}</span></div>`+
-          `<div class="hof-row">🏆 <span class="hof-lbl">Winner:</span> <b>${c.w}</b></div>`+
-          `<div class="hof-row">🥈 <span class="hof-lbl">Runner-up:</span> ${c.r} <span class="hof-score">(${c.s})</span></div>`+
-          `<div class="hof-row">👟 <span class="hof-lbl">Golden Boot:</span> ${c.gb}</div>`+
+          `<div class="hof-head"><span class="hof-year">${c.y}</span><span class="hof-host">${t("hostLbl")} ${c.host}</span></div>`+
+          `<div class="hof-row">🏆 <span class="hof-lbl">${t("winnerLbl")}</span> <b>${c.w}</b></div>`+
+          `<div class="hof-row">🥈 <span class="hof-lbl">${t("runnerLbl")}</span> ${c.r} <span class="hof-score">(${c.s})</span></div>`+
+          `<div class="hof-row">👟 <span class="hof-lbl">${t("goldenBootLbl")}</span> ${c.gb}</div>`+
           `</div>`;
       }
     }
@@ -923,7 +1067,7 @@
       await Promise.all([enrichLiveScores(), fetchEspnScorers()]); rerender();   // merge live scores + scorers, then repaint
       const stampTz=TZ?" "+TZ:"";
       const live=anyLive();
-      document.getElementById("stamp").textContent="Updated "+fmtTime(new Date())+stampTz+(live?" · auto-refreshing live scores":" · tap refresh during matches");
+      document.getElementById("stamp").textContent=t("updated")+" "+fmtTime(new Date())+stampTz+" · "+(live?t("autoRefresh"):t("tapRefresh"));
       schedulePoll(); checkReminders(); scheduleReminders();
     }catch(e){ if(!silent) content.innerHTML='<div class="err">Couldn\'t load schedule.<br>Check connection and tap refresh.</div>'; }
   }
@@ -952,12 +1096,13 @@
     applyTheme(next); try{ localStorage.setItem(THEME_KEY, next); }catch{}
   };
   initTheme();
+  document.getElementById("langToggle").onclick=function(){ setLang(LANG==="ar"?"en":"ar"); };
 
   // Live local-time line in the banner, ticking each second.
-  function updateClock(){ const el=document.getElementById("clock"); if(!el)return; const d=new Date(); let h=d.getHours();const ap=h>=12?"pm":"am";h=h%12||12; const t=`${h}:${pad(d.getMinutes())}:${pad(d.getSeconds())}${ap}`; el.textContent="🕒 "+fmtDay(d)+" · "+t+(TZ?" "+TZ:""); updateNextUp(); }
+  function updateClock(){ const el=document.getElementById("clock"); if(!el)return; const d=new Date(); let h=d.getHours();const ap=LANG==="ar"?(h>=12?"م":"ص"):(h>=12?"pm":"am");h=h%12||12; const tm=`${h}:${pad(d.getMinutes())}:${pad(d.getSeconds())}${LANG==="ar"?" ":""}${ap}`; el.textContent="🕒 "+fmtDay(d)+" · "+tm+(TZ?" "+TZ:""); updateNextUp(); }
 
   // Countdown line: the soonest upcoming match (or a live one), refreshed each second.
-  function fmtCountdown(ms){ if(ms<0)ms=0; const s=Math.floor(ms/1000), d=Math.floor(s/86400), h=Math.floor(s%86400/3600), m=Math.floor(s%3600/60); if(d>0)return `${d}d ${h}h`; if(h>0)return `${h}h ${m}m`; if(m>0)return `${m}m`; return `${s%60}s`; }
+  function fmtCountdown(ms){ if(ms<0)ms=0; const s=Math.floor(ms/1000), d=Math.floor(s/86400), h=Math.floor(s%86400/3600), m=Math.floor(s%3600/60); if(d>0)return `${d}${t("cdD")} ${h}${t("cdH")}`; if(h>0)return `${h}${t("cdH")} ${m}${t("cdM")}`; if(m>0)return `${m}${t("cdM")}`; return `${s%60}${t("cdS")}`; }
   function updateNextUp(){
     const el=document.getElementById("nextUp"); if(!el) return;
     if(!RAW.length){ el.style.display="none"; return; }
@@ -966,9 +1111,9 @@
       if(st==="live"){ if(!live) live=m; }
       else if(st==="upcoming" && t>=now && t<nextT){ next=m; nextT=t; }
     }
-    if(live){ el.textContent=`🔴 Now: ${labelOf(live.team1)} v ${labelOf(live.team2)} (live)`; el.style.display=""; return; }
+    if(live){ el.textContent=`🔴 ${t("nowLabel")} ${labelOf(live.team1)} ${t("vs")} ${labelOf(live.team2)} ${t("liveWord")}`; el.style.display=""; return; }
     if(!next){ el.style.display="none"; return; }
-    el.textContent=`⏱ Next: ${labelOf(next.team1)} v ${labelOf(next.team2)}, kicks off in ${fmtCountdown(nextT-now)}`;
+    el.textContent=`⏱ ${t("nextLabel")} ${labelOf(next.team1)} ${t("vs")} ${labelOf(next.team2)}, ${t("kicksOffIn")} ${fmtCountdown(nextT-now)}`;
     el.style.display="";
   }
   updateClock(); setInterval(updateClock,1000);
@@ -978,7 +1123,7 @@
     const url=location.origin+location.pathname;
     const data={ title:"FIFA World Cup 2026 Match Tracker", text:"Track every World Cup 2026 match: live scores, standings, top scorers and reminders.", url };
     try{ if(navigator.share){ await navigator.share(data); return; } }catch{ return; }
-    try{ await navigator.clipboard.writeText(url); showReminderBanner("Link copied to clipboard"); }catch{}
+    try{ await navigator.clipboard.writeText(url); showReminderBanner(t("linkCopied")); }catch{}
   };
 
   // Per-match kick-off reminders. The user "bells" individual matches; each belled,
@@ -1003,7 +1148,7 @@
     showReminderBanner._t=setTimeout(()=>bar.classList.remove("show"), 60000);
   }
   function fireReminder(m,mins){
-    const msg=`${labelOf(m.team1)} v ${labelOf(m.team2)} ${mins>1?`kicks off in ${Math.round(mins)} min`:"is kicking off now"}`;
+    const msg=`${labelOf(m.team1)} ${t("vs")} ${labelOf(m.team2)} ${mins>1?`${t("remindIn")} ${Math.round(mins)} ${t("remindMinUnit")}`:t("remindNow")}`;
     showReminderBanner(msg);
     // On scheduling browsers the OS notification is delivered by the trigger — avoid a duplicate.
     if(!CAN_SCHEDULE){ try{ if("Notification" in window && Notification.permission==="granted") new Notification("⚽ World Cup 2026", {body:msg, icon:"favicon.svg"}); }catch{} }
@@ -1033,7 +1178,7 @@
       if(at<=now || count++>60) continue;     // skip past matches; sane cap
       try{ await reg.showNotification("⚽ World Cup 2026", {
         tag:"wc-rem:"+matchKey(m),
-        body:`${labelOf(m.team1)} v ${labelOf(m.team2)} kicks off in ${REMIND_LEAD} min`,
+        body:`${labelOf(m.team1)} ${t("vs")} ${labelOf(m.team2)} ${t("remindIn")} ${REMIND_LEAD} ${t("remindMinUnit")}`,
         icon:"icon-192.png", badge:"favicon.svg", data:{url:location.href},
         showTrigger:new TimestampTrigger(at)
       }); }catch{}
@@ -1056,6 +1201,9 @@
   setInterval(checkReminders, 30000);
 
   loadFavs(); loadBelled(); updateFavBtn();
+  document.documentElement.lang=LANG; document.documentElement.dir=(LANG==="ar")?"rtl":"ltr";
+  { const _b=document.getElementById("langToggle"); if(_b){ _b.textContent=(LANG==="ar")?"EN":"ع"; _b.title=t("ttLang"); } }
+  applyStaticI18n();
   if(showUpcomingOnly) document.getElementById("upcomingBtn").classList.add("active");
   load();
 
