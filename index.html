@@ -119,7 +119,9 @@
   h1 { font-size: 22px; font-weight: 700; margin: 0 0 2px; letter-spacing: .2px; }
   .subtitle { font-size: 15px; font-weight: 600; opacity: .92; margin-top: 4px; }
 
-  .today-row { padding: .5rem 1rem 0; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .today-row { padding: 14px 1rem 0; margin-top: 4px; border-top: 1px solid var(--line); display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .today-link { background: none; border: none; color: var(--teal); font-size: 13px; font-weight: 600; cursor: pointer; padding: 4px 2px; display: inline-flex; align-items: center; gap: 6px; }
+  .today-link:hover { text-decoration: underline; }
   .today-btn { display: inline-flex; align-items: center; gap: 5px; width: auto; background: var(--teal); color: #fff; border: none; border-radius: 7px; padding: 5px 11px; font-size: 12px; font-weight: 600; cursor: pointer; }
   .today-btn.ghost { background: transparent; color: var(--teal); border: 1px solid var(--teal); }
   .tr-right { display: flex; align-items: center; gap: 8px; }
@@ -132,9 +134,9 @@
   .day-head.is-today { color: var(--coral); }
   .day-head.is-today::before { content: "TODAY"; font-size: 9px; background: var(--coral); color: #fff; padding: 2px 6px; border-radius: 4px; letter-spacing: .5px; }
 
-  .controls { padding: 1rem 1rem .25rem; }
-  .label { font-size: 11px; text-transform: uppercase; letter-spacing: .5px; color: var(--muted); margin-bottom: 6px; display: block; }
-  .label.sep { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line); }
+  .controls { padding: 1.1rem 1rem .6rem; }
+  .label { font-size: 11px; text-transform: uppercase; letter-spacing: .5px; color: var(--muted); margin-bottom: 7px; display: block; }
+  .label.sep { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--line); }
   .pills { display: flex; flex-wrap: wrap; gap: 7px; }
   .pill { border: 1.5px solid var(--line); background: #fff; color: var(--navy); border-radius: 20px; padding: 6px 13px; font-size: 13px; font-weight: 500; cursor: pointer; transition: all .15s; }
   .pill.active { background: var(--coral); border-color: var(--coral); color: #fff; }
@@ -342,7 +344,7 @@
     </div>
   </div>
 
-  <div class="today-row" id="todayRow"><button class="today-btn" id="todayBtn" data-i18n="todayMatches">📍 Today's matches</button><div class="tr-right"><button class="today-btn ghost" id="bracketBtn" data-i18n="bracketBtn">🏆 Bracket</button><button class="refresh-icon" id="refreshTop" aria-label="Refresh scores" data-i18n-title="ttRefresh" title="Refresh scores">↻</button></div></div>
+  <div class="today-row" id="todayRow"><button class="today-link" id="todayBtn" data-i18n="todayMatches">Go to today's matches ↓</button><div class="tr-right"><button class="today-btn ghost" id="bracketBtn" data-i18n="bracketBtn">🏆 Bracket</button><button class="refresh-icon" id="refreshTop" aria-label="Refresh scores" data-i18n-title="ttRefresh" title="Refresh scores">↻</button></div></div>
 
   <div id="content"><div class="loading" data-i18n="loading">Loading schedule…</div></div>
 
@@ -405,7 +407,7 @@
       filterByGroup:"Filter by group", allGroups:"All groups", groupWord:"Group",
       filterByTeam:"Filter by team", allTeams:"All teams",
       myFilters:"My filters", myTeams:"★ My teams", upcoming:"⏱ Upcoming", myReminders:"🔔 My reminders",
-      chooseMyTeams:"⚙ Choose my teams", todayMatches:"📍 Today's matches", bracketBtn:"🏆 Bracket",
+      chooseMyTeams:"⚙ Choose my teams", todayMatches:"Go to today's matches ↓", bracketBtn:"🏆 Bracket",
       refreshScores:"↻ Refresh scores",
       ttTheme:"Toggle dark mode", ttShare:"Share this app", ttAbout:"About & help", ttLang:"العربية", ttRefresh:"Refresh scores",
       ttFavOn:"Show only your favourite teams' matches", ttFavOff:"Pick teams first, tap ⚙ Choose my teams",
@@ -458,7 +460,7 @@
       filterByGroup:"التصفية حسب المجموعة", allGroups:"كل المجموعات", groupWord:"المجموعة",
       filterByTeam:"التصفية حسب المنتخب", allTeams:"كل المنتخبات",
       myFilters:"عوامل التصفية", myTeams:"★ فرقي", upcoming:"⏱ القادمة", myReminders:"🔔 تنبيهاتي",
-      chooseMyTeams:"⚙ اختر فرقي", todayMatches:"📍 مباريات اليوم", bracketBtn:"🏆 الأدوار الإقصائية",
+      chooseMyTeams:"⚙ اختر فرقي", todayMatches:"اذهب إلى مباريات اليوم ↓", bracketBtn:"🏆 الأدوار الإقصائية",
       refreshScores:"↻ تحديث النتائج",
       ttTheme:"تبديل الوضع الليلي", ttShare:"مشاركة التطبيق", ttAbout:"عن التطبيق والمساعدة", ttLang:"English", ttRefresh:"تحديث النتائج",
       ttFavOn:"إظهار مباريات منتخباتي المفضّلة فقط", ttFavOff:"اختر منتخباتك أولًا، اضغط ⚙ اختر فرقي",
