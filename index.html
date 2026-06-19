@@ -119,7 +119,17 @@
   h1 { font-size: 22px; font-weight: 700; margin: 0 0 2px; letter-spacing: .2px; }
   .subtitle { font-size: 15px; font-weight: 600; opacity: .92; margin-top: 4px; }
 
-  .today-row { padding: 14px 1rem 0; margin-top: 4px; border-top: 1px solid var(--line); display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .today-row { padding: 14px 1rem 0; margin-top: 4px; border-top: 1px solid var(--line); display: flex; align-items: center; justify-content: flex-end; gap: 8px; }
+  /* Horizontal day strip: primary Schedule navigation (today selected by default). */
+  .day-strip { display: flex; gap: 2px; overflow-x: auto; scrollbar-width: none; padding: 8px 1rem 0; margin-top: 6px; border-bottom: 1px solid var(--line); }
+  .day-strip::-webkit-scrollbar { display: none; }
+  .day-chip { flex: 0 0 auto; text-align: center; background: none; border: none; border-bottom: 3px solid transparent; cursor: pointer; padding: 6px 13px 9px; }
+  .day-chip .dc-wd { display: block; font-size: 11px; color: var(--muted); }
+  .day-chip .dc-dt { display: block; font-size: 14px; font-weight: 700; color: var(--navy); white-space: nowrap; }
+  :root[data-theme="dark"] .day-chip .dc-dt { color: var(--ink); }
+  .day-chip:not(.sel) { opacity: .65; }
+  .day-chip.sel { border-bottom-color: var(--teal); }
+  .day-chip.sel .dc-wd, .day-chip.sel .dc-dt { color: var(--teal); }
   .today-link { background: none; border: none; color: var(--teal); font-size: 13px; font-weight: 600; cursor: pointer; padding: 4px 2px; display: inline-flex; align-items: center; gap: 6px; }
   .today-link:hover { text-decoration: underline; }
   .today-btn { display: inline-flex; align-items: center; gap: 5px; width: auto; background: var(--teal); color: #fff; border: none; border-radius: 7px; padding: 5px 11px; font-size: 12px; font-weight: 600; cursor: pointer; }
@@ -337,14 +347,15 @@
     <div class="toggle-row">
       <div class="seg" role="group" aria-label="Show only">
         <button class="seg-btn" id="favBtn" aria-pressed="false" data-i18n="myTeams" title="Show only your favourite teams' matches">★ My teams</button>
-        <button class="seg-btn" id="upcomingBtn" aria-pressed="true" data-i18n="upcoming" data-i18n-title="ttUpcoming" title="Hide matches that have finished">⏱ Upcoming</button>
         <button class="seg-btn" id="remindBtn" aria-pressed="false" data-i18n="myReminders" data-i18n-title="ttRemind" title="Show only matches you've belled for a reminder">🔔 My reminders</button>
       </div>
       <button class="pill action" id="pickBtn" data-i18n="chooseMyTeams">⚙ Choose my teams</button>
     </div>
   </div>
 
-  <div class="today-row" id="todayRow"><button class="today-link" id="todayBtn" data-i18n="todayMatches">Go to today's matches ↓</button><div class="tr-right"><button class="today-btn ghost" id="bracketBtn" data-i18n="bracketBtn">🏆 Bracket</button><button class="refresh-icon" id="refreshTop" aria-label="Refresh scores" data-i18n-title="ttRefresh" title="Refresh scores">↻</button></div></div>
+  <div class="today-row" id="todayRow"><div class="tr-right"><button class="today-btn ghost" id="bracketBtn" data-i18n="bracketBtn">🏆 Bracket</button><button class="refresh-icon" id="refreshTop" aria-label="Refresh scores" data-i18n-title="ttRefresh" title="Refresh scores">↻</button></div></div>
+
+  <div class="day-strip" id="dayStrip"></div>
 
   <div id="content"><div class="loading" data-i18n="loading">Loading schedule…</div></div>
 
@@ -381,7 +392,6 @@
         <div class="about-item"><span class="about-ic">🔍</span><span class="about-tx" data-i18n-html="about.filter"><b>Filter by group</b>Tap a group (A to L) to show only those matches.</span></div>
         <div class="about-item"><span class="about-ic">⭐</span><span class="about-tx" data-i18n-html="about.myteams"><b>My teams</b>Tap <b>⚙ Choose my teams</b> to pick your favourites. They get highlighted, and <b>★ My teams</b> filters to just them.</span></div>
         <div class="about-item"><span class="about-ic">🔔</span><span class="about-tx" data-i18n-html="about.reminders"><b>Match reminders</b>Tap the <b>🔔</b> on any upcoming match to be reminded 15 min before kick-off, only the matches you pick.</span></div>
-        <div class="about-item"><span class="about-ic">⏱️</span><span class="about-tx" data-i18n-html="about.upcoming"><b>Upcoming only</b>Hide matches that have already finished.</span></div>
         <div class="about-item"><span class="about-ic">📍</span><span class="about-tx" data-i18n-html="about.today"><b>Today's matches</b>Jump straight to today's games.</span></div>
         <div class="about-item"><span class="about-ic">📆</span><span class="about-tx" data-i18n-html="about.calendar"><b>Add to calendar</b>Tap <b>Add</b> on any match to save it to your phone or computer's calendar.</span></div>
         <div class="about-item"><span class="about-ic">🌙</span><span class="about-tx" data-i18n-html="about.dark"><b>Dark mode</b>Tap the moon / sun (top) to switch themes. Your choice is remembered.</span></div>
@@ -439,6 +449,7 @@
       loading:"Loading schedule…", noMatches:"No matches for this filter.",
       noBelled:"No belled matches yet, tap 🔔 on a match to get a reminder.",
       scorersEmpty:"Top scorers will appear once goals are scored.",
+      todayWord:"Today", noMatchesDay:"No matches on this day.",
       colTeam:"Team", colWdl:"W-D-L", colGd:"GD", colPts:"Pts", colPlayer:"Player", colGoals:"Goals",
       topScorers:"Top scorers", fromResults:"From match results.", provisional:"Provisional (via ESPN).",
       ownGoalsNote:"Own goals are not counted.",
@@ -492,6 +503,7 @@
       loading:"جارٍ تحميل الجدول…", noMatches:"لا مباريات ضمن هذه التصفية.",
       noBelled:"لا مباريات محفوظة بعد، اضغط 🔔 على مباراة ليصلك تنبيه.",
       scorersEmpty:"يظهر الهدّافون بعد تسجيل الأهداف.",
+      todayWord:"اليوم", noMatchesDay:"لا مباريات في هذا اليوم.",
       colTeam:"المنتخب", colWdl:"ف-ت-خ", colGd:"الفارق", colPts:"نقاط", colPlayer:"اللاعب", colGoals:"الأهداف",
       topScorers:"الهدّافون", fromResults:"من نتائج المباريات.", provisional:"مبدئي (عبر ESPN).",
       ownGoalsNote:"لا تُحتسب الأهداف العكسية.",
@@ -562,8 +574,8 @@
   const LIGHT_BADGES = new Set(["ECU","COL"]);
 
   let RAW = [], favTeams = new Set();
-  let showFavOnly=false, showUpcomingOnly=true, showRemindOnly=false, groupFilter=null, teamFilter=null, view="schedule";
-  let daysShown=7;   // schedule shows ~a week of match-days; "Next week's matches" reveals +7
+  let showFavOnly=false, showRemindOnly=false, groupFilter=null, teamFilter=null, view="schedule";
+  let selectedDayKey=null;    // day strip: selected day's fmtDay key (defaults to today)
   const expanded=new Set();   // match keys whose scorer breakdown is open (in-memory only)
   let historySub="cups";      // History tab sub-view: "cups" | "titles"
   const DAYS=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
@@ -625,44 +637,21 @@
   // One goal line in the expandable scorer breakdown: minute + scorer (+ pen/OG marker).
   function goalLine(g){ if(!g||!g.name) return ""; const tag=g.owngoal?' <span class="g-tag">(OG)</span>':(g.penalty?' <span class="g-tag">(pen)</span>':''); return `<div class="g-line"><span class="g-ball">⚽</span><span class="g-min">${g.minute||""}'</span>${g.name}${tag}</div>`; }
 
-  function render(){
-    const content=document.getElementById("content");
-    let rows=RAW.map(mt=>({...mt,dt:toLocal(mt.date,mt.time)})).filter(r=>r.dt);
-    rows.sort((a,b)=>a.dt-b.dt);
-    if(groupFilter) rows=rows.filter(r=>r.group===groupFilter);
-    if(teamFilter) rows=rows.filter(r=>canon(r.team1)===teamFilter||canon(r.team2)===teamFilter);
-    if(showFavOnly) rows=rows.filter(r=>isFav(r.team1)||isFav(r.team2));
-    if(showUpcomingOnly) rows=rows.filter(r=>matchState(r.dt,r.score,r._live)!=="ft");
-    if(showRemindOnly) rows=rows.filter(r=>belledMatches.has(matchKey(r)));
-    if(!rows.length){ content.innerHTML=`<div class="loading">${showRemindOnly?t("noBelled"):t("noMatches")}</div>`; return; }
-
-    // Show about a week of match-days at a time; a "Next week's matches" button reveals +7 more.
-    // Keeps the list short instead of one endless scroll. daysShown resets when filters change.
-    const dayKeys=[], seenDay=new Set();
-    for(const r of rows){ const k=fmtDay(r.dt); if(!seenDay.has(k)){ seenDay.add(k); dayKeys.push(k); } }
-    const allowed=new Set(dayKeys.slice(0,daysShown));
-    const hasMore=dayKeys.length>daysShown;
-    const visible=rows.filter(r=>allowed.has(fmtDay(r.dt)));
-
-    let html="",lastDay="",open=false;
-    const todayKey = fmtDay(new Date());
-    for(const r of visible){
-      const dayKey=fmtDay(r.dt);
-      if(dayKey!==lastDay){ if(open)html+="</div>"; const isT = dayKey===todayKey; html+=`<div class="day-head${isT?' is-today':''}"${isT?' id="todayAnchor"':''}>${dayKey}</div><div class="matches">`; open=true; lastDay=dayKey; }
-      const fav=isFav(r.team1)||isFav(r.team2);
-      const st=matchState(r.dt,r.score,r._live);
-      const scoreDisp=(r.score&&r.score.ft)?`${r.score.ft[0]}–${r.score.ft[1]}`:"";
-      const stTag=st==="live"?`<span class="status live">${t("statusLive")}</span>`:st==="ft"?`<span class="status ft">${t("statusFt")}</span>`:`<span class="status">${fmtTime(r.dt)}${TZ?" "+TZ:""}</span>`;
-      const grp=r.group?groupLabelShort(r.group):roundLabel(r.round||"");
-      const cid="ics"+(icsId++); ICS_REG[cid]={m:r,dt:r.dt};
-      const belled=belledMatches.has(matchKey(r));
-      const bell=st==="upcoming"?`<button class="bell-btn ${belled?'on':''}" data-cid="${cid}" aria-label="${t("ttBell")}" aria-pressed="${belled}" title="${t("ttBell")}">🔔</button>`:"";
-      const g1=Array.isArray(r.goals1)?r.goals1:[], g2=Array.isArray(r.goals2)?r.goals2:[];
-      const hasGoals=(g1.length+g2.length)>0;
-      // Footer centre is shared: bell for upcoming matches, a ▾ expand arrow for ones with goals.
-      const center=bell||(hasGoals?`<button class="gx-btn" data-cid="${cid}" aria-label="${t("ttExpand")}" title="${t("ttExpand")}">▾</button>`:"");
-      const expd=expanded.has(matchKey(r));
-      html+=`<div class="match ${fav?'fav':''}${expd?' expanded':''}">
+  // One match card's HTML (registers its calendar entry in ICS_REG).
+  function matchCardHTML(r){
+    const fav=isFav(r.team1)||isFav(r.team2);
+    const st=matchState(r.dt,r.score,r._live);
+    const scoreDisp=(r.score&&r.score.ft)?`${r.score.ft[0]}–${r.score.ft[1]}`:"";
+    const stTag=st==="live"?`<span class="status live">${t("statusLive")}</span>`:st==="ft"?`<span class="status ft">${t("statusFt")}</span>`:`<span class="status">${fmtTime(r.dt)}${TZ?" "+TZ:""}</span>`;
+    const grp=r.group?groupLabelShort(r.group):roundLabel(r.round||"");
+    const cid="ics"+(icsId++); ICS_REG[cid]={m:r,dt:r.dt};
+    const belled=belledMatches.has(matchKey(r));
+    const bell=st==="upcoming"?`<button class="bell-btn ${belled?'on':''}" data-cid="${cid}" aria-label="${t("ttBell")}" aria-pressed="${belled}" title="${t("ttBell")}">🔔</button>`:"";
+    const g1=Array.isArray(r.goals1)?r.goals1:[], g2=Array.isArray(r.goals2)?r.goals2:[];
+    const hasGoals=(g1.length+g2.length)>0;
+    const center=bell||(hasGoals?`<button class="gx-btn" data-cid="${cid}" aria-label="${t("ttExpand")}" title="${t("ttExpand")}">▾</button>`:"");
+    const expd=expanded.has(matchKey(r));
+    return `<div class="match ${fav?'fav':''}${expd?' expanded':''}">
         <div class="m-top"><span class="grp-tag">${grp}</span><span class="m-venue">📍 ${venueOf(r.ground)}</span><span></span></div>
         <div class="m-teams">
           <div class="team-side">${badge(r.team1)}<span class="team-name ${isFav(r.team1)?'fav':''}">${labelOf(r.team1)}</span></div>
@@ -672,15 +661,64 @@
         <div class="m-foot">${stTag}<span class="m-foot-c">${center}</span><button class="cal-btn" data-cid="${cid}">${t("add")}</button></div>
         ${hasGoals?`<div class="goals-panel"><div class="g-col">${g1.map(goalLine).join("")}</div><div class="g-col">${g2.map(goalLine).join("")}</div></div>`:""}
       </div>`;
-    }
-    if(open)html+="</div>";
-    if(hasMore) html+=`<button class="more-btn" id="moreBtn">${t("nextWeek")}</button>`;
-    content.innerHTML=html;
+  }
+  function wireCardHandlers(content){
     content.querySelectorAll(".cal-btn").forEach(b=>{ b.onclick=()=>{const e=ICS_REG[b.dataset.cid]; if(e)downloadICS(e.m,e.dt);}; });
     content.querySelectorAll(".bell-btn").forEach(b=>{ b.onclick=()=>{const e=ICS_REG[b.dataset.cid]; if(e)toggleBell(matchKey(e.m));}; });
     content.querySelectorAll(".gx-btn").forEach(b=>{ b.onclick=()=>{ const e=ICS_REG[b.dataset.cid]; if(!e)return; const k=matchKey(e.m), card=b.closest(".match"); if(expanded.has(k)){expanded.delete(k);card&&card.classList.remove("expanded");}else{expanded.add(k);card&&card.classList.add("expanded");} }; });
-    const moreBtn=document.getElementById("moreBtn");
-    if(moreBtn) moreBtn.onclick=()=>{ daysShown+=7; render(); };
+  }
+
+  // Horizontal day strip: one chip per match-day in `rows`, today default, selected centred.
+  function buildDayStrip(rows){
+    const strip=document.getElementById("dayStrip"); if(!strip) return;
+    const days=[], seen=new Set();
+    for(const r of rows){ const k=fmtDay(r.dt); if(!seen.has(k)){ seen.add(k); days.push({key:k,dt:r.dt}); } }
+    if(!days.length){ strip.innerHTML=""; return; }
+    const todayKey=fmtDay(new Date());
+    if(!days.some(d=>d.key===selectedDayKey)){
+      if(days.some(d=>d.key===todayKey)) selectedDayKey=todayKey;
+      else { const now=Date.now(); const up=days.find(d=>d.dt.getTime()>=now); selectedDayKey=(up||days[0]).key; }
+    }
+    const WD=LANG==="ar"?DAYS_AR:DAYS, MO=LANG==="ar"?MONTHS_AR:MONTHS;
+    strip.innerHTML=days.map(d=>{
+      const isT=d.key===todayKey, sel=d.key===selectedDayKey;
+      const wd=isT?t("todayWord"):WD[d.dt.getDay()];
+      const dn=`${d.dt.getDate()} ${MO[d.dt.getMonth()]}`;
+      return `<button class="day-chip${sel?' sel':''}${isT?' is-today':''}" data-day="${d.key}"><span class="dc-wd">${wd}</span><span class="dc-dt">${dn}</span></button>`;
+    }).join("");
+    strip.querySelectorAll(".day-chip").forEach(b=>{ b.onclick=()=>{ selectedDayKey=b.dataset.day; render(); }; });
+    const selEl=strip.querySelector(".day-chip.sel"); if(selEl){ try{ selEl.scrollIntoView({inline:"center",block:"nearest"}); }catch{} }
+  }
+
+  function render(){
+    const content=document.getElementById("content");
+    const strip=document.getElementById("dayStrip");
+    let rows=RAW.map(mt=>({...mt,dt:toLocal(mt.date,mt.time)})).filter(r=>r.dt).sort((a,b)=>a.dt-b.dt);
+    if(groupFilter) rows=rows.filter(r=>r.group===groupFilter);
+    // Team / My teams / My reminders are cross-day views: list all matching matches, hide the strip.
+    const crossDay = !!(teamFilter || showFavOnly || showRemindOnly);
+    if(crossDay){
+      if(strip) strip.style.display="none";
+      if(teamFilter) rows=rows.filter(r=>canon(r.team1)===teamFilter||canon(r.team2)===teamFilter);
+      if(showFavOnly) rows=rows.filter(r=>isFav(r.team1)||isFav(r.team2));
+      if(showRemindOnly) rows=rows.filter(r=>belledMatches.has(matchKey(r)));
+      if(!rows.length){ content.innerHTML=`<div class="loading">${showRemindOnly?t("noBelled"):t("noMatches")}</div>`; return; }
+      let html="",lastDay="",open=false; const todayKey=fmtDay(new Date());
+      for(const r of rows){ const dayKey=fmtDay(r.dt);
+        if(dayKey!==lastDay){ if(open)html+="</div>"; const isT=dayKey===todayKey; html+=`<div class="day-head${isT?' is-today':''}">${dayKey}</div><div class="matches">`; open=true; lastDay=dayKey; }
+        html+=matchCardHTML(r);
+      }
+      if(open)html+="</div>";
+      content.innerHTML=html;
+    } else {
+      // Day-strip mode: pick a day, show that day's matches.
+      if(!rows.length){ if(strip){strip.innerHTML="";strip.style.display="none";} content.innerHTML=`<div class="loading">${t("noMatches")}</div>`; return; }
+      if(strip) strip.style.display="";
+      buildDayStrip(rows);
+      const dayRows=rows.filter(r=>fmtDay(r.dt)===selectedDayKey);
+      content.innerHTML = dayRows.length ? ('<div class="matches">'+dayRows.map(matchCardHTML).join("")+'</div>') : `<div class="loading">${t("noMatchesDay")}</div>`;
+    }
+    wireCardHandlers(content);
   }
 
   // ---- Knockout bracket ----
@@ -784,6 +822,7 @@
     const hideControls=(v==="bracket"||v==="standings"||v==="scorers"||v==="history");
     document.getElementById("controls").style.display=hideControls?"none":"";
     document.getElementById("todayRow").style.display=hideControls?"none":"";
+    document.getElementById("dayStrip").style.display=hideControls?"none":"";
     rerender();
     // Opening Scorers refreshes the match data (openfootball) so the leaderboard is current.
     if(v==="scorers") load(true);
@@ -796,7 +835,7 @@
     el.innerHTML=`<select id="groupSelect" class="group-select" aria-label="${t("filterByGroup")}"><option value="ALL">${t("allGroups")}</option>${groups.map(g=>`<option value="${g}">${groupLabelFull(g)}</option>`).join("")}</select>`;
     const sel=document.getElementById("groupSelect");
     sel.value=groupFilter||"ALL";
-    sel.onchange=()=>{ groupFilter=sel.value==="ALL"?null:sel.value; daysShown=7; render(); };
+    sel.onchange=()=>{ groupFilter=sel.value==="ALL"?null:sel.value; render(); };
   }
 
   // "Filter by team" dropdown — show one team's matches (past, present and future).
@@ -807,9 +846,7 @@
     const sel=document.getElementById("teamSelect");
     sel.value=teamFilter||"ALL";
     sel.onchange=()=>{
-      teamFilter=sel.value==="ALL"?null:sel.value; daysShown=7;
-      // Picking a team shows its whole journey, so drop the Upcoming-only filter.
-      if(teamFilter && showUpcomingOnly){ showUpcomingOnly=false; const ub=document.getElementById("upcomingBtn"); if(ub){ ub.classList.remove("active"); ub.setAttribute("aria-pressed","false"); } }
+      teamFilter=sel.value==="ALL"?null:sel.value;
       render();
     };
   }
@@ -842,21 +879,7 @@
     b.title=none?t("ttFavOff"):t("ttFavOn");
     if(none && showFavOnly){ showFavOnly=false; b.classList.remove("active"); b.setAttribute("aria-pressed","false"); }
   }
-  document.getElementById("favBtn").onclick=function(){ showFavOnly=!showFavOnly; this.classList.toggle("active",showFavOnly); this.setAttribute("aria-pressed",showFavOnly); daysShown=7; render(); };
-
-  function jumpToToday(){
-    let el=document.getElementById("todayAnchor");
-    if(!el){
-      // no match today — find the next upcoming day header
-      const now=new Date();
-      const rows=RAW.map(m=>({...m,dt:toLocal(m.date,m.time)})).filter(r=>r.dt&&r.dt>=now).sort((a,b)=>a.dt-b.dt);
-      if(rows.length){ const k=fmtDay(rows[0].dt); const heads=[...document.querySelectorAll(".day-head")]; el=heads.find(h=>h.textContent.includes(k)); }
-    }
-    if(el) el.scrollIntoView({behavior:"smooth",block:"start"});
-    else { const s=document.getElementById("stamp"); s.textContent=t("noToday"); }
-  }
-  document.getElementById("todayBtn").onclick=jumpToToday;
-  document.getElementById("upcomingBtn").onclick=function(){ showUpcomingOnly=!showUpcomingOnly; this.classList.toggle("active",showUpcomingOnly); this.setAttribute("aria-pressed",showUpcomingOnly); daysShown=7; render(); };
+  document.getElementById("favBtn").onclick=function(){ showFavOnly=!showFavOnly; this.classList.toggle("active",showFavOnly); this.setAttribute("aria-pressed",showFavOnly); render(); };
 
   // Auto-refresh scores while any match is live, so the page stays current
   // without the user tapping refresh. Polls once a minute during live windows.
@@ -1220,7 +1243,7 @@
   }
 
   // The "🔔 My reminders" pill filters the Schedule to just your belled matches.
-  document.getElementById("remindBtn").onclick=function(){ showRemindOnly=!showRemindOnly; this.classList.toggle("active",showRemindOnly); this.setAttribute("aria-pressed",showRemindOnly); daysShown=7; render(); };
+  document.getElementById("remindBtn").onclick=function(){ showRemindOnly=!showRemindOnly; this.classList.toggle("active",showRemindOnly); this.setAttribute("aria-pressed",showRemindOnly); render(); };
   document.getElementById("reminderX").onclick=()=>document.getElementById("reminderBar").classList.remove("show");
   setInterval(checkReminders, 30000);
 
@@ -1228,7 +1251,6 @@
   document.documentElement.lang=LANG; document.documentElement.dir=(LANG==="ar")?"rtl":"ltr";
   { const _b=document.getElementById("langToggle"); if(_b){ _b.textContent=(LANG==="ar")?"EN":"ع"; _b.title=t("ttLang"); } }
   applyStaticI18n();
-  if(showUpcomingOnly) document.getElementById("upcomingBtn").classList.add("active");
   load();
 
   // Deep-link: ?view=bracket opens the knockout view (used by the app shortcuts).
