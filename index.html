@@ -65,6 +65,12 @@
   .stand-tbl { width: 100%; border-collapse: collapse; font-size: 13px; }
   .ltr { direction: ltr; unicode-bidi: isolate; }
   .score, .bscore, .hof-score { direction: ltr; unicode-bidi: isolate; }
+  #content { overflow-x: hidden; }
+  @keyframes slideFromRight { from { opacity: .35; transform: translateX(22px); } to { opacity: 1; transform: none; } }
+  @keyframes slideFromLeft  { from { opacity: .35; transform: translateX(-22px); } to { opacity: 1; transform: none; } }
+  .matches.slide-from-right { animation: slideFromRight .22s ease; }
+  .matches.slide-from-left  { animation: slideFromLeft .22s ease; }
+  @media (prefers-reduced-motion: reduce) { .matches.slide-from-right, .matches.slide-from-left { animation: none; } }
   .stand-tbl th { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; color: var(--muted, #888780); text-align: center; padding: 4px 4px; border-bottom: 1.5px solid var(--line); }
   .stand-tbl td { padding: 7px 4px; border-bottom: 1px solid var(--line); text-align: center; color: var(--navy); }
   :root[data-theme="dark"] .stand-tbl td { color: var(--ink); }
@@ -624,6 +630,7 @@
   let RAW = [], favTeams = new Set();
   let showFavOnly=false, showRemindOnly=false, groupFilter=null, teamFilter=null, view="schedule";
   let selectedDayKey=null;    // day strip: selected day's fmtDay key (defaults to today)
+  let currentDayKeys=[];      // ordered day keys currently in the strip (for swipe nav)
   const expanded=new Set();   // match keys whose scorer breakdown is open (in-memory only)
   let historySub="cups";      // History tab sub-view: "cups" | "titles"
   const DAYS=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
@@ -721,7 +728,8 @@
     const strip=document.getElementById("dayStrip"); if(!strip) return;
     const days=[], seen=new Set();
     for(const r of rows){ const k=fmtDay(r.dt); if(!seen.has(k)){ seen.add(k); days.push({key:k,dt:r.dt}); } }
-    if(!days.length){ strip.innerHTML=""; return; }
+    if(!days.length){ strip.innerHTML=""; currentDayKeys=[]; return; }
+    currentDayKeys=days.map(d=>d.key);   // ordered keys, used by swipe nav (goDay)
     const todayKey=fmtDay(new Date());
     if(!days.some(d=>d.key===selectedDayKey)){
       if(days.some(d=>d.key===todayKey)) selectedDayKey=todayKey;
@@ -770,6 +778,20 @@
       content.innerHTML = dayRows.length ? ('<div class="matches">'+dayRows.map(matchCardHTML).join("")+'</div>') : `<div class="loading">${t("noMatchesDay")}</div>`;
     }
     wireCardHandlers(content);
+  }
+
+  // Swipe nav: step to the next/previous match-day (clamped at the ends, no wrap).
+  function goDay(delta){
+    if(!currentDayKeys.length) return;
+    const i=currentDayKeys.indexOf(selectedDayKey);
+    if(i<0) return;
+    const ni=i+delta;
+    if(ni<0||ni>=currentDayKeys.length) return;   // at first/last day: do nothing
+    selectedDayKey=currentDayKeys[ni];
+    render();
+    // page-turn feedback: new list slides in from the side the swipe came from (mirrored for RTL)
+    const m=document.querySelector("#content .matches");
+    if(m){ const fromRight=(delta>0)===(LANG!=="ar"); m.classList.add(fromRight?"slide-from-right":"slide-from-left"); }
   }
 
   // ---- Knockout bracket ----
@@ -845,19 +867,22 @@
     }
     if(!order.length){ content.innerHTML='<div class="loading">Standings will appear once the group fixtures are loaded.</div>'; return; }
     const gd=r=>r.gf-r.ga, sign=n=>n>0?"+"+n:""+n;
+    // Arabic reads right-to-left: header ف-ت-خ (win-draw-loss) renders naturally RTL (ف on the right),
+    // so the W-D-L value is reversed to l-d-w → its rightmost number (wins) lands under ف.
+    const wdl=r=> LANG==="ar" ? `${r.l}-${r.d}-${r.w}` : `${r.w}-${r.d}-${r.l}`;
     let html='<div class="stand-wrap">';
     for(const g of order.sort()){
       const rows=Object.values(tables[g]).sort((x,y)=>
         y.pts-x.pts || gd(y)-gd(x) || y.gf-x.gf || x.team.localeCompare(y.team));
       html+=`<div class="stand-group"><h3 class="stand-gh">${groupLabelFull(g)}</h3>`+
         '<table class="stand-tbl"><thead><tr>'+
-        `<th class="c-pos"></th><th class="c-team">${t("colTeam")}</th><th class="ltr">${t("colWdl")}</th><th class="ltr">${t("colGd")}</th><th class="c-pts">${t("colPts")}</th>`+
+        `<th class="c-pos"></th><th class="c-team">${t("colTeam")}</th><th>${t("colWdl")}</th><th class="ltr">${t("colGd")}</th><th class="c-pts">${t("colPts")}</th>`+
         '</tr></thead><tbody>';
       rows.forEach((r,i)=>{
         html+=`<tr class="${isFav(r.team)?"stand-fav":""}">`+
           `<td class="c-pos">${i+1}</td>`+
           `<td class="c-team"><span class="stand-team">${badge(r.team)}<span class="name">${labelOf(r.team)}</span></span></td>`+
-          `<td class="ltr">${r.w}-${r.d}-${r.l}</td>`+
+          `<td class="ltr">${wdl(r)}</td>`+
           `<td class="ltr">${sign(gd(r))}</td>`+
           `<td class="c-pts">${r.pts}</td></tr>`;
       });
@@ -892,6 +917,26 @@
     el.addEventListener("click", e=>{ if(moved){ e.preventDefault(); e.stopPropagation(); } }, true);
   })();
   document.getElementById("todayJump").onclick=()=>{ selectedDayKey=fmtDay(new Date()); render(); };
+
+  // Swipe the match list left/right to flip days (Schedule day-strip mode only).
+  (function setupContentSwipe(){
+    const c=document.getElementById("content"); if(!c) return;
+    let x0=0,y0=0,t0=0,active=false;
+    const inDayStripMode=()=> view==="schedule" && !teamFilter && !showFavOnly && !showRemindOnly;
+    c.addEventListener("touchstart", e=>{
+      if(!inDayStripMode() || e.touches.length!==1){ active=false; return; }
+      const tch=e.touches[0]; x0=tch.clientX; y0=tch.clientY; t0=Date.now(); active=true;
+    }, {passive:true});
+    c.addEventListener("touchend", e=>{
+      if(!active) return; active=false;
+      const tch=e.changedTouches[0], dx=tch.clientX-x0, dy=tch.clientY-y0;
+      if(Math.abs(dx)<50) return;                 // not far enough to count as a swipe
+      if(Math.abs(dx)<Math.abs(dy)*1.5) return;   // too vertical: leave scrolling alone
+      if(Date.now()-t0>800) return;               // too slow: probably a scroll/hold
+      const dir=dx<0?1:-1;                         // LTR: swipe left = next day
+      goDay(LANG==="ar"?-dir:dir);                 // RTL: mirror direction
+    }, {passive:true});
+  })();
 
   function buildGroupPills(){
     const groups=[...new Set(RAW.map(m=>m.group).filter(Boolean))].sort();
