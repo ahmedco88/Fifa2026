@@ -63,6 +63,8 @@
   .stand-gh { font-size: 1.05rem; font-weight: 800; color: var(--navy); margin: 0 0 .4rem; }
   :root[data-theme="dark"] .stand-gh { color: var(--ink); }
   .stand-tbl { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .ltr { direction: ltr; unicode-bidi: isolate; }
+  .score, .bscore, .hof-score { direction: ltr; unicode-bidi: isolate; }
   .stand-tbl th { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; color: var(--muted, #888780); text-align: center; padding: 4px 4px; border-bottom: 1.5px solid var(--line); }
   .stand-tbl td { padding: 7px 4px; border-bottom: 1px solid var(--line); text-align: center; color: var(--navy); }
   :root[data-theme="dark"] .stand-tbl td { color: var(--ink); }
@@ -136,10 +138,8 @@
   .day-chip:not(.sel) { opacity: .65; }
   .day-chip.is-today { opacity: 1; }
   .day-chip.is-today .dc-wd { color: var(--teal); font-weight: 700; }
-  .dc-today-dot { display: block; width: 6px; height: 6px; border-radius: 50%; background: var(--teal); margin: 3px auto 0; }
   .day-chip.sel { border-bottom-color: var(--teal); }
   .day-chip.sel .dc-wd, .day-chip.sel .dc-dt { color: var(--teal); }
-  .day-chip.sel .dc-today-dot { display: none; }
   .today-link { background: none; border: none; color: var(--teal); font-size: 13px; font-weight: 600; cursor: pointer; padding: 4px 2px; display: inline-flex; align-items: center; gap: 6px; }
   .today-link:hover { text-decoration: underline; }
   .today-btn { display: inline-flex; align-items: center; gap: 5px; width: auto; background: var(--teal); color: #fff; border: none; border-radius: 7px; padding: 5px 11px; font-size: 12px; font-weight: 600; cursor: pointer; }
@@ -165,6 +165,19 @@
   .filter-row { display: flex; gap: 14px; flex-wrap: wrap; }
   .filter-col { display: flex; flex-direction: column; flex: 1 1 140px; min-width: 0; }
   .filter-col .group-select { width: 100%; max-width: 100%; }
+  /* One symmetrical filter box: group/team, then my teams/my reminders, then choose teams. */
+  .filter-box { border: 1px solid var(--line); border-radius: 12px; background: transparent; padding: 12px; display: flex; flex-direction: column; gap: 9px; }
+  .fb-title { text-align: center; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .6px; color: var(--muted); margin-bottom: 8px; }
+  .fb-row { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+  .fb-row .group-select { width: 100%; max-width: 100%; box-sizing: border-box; }
+  .fbtn { border: 1.5px solid var(--line); background: var(--card); color: var(--navy); border-radius: 10px; padding: 8px 6px; font-size: 13px; font-weight: 600; cursor: pointer; text-align: center; white-space: nowrap; }
+  :root[data-theme="dark"] .fbtn { color: var(--ink); }
+  .fbtn.active { background: #E1F5EE; border-color: var(--teal); color: #0F6E56; }
+  :root[data-theme="dark"] .fbtn.active { background: #143A30; color: #9FE1CB; }
+  .fbtn.active::after { content: " ●"; font-size: 10px; }
+  .fbtn:disabled { opacity: .45; cursor: default; }
+  .fbtn.action { background: transparent; border-style: dashed; border-color: var(--coral); color: var(--coral); }
+  :root[data-theme="dark"] .fbtn.action { background: transparent; color: var(--coral); }
   :root[data-theme="dark"] .group-select { background: var(--card); color: var(--ink); }
   .toggle-row { display: flex; gap: 7px; flex-wrap: wrap; align-items: center; }
   /* Segmented control: the three "show only" filters as one connected toggle group. */
@@ -349,28 +362,22 @@
     <button class="vtab" data-view="history" data-i18n="tab.history">🏅 History</button>
   </div>
 
-  <div class="nextup" id="nextUp" style="display:none"></div>
-
   <div class="controls" id="controls">
-    <div class="filter-row">
-      <div class="filter-col">
-        <span class="label" data-i18n="filterByGroup">Filter by group</span>
+    <div class="fb-title" data-i18n="filterTitle">Filters</div>
+    <div class="filter-box">
+      <div class="fb-row">
         <div class="pills" id="teamPills"></div>
-      </div>
-      <div class="filter-col">
-        <span class="label" data-i18n="filterByTeam">Filter by team</span>
         <div id="teamSelWrap"></div>
       </div>
-    </div>
-    <span class="label sep" data-i18n="myFilters">My filters</span>
-    <div class="toggle-row">
-      <div class="seg" role="group" aria-label="Show only">
-        <button class="seg-btn" id="favBtn" aria-pressed="false" data-i18n="myTeams" title="Show only your favourite teams' matches">★ My teams</button>
-        <button class="seg-btn" id="remindBtn" aria-pressed="false" data-i18n="myReminders" data-i18n-title="ttRemind" title="Show only matches you've belled for a reminder">🔔 My reminders</button>
+      <div class="fb-row">
+        <button class="fbtn" id="favBtn" aria-pressed="false" data-i18n="myTeams" title="Show only your favourite teams' matches">★ My teams</button>
+        <button class="fbtn" id="remindBtn" aria-pressed="false" data-i18n="myReminders" data-i18n-title="ttRemind" title="Show only matches you've belled for a reminder">🔔 My reminders</button>
       </div>
-      <button class="pill action" id="pickBtn" data-i18n="chooseMyTeams">⚙ Choose my teams</button>
+      <button class="fbtn action" id="pickBtn" data-i18n="chooseMyTeams">⚙ Choose my teams</button>
     </div>
   </div>
+
+  <div class="nextup" id="nextUp" style="display:none"></div>
 
   <div class="today-row" id="todayRow"><button class="today-jump" id="todayJump" style="display:none"><span class="tj-dot"></span><span data-i18n="todayWord">Today</span></button><div class="tr-right"><button class="today-btn ghost" id="bracketBtn" data-i18n="bracketBtn">🏆 Bracket</button><button class="refresh-icon" id="refreshTop" aria-label="Refresh scores" data-i18n-title="ttRefresh" title="Refresh scores">↻</button></div></div>
 
@@ -441,7 +448,7 @@
       title:"FIFA World Cup 2026", subhead:"Canada · Mexico · USA · 104 matches", subtitle:"Match Tracker",
       "tab.schedule":"📅 Schedule","tab.standings":"📊 Standings","tab.scorers":"👟 Scorers","tab.history":"🏅 History",
       filterByGroup:"Filter by group", allGroups:"All groups", groupWord:"Group",
-      filterByTeam:"Filter by team", allTeams:"All teams",
+      filterByTeam:"Filter by team", allTeams:"All teams", filterTitle:"Filters",
       myFilters:"My filters", myTeams:"★ My teams", upcoming:"⏱ Upcoming", myReminders:"🔔 My reminders",
       chooseMyTeams:"⚙ Choose my teams", todayMatches:"Go to today's matches ↓", bracketBtn:"🏆 Bracket",
       refreshScores:"↻ Refresh scores",
@@ -502,7 +509,7 @@
       title:"كأس العالم 2026", subhead:"Canada · Mexico · USA · 104 مباراة", subtitle:"متتبّع المباريات",
       "tab.schedule":"📅 المباريات","tab.standings":"📊 الترتيب","tab.scorers":"👟 الهدّافون","tab.history":"🏅 السجل",
       filterByGroup:"التصفية حسب المجموعة", allGroups:"كل المجموعات", groupWord:"المجموعة",
-      filterByTeam:"التصفية حسب المنتخب", allTeams:"كل المنتخبات",
+      filterByTeam:"التصفية حسب المنتخب", allTeams:"كل المنتخبات", filterTitle:"التصفية",
       myFilters:"عوامل التصفية", myTeams:"★ فرقي", upcoming:"⏱ القادمة", myReminders:"🔔 تنبيهاتي",
       chooseMyTeams:"⚙ اختر فرقي", todayMatches:"اذهب إلى مباريات اليوم ↓", bracketBtn:"🏆 الأدوار الإقصائية",
       refreshScores:"↻ تحديث النتائج",
@@ -682,7 +689,7 @@
   function matchCardHTML(r){
     const fav=isFav(r.team1)||isFav(r.team2);
     const st=matchState(r.dt,r.score,r._live);
-    const scoreDisp=(r.score&&r.score.ft)?`${r.score.ft[0]}–${r.score.ft[1]}`:"";
+    const scoreDisp=(r.score&&r.score.ft)?(LANG==="ar"?`${r.score.ft[1]}–${r.score.ft[0]}`:`${r.score.ft[0]}–${r.score.ft[1]}`):"";
     const stTag=st==="live"?`<span class="status live">${t("statusLive")}</span>`:st==="ft"?`<span class="status ft">${t("statusFt")}</span>`:`<span class="status">${fmtTime(r.dt)}${TZ?" "+TZ:""}</span>`;
     const grp=r.group?groupLabelShort(r.group):roundLabel(r.round||"");
     const cid="ics"+(icsId++); ICS_REG[cid]={m:r,dt:r.dt};
@@ -725,8 +732,7 @@
       const isT=d.key===todayKey, sel=d.key===selectedDayKey;
       const wd=isT?t("todayWord"):WD[d.dt.getDay()];
       const dn=`${d.dt.getDate()} ${MO[d.dt.getMonth()]}`;
-      const dot=isT?'<span class="dc-today-dot"></span>':'';
-      return `<button class="day-chip${sel?' sel':''}${isT?' is-today':''}" data-day="${d.key}"><span class="dc-wd">${wd}</span><span class="dc-dt">${dn}</span>${dot}</button>`;
+      return `<button class="day-chip${sel?' sel':''}${isT?' is-today':''}" data-day="${d.key}"><span class="dc-wd">${wd}</span><span class="dc-dt">${dn}</span></button>`;
     }).join("");
     strip.querySelectorAll(".day-chip").forEach(b=>{ b.onclick=()=>{ selectedDayKey=b.dataset.day; render(); }; });
     // "Today" jump button: only when today is a match-day and not currently selected.
@@ -845,14 +851,14 @@
         y.pts-x.pts || gd(y)-gd(x) || y.gf-x.gf || x.team.localeCompare(y.team));
       html+=`<div class="stand-group"><h3 class="stand-gh">${groupLabelFull(g)}</h3>`+
         '<table class="stand-tbl"><thead><tr>'+
-        `<th class="c-pos"></th><th class="c-team">${t("colTeam")}</th><th>${t("colWdl")}</th><th>${t("colGd")}</th><th class="c-pts">${t("colPts")}</th>`+
+        `<th class="c-pos"></th><th class="c-team">${t("colTeam")}</th><th class="ltr">${t("colWdl")}</th><th class="ltr">${t("colGd")}</th><th class="c-pts">${t("colPts")}</th>`+
         '</tr></thead><tbody>';
       rows.forEach((r,i)=>{
         html+=`<tr class="${isFav(r.team)?"stand-fav":""}">`+
           `<td class="c-pos">${i+1}</td>`+
           `<td class="c-team"><span class="stand-team">${badge(r.team)}<span class="name">${labelOf(r.team)}</span></span></td>`+
-          `<td>${r.w}-${r.d}-${r.l}</td>`+
-          `<td>${sign(gd(r))}</td>`+
+          `<td class="ltr">${r.w}-${r.d}-${r.l}</td>`+
+          `<td class="ltr">${sign(gd(r))}</td>`+
           `<td class="c-pts">${r.pts}</td></tr>`;
       });
       html+='</tbody></table></div>';
@@ -869,6 +875,7 @@
     document.getElementById("todayRow").style.display=hideControls?"none":"";
     document.getElementById("stripWrap").style.display=hideControls?"none":"";
     rerender();
+    if(typeof updateNextUp==="function") updateNextUp();
     // Opening Scorers refreshes the match data (openfootball) so the leaderboard is current.
     if(v==="scorers") load(true);
   }
@@ -1232,6 +1239,7 @@
   function fmtCountdown(ms){ if(ms<0)ms=0; const s=Math.floor(ms/1000), d=Math.floor(s/86400), h=Math.floor(s%86400/3600), m=Math.floor(s%3600/60); if(d>0)return `${d}${t("cdD")} ${h}${t("cdH")}`; if(h>0)return `${h}${t("cdH")} ${m}${t("cdM")}`; if(m>0)return `${m}${t("cdM")}`; return `${s%60}${t("cdS")}`; }
   function updateNextUp(){
     const el=document.getElementById("nextUp"); if(!el) return;
+    if(view!=="schedule"){ el.style.display="none"; return; }
     if(!RAW.length){ el.style.display="none"; return; }
     const now=Date.now(); let live=null, next=null, nextT=Infinity;
     for(const m of RAW){ const dt=toLocal(m.date,m.time); if(!dt) continue; const t=dt.getTime(); const st=matchState(dt,m.score,m._live);
