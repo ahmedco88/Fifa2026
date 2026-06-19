@@ -119,10 +119,11 @@
   h1 { font-size: 22px; font-weight: 700; margin: 0 0 2px; letter-spacing: .2px; }
   .subtitle { font-size: 15px; font-weight: 600; opacity: .92; margin-top: 4px; }
 
-  .today-row { padding: 14px 1rem 0; margin-top: 4px; border-top: 1px solid var(--line); display: flex; align-items: center; justify-content: flex-end; gap: 8px; }
+  .today-row { padding: 14px 1rem 0; margin-top: 4px; border-top: 1px solid var(--line); display: flex; align-items: center; gap: 8px; }
+  .today-row .tr-right { margin-inline-start: auto; }
   /* Horizontal day strip: primary Schedule navigation (today selected by default). */
   .strip-wrap { display: flex; align-items: stretch; margin-top: 6px; border-bottom: 1px solid var(--line); }
-  .today-jump { flex: 0 0 auto; align-self: center; margin: 0 8px; display: inline-flex; align-items: center; gap: 5px; background: #E1F5EE; color: #0F6E56; border: 1.5px solid #9FE1CB; border-radius: 20px; padding: 6px 12px; font-size: 12px; font-weight: 700; cursor: pointer; white-space: nowrap; }
+  .today-jump { flex: 0 0 auto; display: inline-flex; align-items: center; gap: 5px; background: #E1F5EE; color: #0F6E56; border: 1.5px solid #9FE1CB; border-radius: 20px; padding: 6px 12px; font-size: 12px; font-weight: 700; cursor: pointer; white-space: nowrap; }
   :root[data-theme="dark"] .today-jump { background: #143A30; color: #9FE1CB; border-color: #0F6E56; }
   .tj-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--teal); display: inline-block; }
   .day-strip { flex: 1; min-width: 0; display: flex; gap: 2px; overflow-x: auto; scrollbar-width: none; padding: 8px 1rem 0; cursor: grab; }
@@ -284,6 +285,15 @@
   .about-tx b { color: var(--ink); font-weight: 600; }
   .about-tx > b:first-child { display: block; margin-bottom: 1px; }
   .about-note { font-size: 11px; color: var(--muted); line-height: 1.5; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line); }
+  .notif-box { background: var(--cream); border: 1px solid var(--line); border-radius: 10px; padding: 11px 12px; margin-top: 12px; }
+  :root[data-theme="dark"] .notif-box { background: var(--card); }
+  .notif-title { font-size: 13px; font-weight: 600; color: var(--ink); margin-bottom: 7px; }
+  .notif-row { display: flex; align-items: flex-start; gap: 8px; }
+  .notif-dot { width: 8px; height: 8px; border-radius: 50%; flex: none; margin-top: 5px; background: var(--muted); }
+  .notif-dot.on { background: #1D9E75; }
+  .notif-dot.blocked { background: #A32D2D; }
+  .notif-status { font-size: 13px; color: var(--ink); line-height: 1.45; }
+  .notif-box .btn-primary { margin-top: 10px; padding: 9px 14px; font-size: 13px; }
 
   /* Arabic / RTL: most flex+grid mirrors automatically; fix the physical-direction bits. */
   [dir="rtl"] .match.fav { border-left: 0; border-right: 4px solid var(--coral); }
@@ -362,10 +372,9 @@
     </div>
   </div>
 
-  <div class="today-row" id="todayRow"><div class="tr-right"><button class="today-btn ghost" id="bracketBtn" data-i18n="bracketBtn">🏆 Bracket</button><button class="refresh-icon" id="refreshTop" aria-label="Refresh scores" data-i18n-title="ttRefresh" title="Refresh scores">↻</button></div></div>
+  <div class="today-row" id="todayRow"><button class="today-jump" id="todayJump" style="display:none"><span class="tj-dot"></span><span data-i18n="todayWord">Today</span></button><div class="tr-right"><button class="today-btn ghost" id="bracketBtn" data-i18n="bracketBtn">🏆 Bracket</button><button class="refresh-icon" id="refreshTop" aria-label="Refresh scores" data-i18n-title="ttRefresh" title="Refresh scores">↻</button></div></div>
 
   <div class="strip-wrap" id="stripWrap">
-    <button class="today-jump" id="todayJump" style="display:none"><span class="tj-dot"></span><span data-i18n="todayWord">Today</span></button>
     <div class="day-strip" id="dayStrip"></div>
   </div>
 
@@ -408,6 +417,11 @@
         <div class="about-item"><span class="about-ic">📆</span><span class="about-tx" data-i18n-html="about.calendar"><b>Add to calendar</b>Tap <b>Add</b> on any match to save it to your phone or computer's calendar.</span></div>
         <div class="about-item"><span class="about-ic">🌙</span><span class="about-tx" data-i18n-html="about.dark"><b>Dark mode</b>Tap the moon / sun (top) to switch themes. Your choice is remembered.</span></div>
         <div class="about-item"><span class="about-ic">🔄</span><span class="about-tx" data-i18n-html="about.live"><b>Live scores</b>Scores update on their own while matches are being played. You can also tap <b>Refresh</b> any time.</span></div>
+      </div>
+      <div class="notif-box">
+        <div class="notif-title" data-i18n="notifTitle">🔔 Reminders &amp; notifications</div>
+        <div class="notif-row"><span class="notif-dot" id="notifDot"></span><span class="notif-status" id="notifStatus"></span></div>
+        <button class="btn-primary" id="notifBtn" style="display:none"></button>
       </div>
       <p class="about-note" data-i18n="aboutNote">Times may lag a minute or two behind the live broadcast. Schedule from the open-source openfootball project; live scores via ESPN's public feed.</p>
       <p class="about-note" id="iosInstallHint" data-i18n-html="iosHint" hidden>📱 <b>On iPhone:</b> tap the <b>Share</b> icon, then <b>Add to Home Screen</b> to install this app.</p>
@@ -457,6 +471,13 @@
       aboutNote:"Times may lag a minute or two behind the live broadcast. Schedule from the open-source openfootball project; live scores via ESPN's public feed.",
       iosHint:"📱 <b>On iPhone:</b> tap the <b>Share</b> icon, then <b>Add to Home Screen</b> to install this app.",
       install:"⬇ Install app", aboutOk:"Got it 👍",
+      notifTitle:"🔔 Reminders & notifications",
+      notifOnClosed:"Reminders are on, even when the app is closed.",
+      notifOnOpen:"Reminders are on, but only while the app is open.",
+      notifOff:"Reminders are off. Turn them on for a heads-up before kick-off.",
+      notifBlocked:"Notifications are blocked. To get reminders, allow notifications for this app in your browser or phone settings.",
+      notifUnsupported:"This browser doesn't support notifications.",
+      notifEnable:"Enable reminders", notifRecheck:"Re-check reminders",
       vs:"v", statusLive:"● Live", statusFt:"FT", add:"📅 Add", nextWeek:"Next week's matches ↓",
       loading:"Loading schedule…", noMatches:"No matches for this filter.",
       noBelled:"No belled matches yet, tap 🔔 on a match to get a reminder.",
@@ -511,6 +532,13 @@
       aboutNote:"قد تتأخر الأوقات دقيقة أو دقيقتين عن البث المباشر. الجدول من مشروع openfootball المفتوح المصدر؛ النتائج المباشرة عبر تغذية ESPN العامة.",
       iosHint:"📱 <b>على آيفون:</b> اضغط أيقونة <b>المشاركة</b>، ثم <b>إضافة إلى الشاشة الرئيسية</b> لتثبيت التطبيق.",
       install:"⬇ تثبيت التطبيق", aboutOk:"تمام 👍",
+      notifTitle:"🔔 التنبيهات والإشعارات",
+      notifOnClosed:"التنبيهات مفعّلة، حتى عندما يكون التطبيق مغلقًا.",
+      notifOnOpen:"التنبيهات مفعّلة، لكن أثناء فتح التطبيق فقط.",
+      notifOff:"التنبيهات متوقفة. فعّلها لتصلك تذكرة قبل انطلاق المباراة.",
+      notifBlocked:"الإشعارات محظورة. لتلقّي التنبيهات، اسمح بالإشعارات لهذا التطبيق من إعدادات المتصفح أو الهاتف.",
+      notifUnsupported:"هذا المتصفح لا يدعم الإشعارات.",
+      notifEnable:"تفعيل التنبيهات", notifRecheck:"إعادة فحص التنبيهات",
       vs:"ضد", statusLive:"● مباشر", statusFt:"انتهت", add:"📅 إضافة", nextWeek:"مباريات الأسبوع التالي ↓",
       loading:"جارٍ تحميل الجدول…", noMatches:"لا مباريات ضمن هذه التصفية.",
       noBelled:"لا مباريات محفوظة بعد، اضغط 🔔 على مباراة ليصلك تنبيه.",
@@ -548,6 +576,7 @@
     applyStaticI18n();
     if(typeof buildGroupPills==="function" && RAW.length){ buildGroupPills(); buildTeamFilter(); }
     if(typeof updateFavBtn==="function") updateFavBtn();
+    if(typeof updateNotifStatus==="function") updateNotifStatus();
     if(typeof rerender==="function") rerender();
     if(typeof updateClock==="function") updateClock();
   }
@@ -893,7 +922,24 @@
   document.getElementById("overlay").onclick=(e)=>{ if(e.target.id==="overlay")closePicker(); };
 
   function closeAbout(){ document.getElementById("aboutOverlay").classList.remove("open"); }
-  document.getElementById("aboutBtn").onclick=()=>document.getElementById("aboutOverlay").classList.add("open");
+  document.getElementById("aboutBtn").onclick=()=>{ document.getElementById("aboutOverlay").classList.add("open"); updateNotifStatus(); };
+  // Reminders/notifications status in the info card: reflect permission + offer to enable/re-check.
+  function updateNotifStatus(){
+    const st=document.getElementById("notifStatus"), btn=document.getElementById("notifBtn"), dot=document.getElementById("notifDot");
+    if(!st) return;
+    if(!("Notification" in window)){ st.textContent=t("notifUnsupported"); if(btn)btn.style.display="none"; if(dot)dot.className="notif-dot"; return; }
+    const p=Notification.permission; let cls="";
+    if(p==="granted"){ st.textContent=CAN_SCHEDULE?t("notifOnClosed"):t("notifOnOpen"); cls="on"; if(btn){btn.style.display=""; btn.textContent=t("notifRecheck");} }
+    else if(p==="denied"){ st.textContent=t("notifBlocked"); cls="blocked"; if(btn)btn.style.display="none"; }
+    else { st.textContent=t("notifOff"); if(btn){btn.style.display=""; btn.textContent=t("notifEnable");} }
+    if(dot) dot.className="notif-dot"+(cls?" "+cls:"");
+  }
+  document.getElementById("notifBtn").onclick=async function(){
+    if(!("Notification" in window)) return;
+    if(Notification.permission==="default"){ try{ await Notification.requestPermission(); }catch{} }
+    if(Notification.permission==="granted"){ try{ await scheduleReminders(); }catch{} }
+    updateNotifStatus();
+  };
   document.getElementById("aboutX").onclick=closeAbout;
   document.getElementById("aboutOk").onclick=closeAbout;
   document.getElementById("aboutOverlay").onclick=(e)=>{ if(e.target.id==="aboutOverlay")closeAbout(); };
