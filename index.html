@@ -121,15 +121,24 @@
 
   .today-row { padding: 14px 1rem 0; margin-top: 4px; border-top: 1px solid var(--line); display: flex; align-items: center; justify-content: flex-end; gap: 8px; }
   /* Horizontal day strip: primary Schedule navigation (today selected by default). */
-  .day-strip { display: flex; gap: 2px; overflow-x: auto; scrollbar-width: none; padding: 8px 1rem 0; margin-top: 6px; border-bottom: 1px solid var(--line); }
+  .strip-wrap { display: flex; align-items: stretch; margin-top: 6px; border-bottom: 1px solid var(--line); }
+  .today-jump { flex: 0 0 auto; align-self: center; margin: 0 8px; display: inline-flex; align-items: center; gap: 5px; background: #E1F5EE; color: #0F6E56; border: 1.5px solid #9FE1CB; border-radius: 20px; padding: 6px 12px; font-size: 12px; font-weight: 700; cursor: pointer; white-space: nowrap; }
+  :root[data-theme="dark"] .today-jump { background: #143A30; color: #9FE1CB; border-color: #0F6E56; }
+  .tj-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--teal); display: inline-block; }
+  .day-strip { flex: 1; min-width: 0; display: flex; gap: 2px; overflow-x: auto; scrollbar-width: none; padding: 8px 1rem 0; cursor: grab; }
+  .day-strip.dragging { cursor: grabbing; }
   .day-strip::-webkit-scrollbar { display: none; }
   .day-chip { flex: 0 0 auto; text-align: center; background: none; border: none; border-bottom: 3px solid transparent; cursor: pointer; padding: 6px 13px 9px; }
   .day-chip .dc-wd { display: block; font-size: 11px; color: var(--muted); }
   .day-chip .dc-dt { display: block; font-size: 14px; font-weight: 700; color: var(--navy); white-space: nowrap; }
   :root[data-theme="dark"] .day-chip .dc-dt { color: var(--ink); }
   .day-chip:not(.sel) { opacity: .65; }
+  .day-chip.is-today { opacity: 1; }
+  .day-chip.is-today .dc-wd { color: var(--teal); font-weight: 700; }
+  .dc-today-dot { display: block; width: 6px; height: 6px; border-radius: 50%; background: var(--teal); margin: 3px auto 0; }
   .day-chip.sel { border-bottom-color: var(--teal); }
   .day-chip.sel .dc-wd, .day-chip.sel .dc-dt { color: var(--teal); }
+  .day-chip.sel .dc-today-dot { display: none; }
   .today-link { background: none; border: none; color: var(--teal); font-size: 13px; font-weight: 600; cursor: pointer; padding: 4px 2px; display: inline-flex; align-items: center; gap: 6px; }
   .today-link:hover { text-decoration: underline; }
   .today-btn { display: inline-flex; align-items: center; gap: 5px; width: auto; background: var(--teal); color: #fff; border: none; border-radius: 7px; padding: 5px 11px; font-size: 12px; font-weight: 600; cursor: pointer; }
@@ -355,7 +364,10 @@
 
   <div class="today-row" id="todayRow"><div class="tr-right"><button class="today-btn ghost" id="bracketBtn" data-i18n="bracketBtn">🏆 Bracket</button><button class="refresh-icon" id="refreshTop" aria-label="Refresh scores" data-i18n-title="ttRefresh" title="Refresh scores">↻</button></div></div>
 
-  <div class="day-strip" id="dayStrip"></div>
+  <div class="strip-wrap" id="stripWrap">
+    <button class="today-jump" id="todayJump" style="display:none"><span class="tj-dot"></span><span data-i18n="todayWord">Today</span></button>
+    <div class="day-strip" id="dayStrip"></div>
+  </div>
 
   <div id="content"><div class="loading" data-i18n="loading">Loading schedule…</div></div>
 
@@ -684,21 +696,25 @@
       const isT=d.key===todayKey, sel=d.key===selectedDayKey;
       const wd=isT?t("todayWord"):WD[d.dt.getDay()];
       const dn=`${d.dt.getDate()} ${MO[d.dt.getMonth()]}`;
-      return `<button class="day-chip${sel?' sel':''}${isT?' is-today':''}" data-day="${d.key}"><span class="dc-wd">${wd}</span><span class="dc-dt">${dn}</span></button>`;
+      const dot=isT?'<span class="dc-today-dot"></span>':'';
+      return `<button class="day-chip${sel?' sel':''}${isT?' is-today':''}" data-day="${d.key}"><span class="dc-wd">${wd}</span><span class="dc-dt">${dn}</span>${dot}</button>`;
     }).join("");
     strip.querySelectorAll(".day-chip").forEach(b=>{ b.onclick=()=>{ selectedDayKey=b.dataset.day; render(); }; });
+    // "Today" jump button: only when today is a match-day and not currently selected.
+    const tj=document.getElementById("todayJump");
+    if(tj){ const hasToday=days.some(d=>d.key===todayKey); tj.style.display=(hasToday && selectedDayKey!==todayKey)?"":"none"; }
     const selEl=strip.querySelector(".day-chip.sel"); if(selEl){ try{ selEl.scrollIntoView({inline:"center",block:"nearest"}); }catch{} }
   }
 
   function render(){
     const content=document.getElementById("content");
-    const strip=document.getElementById("dayStrip");
+    const wrap=document.getElementById("stripWrap");
     let rows=RAW.map(mt=>({...mt,dt:toLocal(mt.date,mt.time)})).filter(r=>r.dt).sort((a,b)=>a.dt-b.dt);
     if(groupFilter) rows=rows.filter(r=>r.group===groupFilter);
     // Team / My teams / My reminders are cross-day views: list all matching matches, hide the strip.
     const crossDay = !!(teamFilter || showFavOnly || showRemindOnly);
     if(crossDay){
-      if(strip) strip.style.display="none";
+      if(wrap) wrap.style.display="none";
       if(teamFilter) rows=rows.filter(r=>canon(r.team1)===teamFilter||canon(r.team2)===teamFilter);
       if(showFavOnly) rows=rows.filter(r=>isFav(r.team1)||isFav(r.team2));
       if(showRemindOnly) rows=rows.filter(r=>belledMatches.has(matchKey(r)));
@@ -712,8 +728,8 @@
       content.innerHTML=html;
     } else {
       // Day-strip mode: pick a day, show that day's matches.
-      if(!rows.length){ if(strip){strip.innerHTML="";strip.style.display="none";} content.innerHTML=`<div class="loading">${t("noMatches")}</div>`; return; }
-      if(strip) strip.style.display="";
+      if(!rows.length){ if(wrap) wrap.style.display="none"; content.innerHTML=`<div class="loading">${t("noMatches")}</div>`; return; }
+      if(wrap) wrap.style.display="";
       buildDayStrip(rows);
       const dayRows=rows.filter(r=>fmtDay(r.dt)===selectedDayKey);
       content.innerHTML = dayRows.length ? ('<div class="matches">'+dayRows.map(matchCardHTML).join("")+'</div>') : `<div class="loading">${t("noMatchesDay")}</div>`;
@@ -822,12 +838,24 @@
     const hideControls=(v==="bracket"||v==="standings"||v==="scorers"||v==="history");
     document.getElementById("controls").style.display=hideControls?"none":"";
     document.getElementById("todayRow").style.display=hideControls?"none":"";
-    document.getElementById("dayStrip").style.display=hideControls?"none":"";
+    document.getElementById("stripWrap").style.display=hideControls?"none":"";
     rerender();
     // Opening Scorers refreshes the match data (openfootball) so the leaderboard is current.
     if(v==="scorers") load(true);
   }
   document.querySelectorAll(".vtab").forEach(t=>{ t.onclick=()=>setView(t.dataset.view); });
+
+  // Drag-to-scroll the day strip (mouse / pen; touch uses native swipe). A drag suppresses the click.
+  (function(){
+    const el=document.getElementById("dayStrip"); if(!el) return;
+    let down=false, startX=0, startScroll=0, moved=false;
+    el.addEventListener("pointerdown", e=>{ if(e.pointerType==="touch") return; down=true; moved=false; startX=e.clientX; startScroll=el.scrollLeft; });
+    el.addEventListener("pointermove", e=>{ if(!down) return; const dx=e.clientX-startX; if(Math.abs(dx)>4){ moved=true; el.classList.add("dragging"); } el.scrollLeft=startScroll-dx; });
+    const end=()=>{ down=false; el.classList.remove("dragging"); };
+    el.addEventListener("pointerup", end); el.addEventListener("pointerleave", end); el.addEventListener("pointercancel", end);
+    el.addEventListener("click", e=>{ if(moved){ e.preventDefault(); e.stopPropagation(); } }, true);
+  })();
+  document.getElementById("todayJump").onclick=()=>{ selectedDayKey=fmtDay(new Date()); render(); };
 
   function buildGroupPills(){
     const groups=[...new Set(RAW.map(m=>m.group).filter(Boolean))].sort();
