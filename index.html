@@ -78,6 +78,11 @@
   .stand-tbl .c-team { text-align: left; }
   .stand-tbl .c-pts { font-weight: 800; }
   .stand-team { display: flex; align-items: center; gap: 8px; }
+  /* Tap a team in standings → jump to that team's matches in the Schedule. */
+  .stand-team.tappable { cursor: pointer; border-radius: 7px; padding: 2px 4px; margin: -2px -4px; transition: background .12s; }
+  .stand-team.tappable:hover { background: rgba(0,0,0,.05); }
+  :root[data-theme="dark"] .stand-team.tappable:hover { background: rgba(255,255,255,.08); }
+  .stand-team.tappable:active { background: rgba(0,0,0,.10); }
   .stand-team .name { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 130px; }
   .stand-team .badge { flex: none; }
   .stand-fav { background: rgba(255,193,7,.10); }
@@ -459,6 +464,7 @@
       "tab.schedule":"📅 Schedule","tab.standings":"📊 Standings","tab.scorers":"👟 Scorers","tab.history":"🏅 History",
       filterByGroup:"Filter by group", allGroups:"All groups", groupWord:"Group",
       filterByTeam:"Filter by team", allTeams:"All teams", filterTitle:"Filters",
+      seeMatches:"See this team's matches",
       myFilters:"My filters", myTeams:"★ My teams", upcoming:"⏱ Upcoming", myReminders:"🔔 My reminders",
       chooseMyTeams:"⚙ Choose my teams", todayMatches:"Go to today's matches ↓", bracketBtn:"🏆 Bracket",
       refreshScores:"↻ Refresh scores",
@@ -521,6 +527,7 @@
       "tab.schedule":"📅 المباريات","tab.standings":"📊 الترتيب","tab.scorers":"👟 الهدّافون","tab.history":"🏅 السجل",
       filterByGroup:"التصفية حسب المجموعة", allGroups:"كل المجموعات", groupWord:"المجموعة",
       filterByTeam:"التصفية حسب المنتخب", allTeams:"كل المنتخبات", filterTitle:"التصفية",
+      seeMatches:"عرض مباريات هذا المنتخب",
       myFilters:"عوامل التصفية", myTeams:"★ فرقي", upcoming:"⏱ القادمة", myReminders:"🔔 تنبيهاتي",
       chooseMyTeams:"⚙ اختر فرقي", todayMatches:"اذهب إلى مباريات اليوم ↓", bracketBtn:"🏆 الأدوار الإقصائية",
       refreshScores:"↻ تحديث النتائج",
@@ -916,7 +923,7 @@
       rows.forEach((r,i)=>{
         html+=`<tr class="${isFav(r.team)?"stand-fav":""}">`+
           `<td class="c-pos">${i+1}</td>`+
-          `<td class="c-team"><span class="stand-team">${badge(r.team)}<span class="name">${labelOf(r.team)}</span></span></td>`+
+          `<td class="c-team"><span class="stand-team tappable" data-team="${r.team}" role="button" tabindex="0" title="${t("seeMatches")}">${badge(r.team)}<span class="name">${labelOf(r.team)}</span></span></td>`+
           `<td class="ltr">${wdl(r)}</td>`+
           `<td class="ltr">${sign(gd(r))}</td>`+
           `<td class="c-pts">${r.pts}</td></tr>`;
@@ -924,6 +931,12 @@
       html+='</tbody></table></div>';
     }
     content.innerHTML=html+'</div>';
+    // Tapping a team jumps to that team's matches in the Schedule (same as the team filter).
+    const jumpToTeam=name=>{ teamFilter=name; if(typeof buildTeamFilter==="function") buildTeamFilter(); setView("schedule"); };
+    content.querySelectorAll(".stand-team.tappable").forEach(elm=>{
+      elm.onclick=()=>jumpToTeam(elm.dataset.team);
+      elm.onkeydown=e=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); jumpToTeam(elm.dataset.team); } };
+    });
   }
 
   function rerender(){ if(view==="bracket") renderBracket(); else if(view==="standings") renderStandings(); else if(view==="scorers") renderScorers(); else if(view==="history") renderHistory(); else render(); }
