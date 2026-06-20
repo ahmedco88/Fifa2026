@@ -180,6 +180,9 @@
   .filter-box { border: 1px solid var(--line); border-radius: 12px; background: transparent; padding: 12px; display: flex; flex-direction: column; gap: 9px; }
   .fb-title { text-align: center; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .6px; color: var(--muted); margin-bottom: 8px; }
   .fb-row { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+  /* My teams | Choose my teams (distinct dashed action) | My reminders — equal, symmetrical thirds. */
+  .fb-row3 { grid-template-columns: 1fr 1fr 1fr; align-items: stretch; }
+  .fb-row3 .fbtn { white-space: normal; line-height: 1.15; min-height: 46px; display: inline-flex; align-items: center; justify-content: center; padding: 6px 4px; }
   .fb-row .group-select { width: 100%; max-width: 100%; box-sizing: border-box; }
   .fbtn { border: 1.5px solid var(--line); background: var(--card); color: var(--navy); border-radius: 10px; padding: 8px 6px; font-size: 13px; font-weight: 600; cursor: pointer; text-align: center; white-space: nowrap; }
   :root[data-theme="dark"] .fbtn { color: var(--ink); }
@@ -268,6 +271,8 @@
   .hl-val { font-size: 13.5px; font-weight: 600; color: var(--navy); display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
   :root[data-theme="dark"] .hl-val { color: var(--ink); }
   .hl-sub { color: var(--muted); font-weight: 400; }
+  .hl-desc { font-size: 10.5px; color: var(--muted); margin-top: 3px; }
+  .hl-stack { display: flex; flex-direction: column; gap: 2px; }
   .hl-val .stand-team { gap: 6px; }
   .hl-val .stand-team .name { max-width: none; }
   /* Hall of Fame (History tab) — labelled cards */
@@ -396,11 +401,11 @@
         <div class="pills" id="teamPills"></div>
         <div id="teamSelWrap"></div>
       </div>
-      <div class="fb-row">
+      <div class="fb-row fb-row3">
         <button class="fbtn" id="favBtn" aria-pressed="false" data-i18n="myTeams" title="Show only your favourite teams' matches">★ My teams</button>
+        <button class="fbtn action" id="pickBtn" data-i18n="chooseMyTeams">⚙ Choose my teams</button>
         <button class="fbtn" id="remindBtn" aria-pressed="false" data-i18n="myReminders" data-i18n-title="ttRemind" title="Show only matches you've belled for a reminder">🔔 My reminders</button>
       </div>
-      <button class="fbtn action" id="pickBtn" data-i18n="chooseMyTeams">⚙ Choose my teams</button>
     </div>
   </div>
 
@@ -526,6 +531,7 @@
       biggestWin:"Biggest win", hatTrickLabel:"Hat-trick",
       highlightsTitle:"Highlights", highScore:"Highest-scoring match", bestAttack:"Best attack", bestDefence:"Best defence",
       cleanSheets:"Clean sheets", ownGoalsStat:"Own goals", goalsWord:"goals", gamesWord:"games", concededWord:"conceded",
+      cleanSheetsDesc:"Times a team kept the opponent scoreless (0 goals against)",
       pastCups:"Past cups", mostTitles:"Most titles", pastTitle:"Past World Cups", titlesTitle:"Most World Cup titles",
       hostLbl:"Host:", winnerLbl:"Winner:", runnerLbl:"Runner-up:", goldenBootLbl:"Golden Boot:",
       "round.r32":"Round of 32","round.r16":"Round of 16","round.qf":"Quarter-finals","round.sf":"Semi-finals","round.third":"Third place","round.final":"Final",
@@ -591,6 +597,7 @@
       biggestWin:"أكبر فوز", hatTrickLabel:"هاتريك",
       highlightsTitle:"أبرز اللقطات", highScore:"أكثر مباراة تهديفًا", bestAttack:"أفضل هجوم", bestDefence:"أفضل دفاع",
       cleanSheets:"شباك نظيفة", ownGoalsStat:"أهداف عكسية", goalsWord:"أهداف", gamesWord:"مباريات", concededWord:"استقبلها",
+      cleanSheetsDesc:"عدد المرات التي حافظ فيها منتخب على نظافة شباكه (دون استقبال أي هدف)",
       pastCups:"الكؤوس السابقة", mostTitles:"الأكثر تتويجًا", pastTitle:"كؤوس العالم السابقة", titlesTitle:"الأكثر تتويجًا بكأس العالم",
       hostLbl:"المضيف:", winnerLbl:"البطل:", runnerLbl:"الوصيف:", goldenBootLbl:"الحذاء الذهبي:",
       "round.r32":"دور الـ32","round.r16":"دور الـ16","round.qf":"ربع النهائي","round.sf":"نصف النهائي","round.third":"تحديد المركز الثالث","round.final":"النهائي",
@@ -811,6 +818,7 @@
   function render(){
     const content=document.getElementById("content");
     const wrap=document.getElementById("stripWrap");
+    if(groupFilter||teamFilter||showFavOnly||showRemindOnly) armBackTrap();   // a filter is a "back returns home" state too
     let rows=RAW.map(mt=>({...mt,dt:toLocal(mt.date,mt.time)})).filter(r=>r.dt).sort((a,b)=>a.dt-b.dt);
     if(groupFilter) rows=rows.filter(r=>r.group===groupFilter);
     // Team / My teams / My reminders are cross-day views: list all matching matches, hide the strip.
@@ -964,6 +972,7 @@
   function rerender(){ if(view==="bracket") renderBracket(); else if(view==="standings") renderStandings(); else if(view==="scorers") renderScorers(); else if(view==="history") renderHistory(); else render(); }
   function setView(v){
     view=v;
+    if(v!=="schedule") armBackTrap();   // leaving home → arm phone back button to return here
     document.querySelectorAll(".vtab").forEach(t=>t.classList.toggle("active",t.dataset.view===v));
     const hideControls=(v==="bracket"||v==="standings"||v==="scorers"||v==="history");
     document.getElementById("controls").style.display=hideControls?"none":"";
@@ -975,6 +984,23 @@
     if(v==="scorers") load(true);
   }
   document.querySelectorAll(".vtab").forEach(t=>{ t.onclick=()=>setView(t.dataset.view); });
+
+  // ── Phone back button → Schedule home (instead of leaving the app) ──
+  // We keep ONE extra history entry whenever the user is away from the clean Schedule
+  // view (another tab, or a filter applied). Pressing the device back button pops that
+  // entry → we reset to home. Pressing back again (already home) lets the OS leave the
+  // app normally. One press from anywhere returns home.
+  function isCleanHome(){ return view==="schedule" && !groupFilter && !teamFilter && !showFavOnly && !showRemindOnly; }
+  function armBackTrap(){ try{ if(!history.state || history.state.wc!==1) history.pushState({wc:1},""); }catch{} }
+  function goScheduleHome(){
+    groupFilter=null; teamFilter=null; showFavOnly=false; showRemindOnly=false;
+    const fb=document.getElementById("favBtn"); if(fb){ fb.classList.remove("active"); fb.setAttribute("aria-pressed","false"); }
+    const rb=document.getElementById("remindBtn"); if(rb){ rb.classList.remove("active"); rb.setAttribute("aria-pressed","false"); }
+    if(typeof buildGroupPills==="function") buildGroupPills();
+    if(typeof buildTeamFilter==="function") buildTeamFilter();
+    setView("schedule");
+  }
+  window.addEventListener("popstate",()=>{ if(!isCleanHome()) goScheduleHome(); });
 
   // Drag-to-scroll the day strip (mouse / pen; touch uses native swipe). A drag suppresses the click.
   (function(){
@@ -1237,16 +1263,16 @@
         stat(s.played,t("statMatches"))+stat(s.goals,t("statGoals"))+stat(s.gpm,t("statGpm"))+stat(s.hatTricks,t("statHat"))+'</div>';
       // Scoreline kept LTR-isolated so it reads team1 → team2 even in Arabic RTL.
       const line2=(t1,a,b,t2)=>`<span class="ltr">${labelOf(t1)} ${a}–${b} ${labelOf(t2)}</span>`;
-      // Single-team value with a tap-to-filter chip (falls back to plain label if not a real team).
-      const teamTap=name=>{ const c=canon(name); return TEAM[c]?`<span class="stand-team tappable" data-team="${c}" role="button" tabindex="0" title="${t("seeMatches")}">${badge(name)}<span class="name">${labelOf(name)}</span></span>`:labelOf(name); };
-      const hi=(icon,label,val)=>`<div class="hl-row"><span class="hl-ic">${icon}</span><div class="hl-body"><div class="hl-lbl">${label}</div><div class="hl-val">${val}</div></div></div>`;
+      // Single-team value as a flag-less tap-to-filter chip (falls back to plain label if not a real team).
+      const teamTap=name=>{ const c=canon(name); return TEAM[c]?`<span class="stand-team tappable" data-team="${c}" role="button" tabindex="0" title="${t("seeMatches")}"><span class="name">${labelOf(name)}</span></span>`:labelOf(name); };
+      const hi=(icon,label,val,desc)=>`<div class="hl-row"><span class="hl-ic">${icon}</span><div class="hl-body"><div class="hl-lbl">${label}</div><div class="hl-val">${val}</div>${desc?`<div class="hl-desc">${desc}</div>`:""}</div></div>`;
       let rows="";
       if(s.biggest && s.bigMargin>0) rows+=hi("🏆",t("biggestWin"),line2(s.biggest.m.team1,s.biggest.a,s.biggest.b,s.biggest.m.team2));
       if(s.highest && s.hiTotal>0) rows+=hi("🔥",t("highScore"),`${line2(s.highest.m.team1,s.highest.a,s.highest.b,s.highest.m.team2)} <span class="hl-sub">(${s.hiTotal} ${t("goalsWord")})</span>`);
-      if(s.htList.length) rows+=hi("🎩",t("hatTrickLabel"),s.htList.join(" · "));
+      if(s.htList.length) rows+=hi("🎩",t("hatTrickLabel"),`<div class="hl-stack">${s.htList.map(x=>`<span>${x}</span>`).join("")}</div>`);
       if(s.bestAtt && s.bestAtt.gf>0) rows+=hi("🎯",t("bestAttack"),`${teamTap(s.bestAtt.team)} <span class="hl-sub">${s.bestAtt.gf} ${t("goalsWord")} · ${s.bestAtt.mp} ${t("gamesWord")}</span>`);
       if(s.bestDef) rows+=hi("🛡️",t("bestDefence"),`${teamTap(s.bestDef.team)} <span class="hl-sub">${s.bestDef.ga} ${t("concededWord")} · ${s.bestDef.mp} ${t("gamesWord")}</span>`);
-      if(s.cleanSheets>0) rows+=hi("🧤",t("cleanSheets"),`${s.cleanSheets}`);
+      if(s.cleanSheets>0) rows+=hi("🧤",t("cleanSheets"),`${s.cleanSheets}`,t("cleanSheetsDesc"));
       if(s.ownGoals>0) rows+=hi("🥅",t("ownGoalsStat"),`${s.ownGoals}`);
       if(rows) html+=`<div class="hl-h">${t("highlightsTitle")}</div><div class="hl-list">${rows}</div>`;
     }
@@ -1479,6 +1505,10 @@
   applyStaticI18n();
   load();
   initFanCount();
+
+  // Mark the Schedule home as the base history entry, so the phone back button has
+  // somewhere to return to (see armBackTrap / popstate handler above).
+  try{ history.replaceState({wc:0},""); }catch{}
 
   // Deep-link: ?view=bracket opens the knockout view (used by the app shortcuts).
   try{ const qv=new URLSearchParams(location.search).get("view"); if(qv==="bracket"||qv==="standings"||qv==="scorers"||qv==="history") setView(qv); }catch{}
