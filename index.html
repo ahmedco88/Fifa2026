@@ -257,6 +257,19 @@
   .stat-l { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .3px; }
   .stats-extra { padding: .5rem 1rem 0; font-size: 12px; color: var(--muted); }
   @media (max-width: 430px) { .stats-panel { grid-template-columns: repeat(2, 1fr); } }
+  /* Tournament highlights — one labelled row per stat (replaces the old run-on line) */
+  .hl-h { padding: .9rem 1rem .3rem; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: var(--muted); }
+  .hl-list { padding: 0 1rem; }
+  .hl-row { display: flex; align-items: flex-start; gap: 11px; padding: 9px 2px; border-bottom: 1px solid var(--line); }
+  .hl-row:last-child { border-bottom: none; }
+  .hl-ic { font-size: 16px; line-height: 1.35; flex: none; }
+  .hl-body { flex: 1; min-width: 0; }
+  .hl-lbl { font-size: 11px; color: var(--muted); margin-bottom: 2px; }
+  .hl-val { font-size: 13.5px; font-weight: 600; color: var(--navy); display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  :root[data-theme="dark"] .hl-val { color: var(--ink); }
+  .hl-sub { color: var(--muted); font-weight: 400; }
+  .hl-val .stand-team { gap: 6px; }
+  .hl-val .stand-team .name { max-width: none; }
   /* Hall of Fame (History tab) — labelled cards */
   .hof-wrap { padding: .4rem 1rem 1rem; }
   .hof-item { background: var(--card); border: 0.5px solid var(--line); border-radius: 12px; padding: 11px 13px; margin-bottom: 9px; }
@@ -511,6 +524,8 @@
       ownGoalsNote:"Own goals are not counted.",
       statsTitle:"Tournament so far", statMatches:"Matches", statGoals:"Goals", statGpm:"Goals / match", statHat:"Hat-tricks",
       biggestWin:"Biggest win", hatTrickLabel:"Hat-trick",
+      highlightsTitle:"Highlights", highScore:"Highest-scoring match", bestAttack:"Best attack", bestDefence:"Best defence",
+      cleanSheets:"Clean sheets", ownGoalsStat:"Own goals", goalsWord:"goals", gamesWord:"games", concededWord:"conceded",
       pastCups:"Past cups", mostTitles:"Most titles", pastTitle:"Past World Cups", titlesTitle:"Most World Cup titles",
       hostLbl:"Host:", winnerLbl:"Winner:", runnerLbl:"Runner-up:", goldenBootLbl:"Golden Boot:",
       "round.r32":"Round of 32","round.r16":"Round of 16","round.qf":"Quarter-finals","round.sf":"Semi-finals","round.third":"Third place","round.final":"Final",
@@ -574,6 +589,8 @@
       ownGoalsNote:"لا تُحتسب الأهداف العكسية.",
       statsTitle:"البطولة حتى الآن", statMatches:"مباريات", statGoals:"أهداف", statGpm:"أهداف/مباراة", statHat:"هاتريك",
       biggestWin:"أكبر فوز", hatTrickLabel:"هاتريك",
+      highlightsTitle:"أبرز اللقطات", highScore:"أكثر مباراة تهديفًا", bestAttack:"أفضل هجوم", bestDefence:"أفضل دفاع",
+      cleanSheets:"شباك نظيفة", ownGoalsStat:"أهداف عكسية", goalsWord:"أهداف", gamesWord:"مباريات", concededWord:"استقبلها",
       pastCups:"الكؤوس السابقة", mostTitles:"الأكثر تتويجًا", pastTitle:"كؤوس العالم السابقة", titlesTitle:"الأكثر تتويجًا بكأس العالم",
       hostLbl:"المضيف:", winnerLbl:"البطل:", runnerLbl:"الوصيف:", goldenBootLbl:"الحذاء الذهبي:",
       "round.r32":"دور الـ32","round.r16":"دور الـ16","round.qf":"ربع النهائي","round.sf":"نصف النهائي","round.third":"تحديد المركز الثالث","round.final":"النهائي",
@@ -1176,17 +1193,32 @@
 
   // Tournament-so-far stats, computed from match results already in RAW.
   function tournamentStats(){
-    let played=0, goals=0, biggest=null, bigMargin=0;
+    let played=0, goals=0, biggest=null, bigMargin=0, highest=null, hiTotal=0, cleanSheets=0, ownGoals=0;
+    const tt={};   // canon team -> running {gf, ga, mp} across all played matches
+    const bump=name=> (tt[name]||(tt[name]={team:name,gf:0,ga:0,mp:0}));
     for(const m of RAW){ const ft=m.score&&m.score.ft; if(!ft||ft[0]==null||ft[1]==null) continue;
       const a=Number(ft[0]), b=Number(ft[1]); if(Number.isNaN(a)||Number.isNaN(b)) continue;
       played++; goals+=a+b;
       const margin=Math.abs(a-b); if(margin>bigMargin){ bigMargin=margin; biggest={m,a,b}; }
+      const total=a+b; if(total>hiTotal){ hiTotal=total; highest={m,a,b}; }
+      if(b===0) cleanSheets++;   // team1 conceded nothing
+      if(a===0) cleanSheets++;   // team2 conceded nothing
+      const A=bump(canon(m.team1)), B=bump(canon(m.team2));
+      A.mp++; B.mp++; A.gf+=a; A.ga+=b; B.gf+=b; B.ga+=a;
     }
+    // Own goals: counted from the per-match goal arrays (these are excluded from scorer credit).
+    for(const m of RAW){ for(const arr of [m.goals1,m.goals2]){ if(!Array.isArray(arr)) continue;
+      for(const g of arr){ if(g&&g.owngoal) ownGoals++; } } }
     let hatTricks=0; const htList=[];
     for(const m of RAW){ for(const arr of [m.goals1,m.goals2]){ if(!Array.isArray(arr)) continue;
       const c={}; for(const g of arr){ if(!g||!g.name||g.owngoal) continue; c[g.name]=(c[g.name]||0)+1; }
       for(const name in c){ if(c[name]>=3){ hatTricks++; htList.push(`${name} (${c[name]})`); } } } }
-    return {played, goals, gpm: played?(goals/played).toFixed(1):"0", biggest, bigMargin, hatTricks, htList};
+    const teams=Object.values(tt);
+    // Best attack: most scored. Best defence: fewest conceded, then more games (more impressive), then more scored.
+    const bestAtt = teams.length ? teams.slice().sort((x,y)=> y.gf-x.gf || x.ga-y.ga || y.mp-x.mp)[0] : null;
+    const bestDef = teams.length ? teams.slice().sort((x,y)=> x.ga-y.ga || y.mp-x.mp || y.gf-x.gf)[0] : null;
+    return {played, goals, gpm: played?(goals/played).toFixed(1):"0", biggest, bigMargin,
+            highest, hiTotal, cleanSheets, ownGoals, bestAtt, bestDef, hatTricks, htList};
   }
 
   function renderScorers(){
@@ -1203,10 +1235,20 @@
     if(s.played>0){
       html+=`<div class="stats-h">${t("statsTitle")}</div><div class="stats-panel">`+
         stat(s.played,t("statMatches"))+stat(s.goals,t("statGoals"))+stat(s.gpm,t("statGpm"))+stat(s.hatTricks,t("statHat"))+'</div>';
-      const extra=[];
-      if(s.biggest && s.bigMargin>0) extra.push(`${t("biggestWin")}: ${labelOf(s.biggest.m.team1)} ${s.biggest.a}–${s.biggest.b} ${labelOf(s.biggest.m.team2)}`);
-      if(s.htList.length) extra.push(`${t("hatTrickLabel")}: ${s.htList.join(", ")}`);
-      if(extra.length) html+=`<div class="stats-extra">${extra.join(" · ")}</div>`;
+      // Scoreline kept LTR-isolated so it reads team1 → team2 even in Arabic RTL.
+      const line2=(t1,a,b,t2)=>`<span class="ltr">${labelOf(t1)} ${a}–${b} ${labelOf(t2)}</span>`;
+      // Single-team value with a tap-to-filter chip (falls back to plain label if not a real team).
+      const teamTap=name=>{ const c=canon(name); return TEAM[c]?`<span class="stand-team tappable" data-team="${c}" role="button" tabindex="0" title="${t("seeMatches")}">${badge(name)}<span class="name">${labelOf(name)}</span></span>`:labelOf(name); };
+      const hi=(icon,label,val)=>`<div class="hl-row"><span class="hl-ic">${icon}</span><div class="hl-body"><div class="hl-lbl">${label}</div><div class="hl-val">${val}</div></div></div>`;
+      let rows="";
+      if(s.biggest && s.bigMargin>0) rows+=hi("🏆",t("biggestWin"),line2(s.biggest.m.team1,s.biggest.a,s.biggest.b,s.biggest.m.team2));
+      if(s.highest && s.hiTotal>0) rows+=hi("🔥",t("highScore"),`${line2(s.highest.m.team1,s.highest.a,s.highest.b,s.highest.m.team2)} <span class="hl-sub">(${s.hiTotal} ${t("goalsWord")})</span>`);
+      if(s.htList.length) rows+=hi("🎩",t("hatTrickLabel"),s.htList.join(" · "));
+      if(s.bestAtt && s.bestAtt.gf>0) rows+=hi("🎯",t("bestAttack"),`${teamTap(s.bestAtt.team)} <span class="hl-sub">${s.bestAtt.gf} ${t("goalsWord")} · ${s.bestAtt.mp} ${t("gamesWord")}</span>`);
+      if(s.bestDef) rows+=hi("🛡️",t("bestDefence"),`${teamTap(s.bestDef.team)} <span class="hl-sub">${s.bestDef.ga} ${t("concededWord")} · ${s.bestDef.mp} ${t("gamesWord")}</span>`);
+      if(s.cleanSheets>0) rows+=hi("🧤",t("cleanSheets"),`${s.cleanSheets}`);
+      if(s.ownGoals>0) rows+=hi("🥅",t("ownGoalsStat"),`${s.ownGoals}`);
+      if(rows) html+=`<div class="hl-h">${t("highlightsTitle")}</div><div class="hl-list">${rows}</div>`;
     }
     if(!list.length){ content.innerHTML=html+`<div class="loading">${t("scorersEmpty")}</div></div>`; return; }
     html+=`<div class="stand-group"><div class="stand-gh">${t("topScorers")}</div><table class="stand-tbl"><thead><tr>`+
