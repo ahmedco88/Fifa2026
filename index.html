@@ -886,6 +886,16 @@
   }
   // Build the group tables purely from match results the app already has.
   // 3 pts win / 1 draw / 0 loss; tiebreak Pts → GD → goals scored → name.
+  // Jump to one team's matches in the Schedule (shared by Standings + Scorers tap targets).
+  function jumpToTeamMatches(name){ teamFilter=name; if(typeof buildTeamFilter==="function") buildTeamFilter(); setView("schedule"); }
+  // Wire every .stand-team.tappable inside a freshly-rendered view to jumpToTeamMatches.
+  function bindTeamTaps(container){
+    container.querySelectorAll(".stand-team.tappable").forEach(elm=>{
+      elm.onclick=()=>jumpToTeamMatches(elm.dataset.team);
+      elm.onkeydown=e=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); jumpToTeamMatches(elm.dataset.team); } };
+    });
+  }
+
   function renderStandings(){
     const content=document.getElementById("content");
     const tables={};            // "Group A" -> { teamName -> stats }
@@ -931,12 +941,7 @@
       html+='</tbody></table></div>';
     }
     content.innerHTML=html+'</div>';
-    // Tapping a team jumps to that team's matches in the Schedule (same as the team filter).
-    const jumpToTeam=name=>{ teamFilter=name; if(typeof buildTeamFilter==="function") buildTeamFilter(); setView("schedule"); };
-    content.querySelectorAll(".stand-team.tappable").forEach(elm=>{
-      elm.onclick=()=>jumpToTeam(elm.dataset.team);
-      elm.onkeydown=e=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); jumpToTeam(elm.dataset.team); } };
-    });
+    bindTeamTaps(content);   // tap a team → its matches in the Schedule
   }
 
   function rerender(){ if(view==="bracket") renderBracket(); else if(view==="standings") renderStandings(); else if(view==="scorers") renderScorers(); else if(view==="history") renderHistory(); else render(); }
@@ -1209,15 +1214,19 @@
       '</tr></thead><tbody>';
     list.forEach((r,i)=>{
       const code=codeOf(r.team);
+      const cTeam=canon(r.team);
+      // Only make the flag/code tappable when it maps to a real team we can filter the schedule by.
+      const tap=TEAM[cTeam]?` tappable" data-team="${cTeam}" role="button" tabindex="0" title="${t("seeMatches")}`:"";
       html+=`<tr class="${isFav(r.team)?"stand-fav":""}">`+
         `<td class="c-pos">${i+1}</td>`+
         `<td class="c-player">${r.player}</td>`+
-        `<td class="c-team"><span class="stand-team">${badge(r.team)}<span class="name">${code!=="?"?code:labelOf(r.team)}</span></span></td>`+
+        `<td class="c-team"><span class="stand-team${tap}">${badge(r.team)}<span class="name">${code!=="?"?code:labelOf(r.team)}</span></span></td>`+
         `<td class="c-pts">${r.goals}</td></tr>`;
     });
     html+='</tbody></table></div>'+
       `<div class="stand-cap">${usingRaw?t("fromResults"):t("provisional")} ${t("ownGoalsNote")}</div></div>`;
     content.innerHTML=html;
+    bindTeamTaps(content);   // tap a player's flag/code → that team's matches in the Schedule
   }
 
   // Past World Cups (1930 to 2022), verified from Wikipedia. Static, offline.
