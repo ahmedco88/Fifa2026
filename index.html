@@ -605,7 +605,7 @@
      Anonymous count of unique browsers that have opened the app. No personal data.
      1) Deploy the worker (see ..\counter-worker\README.md), 2) paste its URL below, 3) push.
      Leave COUNTER_API as "" and the footer line simply stays hidden. */
-  const COUNTER_API = "";   // e.g. "https://wc2026-counter.YOURNAME.workers.dev"
+  const COUNTER_API = "https://wc2026-counter.cpdgen.workers.dev";   // Cloudflare worker (counter-worker/)
   let fanTotal = null;
   function renderFanCount(){
     const el=document.getElementById("fanCount"); if(!el) return;
