@@ -280,6 +280,9 @@
   footer a { color: var(--coral); text-decoration: none; font-weight: 600; }
   footer a:hover { text-decoration: underline; }
   footer .bio { max-width: 30rem; margin: 0 auto .6rem; }
+  footer .fan-count { max-width: 30rem; margin: 0 auto .8rem; color: var(--teal); font-weight: 600; }
+  footer .fan-count b { color: var(--teal); }
+  :root[data-theme="dark"] footer .fan-count, :root[data-theme="dark"] footer .fan-count b { color: #5DCAA5; }
 
   .overlay { position: fixed; inset: 0; background: rgba(30,60,90,.55); display: none; align-items: center; justify-content: center; z-index: 50; padding: 1rem; }
   .overlay.open { display: flex; }
@@ -399,6 +402,7 @@
   <div class="note" id="note" data-i18n="note">⚠ Times shown in your local timezone, converted from each venue's local kick-off. Live scores update automatically as matches are played, and may lag a minute or two behind the live broadcast.</div>
 
   <footer>
+    <p class="fan-count" id="fanCount" hidden></p>
     <p class="bio" data-i18n-html="bio">Built by Ahmed Al-Obaidi, a busy doctor with a soft spot for technology and soccer.<br>Made in spare moments between shifts, for fellow fans who just want the matches in one place.</p>
     <p><a href="https://mrobaidi.com" target="_blank" rel="noopener" data-i18n="otherProjects">See my other projects here →</a></p>
   </footer>
@@ -509,7 +513,8 @@
       cdD:"d", cdH:"h", cdM:"m", cdS:"s",
       remindIn:"kicks off in", remindMinUnit:"min", remindNow:"is kicking off now",
       updated:"Updated", autoRefresh:"auto-refreshing live scores", tapRefresh:"tap refresh during matches",
-      noToday:"No upcoming matches found for today.", linkCopied:"Link copied to clipboard"
+      noToday:"No upcoming matches found for today.", linkCopied:"Link copied to clipboard",
+      fanCount:"{n} fans used this great little webapp so far and counting"
     },
     ar: {
       title:"كأس العالم 2026", subhead:"Canada · Mexico · USA · 104 مباراة", subtitle:"متتبّع المباريات",
@@ -570,7 +575,8 @@
       cdD:"ي", cdH:"س", cdM:"د", cdS:"ث",
       remindIn:"تبدأ خلال", remindMinUnit:"دقيقة", remindNow:"على وشك الانطلاق الآن",
       updated:"آخر تحديث", autoRefresh:"يتم تحديث النتائج تلقائيًا", tapRefresh:"اضغط تحديث أثناء المباريات",
-      noToday:"لا مباريات قادمة لهذا اليوم.", linkCopied:"تم نسخ الرابط"
+      noToday:"لا مباريات قادمة لهذا اليوم.", linkCopied:"تم نسخ الرابط",
+      fanCount:"استخدم {n} مشجع هذا التطبيق الصغير الرائع حتى الآن، والعدد في ازدياد"
     }
   };
   let LANG = "en";
@@ -592,6 +598,35 @@
     if(typeof updateNotifStatus==="function") updateNotifStatus();
     if(typeof rerender==="function") rerender();
     if(typeof updateClock==="function") updateClock();
+    if(typeof renderFanCount==="function") renderFanCount();
+  }
+
+  /* ---- Public fan counter (Cloudflare Worker + KV) ----
+     Anonymous count of unique browsers that have opened the app. No personal data.
+     1) Deploy the worker (see ..\counter-worker\README.md), 2) paste its URL below, 3) push.
+     Leave COUNTER_API as "" and the footer line simply stays hidden. */
+  const COUNTER_API = "";   // e.g. "https://wc2026-counter.YOURNAME.workers.dev"
+  let fanTotal = null;
+  function renderFanCount(){
+    const el=document.getElementById("fanCount"); if(!el) return;
+    if(!(fanTotal>0)){ el.hidden=true; return; }
+    el.innerHTML = t("fanCount").replace("{n}", `<b>${fanTotal.toLocaleString("en-US")}</b>`);
+    el.hidden=false;
+  }
+  async function initFanCount(){
+    if(!COUNTER_API) return;                                  // not deployed yet → stay hidden
+    const counted = (()=>{ try{ return localStorage.getItem("wc2026_counted")==="1"; }catch{ return false; } })();
+    const url = COUNTER_API.replace(/\/+$/,"") + (counted ? "/count" : "/hit");  // count once per browser
+    try{
+      const res = await fetch(url, {cache:"no-store"});
+      if(!res.ok) return;
+      const data = await res.json();
+      if(typeof data.count==="number"){
+        fanTotal = data.count;
+        if(!counted){ try{ localStorage.setItem("wc2026_counted","1"); }catch{} }
+        renderFanCount();
+      }
+    }catch{}                                                  // offline / not reachable → line stays hidden
   }
 
   // Short label for the viewer's local timezone (e.g. "AEST", "GMT+10", "PST").
@@ -1379,6 +1414,7 @@
   { const _b=document.getElementById("langToggle"); if(_b){ _b.textContent=(LANG==="ar")?"EN":"ع"; _b.title=t("ttLang"); } }
   applyStaticI18n();
   load();
+  initFanCount();
 
   // Deep-link: ?view=bracket opens the knockout view (used by the app shortcuts).
   try{ const qv=new URLSearchParams(location.search).get("view"); if(qv==="bracket"||qv==="standings"||qv==="scorers"||qv==="history") setView(qv); }catch{}
