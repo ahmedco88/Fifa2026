@@ -1152,7 +1152,7 @@
         pen: (x.shootoutScore!=null&&x.shootoutScore!=="")?parseInt(x.shootoutScore,10):null
       }));
       if(teams.some(t=>!t.iso || t.score==null || isNaN(t.score))) return null;
-      return { teams, state:ty.state, completed:!!ty.completed };
+      return { id: ev.id, teams, state:ty.state, completed:!!ty.completed };
     }catch{ return null; }
   }
   async function fetchEspnDay(d){
@@ -1177,8 +1177,54 @@
         m.score=Object.assign({},m.score,{ft:[by[a].score,by[b].score]});
         if(by[a].pen!=null&&by[b].pen!=null) m.score.pen=[by[a].pen,by[b].pen];
         m._live = ev.state==="in" && !ev.completed;    // in-progress → show "● Live" + running score
+        m._espnId = ev.id;                              // for the per-match summary (live goalscorers)
       }
     }catch{}
+  }
+
+  // ── Live goalscorers (ESPN per-match summary) ───────────────────────────────
+  // The scoreboard gives live scores but not who scored; the summary's keyEvents do.
+  // We fetch it for live (and just-finished, not-yet-in-openfootball) matches and fill
+  // goals1/goals2, so BOTH the match-card breakdown and the Top Scorers leaderboard
+  // update live — they already read goals1/goals2. Defensive: any failure is a no-op.
+  const ESPN_SUMMARY_URL="https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/summary?event=";
+  function parseEspnGoal(e){
+    if(!e||!e.scoringPlay||e.shootout) return null;     // skip non-goals and penalty shootouts
+    const ttype=((e.type&&(e.type.type||e.type.text))||"").toLowerCase();
+    const txt=(e.text||"").toLowerCase();
+    const owngoal=/own goal/.test(ttype)||/own goal/.test(txt)||e.ownGoal===true;
+    const penalty=/penalt/.test(ttype)||/penalt/.test(txt)||e.penaltyKick===true;
+    const parts=e.participants||[];
+    const name=(parts[0]&&((parts[0].athlete&&parts[0].athlete.displayName)||parts[0].displayName))||null;
+    if(!name) return null;
+    const minute=parseInt(String((e.clock&&(e.clock.displayValue||e.clock))||"").replace(/\D+/g,""),10)||null;
+    return { name, minute, owngoal, penalty, teamId:String((e.team&&e.team.id)||"") };
+  }
+  async function fetchLiveGoals(){
+    const has=a=>Array.isArray(a)&&a.length>0;
+    const targets=RAW.filter(m=>m._espnId && (m._live || (!has(m.goals1)&&!has(m.goals2))));
+    await Promise.all(targets.map(async m=>{
+      try{
+        const j=await (await fetch(ESPN_SUMMARY_URL+m._espnId,{cache:"no-store"})).json();
+        const comps=(j.header&&j.header.competitions&&j.header.competitions[0]&&j.header.competitions[0].competitors)||[];
+        if(comps.length!==2) return;
+        const isoA=iso2Of(m.team1), isoB=iso2Of(m.team2);
+        const slotOf={};   // ESPN team id → which openfootball side (1=team1, 2=team2)
+        for(const c of comps){ const iso=espnTeamIso(c.team), id=String((c.team&&c.team.id)||""); if(iso&&iso===isoA) slotOf[id]=1; else if(iso&&iso===isoB) slotOf[id]=2; }
+        const g1=[], g2=[];
+        for(const e of (j.keyEvents||[])){
+          const g=parseEspnGoal(e); if(!g) continue;
+          const obj={ name:g.name, minute:g.minute, owngoal:g.owngoal, penalty:g.penalty };
+          const slot=slotOf[g.teamId];
+          if(slot===1) g1.push(obj); else if(slot===2) g2.push(obj);
+        }
+        if(g1.length||g2.length){
+          if(!has(m.goals1)) m.goals1=g1;   // never clobber authoritative openfootball goals
+          if(!has(m.goals2)) m.goals2=g2;
+          m._liveGoals=true;
+        }
+      }catch{}
+    }));
   }
 
   // ── Top scorers ───────────────────────────────────────────────────────────
@@ -1384,7 +1430,8 @@
       RAW=json.matches||[];
       buildGroupPills(); buildTeamFilter(); rerender();
       document.getElementById("refreshBtn").style.display="block";
-      await Promise.all([enrichLiveScores(), fetchEspnScorers()]); rerender();   // merge live scores + scorers, then repaint
+      await enrichLiveScores();                                    // live scores + ESPN match ids first
+      await Promise.all([fetchLiveGoals(), fetchEspnScorers()]); rerender();   // live goalscorers + scorers, then repaint
       const stampTz=TZ?" "+TZ:"";
       const live=anyLive();
       document.getElementById("stamp").textContent=t("updated")+" "+fmtTime(new Date())+stampTz+" · "+(live?t("autoRefresh"):t("tapRefresh"));
