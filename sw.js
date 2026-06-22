@@ -1,6 +1,6 @@
 /* Service worker for WC 2026 Matches Tracker (PWA).
    Scope is the GitHub Pages subpath, so all URLs are relative. */
-const CACHE = "wc2026-v3";
+const CACHE = "wc2026-v4";
 const SHELL = [
   "./",
   "./index.html",
