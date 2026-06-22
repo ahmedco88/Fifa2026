@@ -222,6 +222,10 @@
   .team-side.right { justify-content: flex-end; }
   .team-name { font-size: 14px; font-weight: 500; color: var(--navy); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .team-name.fav { font-weight: 700; }
+  .team-name.tappable { cursor: pointer; border-radius: 6px; padding: 2px 5px; margin: -2px -5px; transition: background .12s; }
+  .team-name.tappable:hover { background: rgba(0,0,0,.05); }
+  :root[data-theme="dark"] .team-name.tappable:hover { background: rgba(255,255,255,.08); }
+  .team-name.tappable:active { background: rgba(0,0,0,.10); }
   .vs { font-size: 12px; color: #aaa; flex-shrink: 0; }
   .score { font-size: 17px; font-weight: 700; color: var(--navy); flex-shrink: 0; min-width: 44px; text-align: center; }
   .badge { width: 30px; height: 22px; border-radius: 4px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; color: #fff; letter-spacing: .3px; }
@@ -511,7 +515,7 @@
       pickTitle:"Choose teams to follow", clear:"Clear", saveTeams:"Save my teams",
       aboutTitle:"About & how to use",
       aboutIntro:"Your pocket guide to the World Cup 2026: all 104 matches, live scores, and your teams in one place. Here's what each part does:",
-      "about.schedule":"<b>Schedule</b>Every match, grouped by day. Kick-off times are shown in <b>your</b> local time automatically.",
+      "about.schedule":"<b>Schedule</b>Every match, grouped by day. Kick-off times are shown in <b>your</b> local time automatically. Tap a team's name to see just their matches.",
       "about.standings":"<b>Standings</b>Tap the <b>Standings</b> tab for the group tables: wins, draws, losses, goal difference and points, updated as results come in.",
       "about.scorers":"<b>Scorers</b>Tap the <b>Scorers</b> tab for the tournament's top goalscorers, updated live as goals go in (own goals aren't counted).",
       "about.bracket":"<b>Bracket</b>Tap the <b>🏆 Bracket</b> button on the Schedule to see the knockout rounds, who's playing who, and who goes through.",
@@ -577,7 +581,7 @@
       pickTitle:"اختر المنتخبات التي تتابعها", clear:"مسح", saveTeams:"حفظ فرقي",
       aboutTitle:"عن التطبيق وطريقة الاستخدام",
       aboutIntro:"دليلك المختصر لكأس العالم 2026: كل المباريات الـ104، النتائج المباشرة، ومنتخباتك في مكان واحد. إليك وظيفة كل قسم:",
-      "about.schedule":"<b>المباريات</b>كل مباراة، مرتّبة حسب اليوم. تُعرض أوقات الانطلاق بتوقيتك المحلي تلقائيًا.",
+      "about.schedule":"<b>المباريات</b>كل مباراة، مرتّبة حسب اليوم. تُعرض أوقات الانطلاق بتوقيتك المحلي تلقائيًا. اضغط على اسم المنتخب لعرض مبارياته فقط.",
       "about.standings":"<b>الترتيب</b>اضغط تبويب <b>الترتيب</b> لجداول المجموعات: الفوز والتعادل والخسارة وفارق الأهداف والنقاط، تتحدّث مع ورود النتائج.",
       "about.scorers":"<b>الهدّافون</b>اضغط تبويب <b>الهدّافون</b> لأبرز هدّافي البطولة، يتحدّث مباشرةً مع تسجيل الأهداف (لا تُحتسب الأهداف العكسية).",
       "about.bracket":"<b>الأدوار الإقصائية</b>اضغط زر <b>🏆 الأدوار الإقصائية</b> في صفحة المباريات لرؤية الأدوار الإقصائية ومن يلعب ضد من ومن يتأهّل.",
@@ -775,6 +779,13 @@
   function goalLine(g){ if(!g||!g.name) return ""; const tag=g.owngoal?' <span class="g-tag">(OG)</span>':(g.penalty?' <span class="g-tag">(pen)</span>':''); return `<div class="g-line"><span class="g-ball">⚽</span><span class="g-min">${g.minute||""}'</span>${g.name}${tag}</div>`; }
 
   // One match card's HTML (registers its calendar entry in ICS_REG).
+  // Team name inside a schedule card. Tappable → jumps to that team's matches,
+  // but only when it maps to a real team we can filter by (skips "Winner Group A" etc).
+  function teamNameHTML(name){
+    const c=canon(name), favCls=isFav(name)?" fav":"";
+    if(TEAM[c]) return `<span class="team-name tappable${favCls}" data-team="${c}" role="button" tabindex="0" title="${t("seeMatches")}">${labelOf(name)}</span>`;
+    return `<span class="team-name${favCls}">${labelOf(name)}</span>`;
+  }
   function matchCardHTML(r){
     const fav=isFav(r.team1)||isFav(r.team2);
     const st=matchState(r.dt,r.score,r._live);
@@ -791,9 +802,9 @@
     return `<div class="match ${fav?'fav':''}${expd?' expanded':''}">
         <div class="m-top"><span class="grp-tag">${grp}</span><span class="m-venue">📍 ${venueOf(r.ground)}</span><span></span></div>
         <div class="m-teams">
-          <div class="team-side">${badge(r.team1)}<span class="team-name ${isFav(r.team1)?'fav':''}">${labelOf(r.team1)}</span></div>
+          <div class="team-side">${badge(r.team1)}${teamNameHTML(r.team1)}</div>
           ${scoreDisp?`<span class="score">${scoreDisp}</span>`:`<span class="vs">${t("vs")}</span>`}
-          <div class="team-side right"><span class="team-name ${isFav(r.team2)?'fav':''}">${labelOf(r.team2)}</span>${badge(r.team2)}</div>
+          <div class="team-side right">${teamNameHTML(r.team2)}${badge(r.team2)}</div>
         </div>
         <div class="m-foot">${stTag}<span class="m-foot-c">${center}</span><button class="cal-btn" data-cid="${cid}">${t("add")}</button></div>
         ${hasGoals?`<div class="goals-panel"><div class="g-col">${g1.map(goalLine).join("")}</div><div class="g-col">${g2.map(goalLine).join("")}</div></div>`:""}
@@ -803,6 +814,7 @@
     content.querySelectorAll(".cal-btn").forEach(b=>{ b.onclick=()=>{const e=ICS_REG[b.dataset.cid]; if(e)downloadICS(e.m,e.dt);}; });
     content.querySelectorAll(".bell-btn").forEach(b=>{ b.onclick=()=>{const e=ICS_REG[b.dataset.cid]; if(e)toggleBell(matchKey(e.m));}; });
     content.querySelectorAll(".gx-btn").forEach(b=>{ b.onclick=()=>{ const e=ICS_REG[b.dataset.cid]; if(!e)return; const k=matchKey(e.m), card=b.closest(".match"); if(expanded.has(k)){expanded.delete(k);card&&card.classList.remove("expanded");}else{expanded.add(k);card&&card.classList.add("expanded");} }; });
+    bindTeamTaps(content);   // tap a team name → its matches in the Schedule
   }
 
   // Horizontal day strip: one chip per match-day in `rows`, today default, selected centred.
@@ -931,7 +943,7 @@
   function jumpToTeamMatches(name){ teamFilter=name; if(typeof buildTeamFilter==="function") buildTeamFilter(); setView("schedule"); }
   // Wire every .stand-team.tappable inside a freshly-rendered view to jumpToTeamMatches.
   function bindTeamTaps(container){
-    container.querySelectorAll(".stand-team.tappable").forEach(elm=>{
+    container.querySelectorAll(".stand-team.tappable, .team-name.tappable").forEach(elm=>{
       elm.onclick=()=>jumpToTeamMatches(elm.dataset.team);
       elm.onkeydown=e=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); jumpToTeamMatches(elm.dataset.team); } };
     });
