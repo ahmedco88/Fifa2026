@@ -249,6 +249,9 @@
   /* Pulsing red dot replaces the static ● glyph, to draw the eye to a live match. */
   .status.live::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: #A32D2D; animation: wcLivePulse 1.1s ease-in-out infinite; }
   .status.ft { background: #E1F5EE; color: #0F6E56; }
+  /* Suspended / delayed / postponed: amber, to flag a match that isn't running normally. */
+  .status.susp { background: #FCF1D6; color: #8A6516; }
+  :root[data-theme="dark"] .status.susp { background: #38301A; color: #E8C766; }
   .cal-btn { font-size: 11px; color: var(--teal); background: none; border: none; cursor: pointer; padding: 2px 4px; font-weight: 600; }
   .bell-btn { font-size: 19px; background: none; border: none; cursor: pointer; padding: 0 4px; line-height: 1; opacity: .3; filter: grayscale(1); transition: opacity .15s, filter .15s; }
   .bell-btn.on { opacity: 1; filter: none; }
@@ -539,6 +542,7 @@
       notifUnsupported:"This browser doesn't support notifications.",
       notifEnable:"Enable reminders", notifRecheck:"Re-check reminders",
       vs:"v", statusLive:"● Live", statusFt:"FT", add:"📅 Add", nextWeek:"Next week's matches ↓",
+      st_suspended:"⏸ Suspended", st_delayed:"⏳ Delayed", st_postponed:"⏳ Postponed", st_abandoned:"⛔ Abandoned", st_canceled:"⛔ Cancelled", st_forfeit:"⛔ Forfeit",
       loading:"Loading schedule…", noMatches:"No matches for this filter.",
       noBelled:"No belled matches yet, tap 🔔 on a match to get a reminder.",
       scorersEmpty:"Top scorers will appear once goals are scored.",
@@ -605,6 +609,7 @@
       notifUnsupported:"هذا المتصفح لا يدعم الإشعارات.",
       notifEnable:"تفعيل التنبيهات", notifRecheck:"إعادة فحص التنبيهات",
       vs:"ضد", statusLive:"● مباشر", statusFt:"انتهت", add:"📅 إضافة", nextWeek:"مباريات الأسبوع التالي ↓",
+      st_suspended:"⏸ موقوفة", st_delayed:"⏳ مؤجّلة", st_postponed:"⏳ مؤجّلة", st_abandoned:"⛔ متوقّفة", st_canceled:"⛔ ملغاة", st_forfeit:"⛔ انسحاب",
       loading:"جارٍ تحميل الجدول…", noMatches:"لا مباريات ضمن هذه التصفية.",
       noBelled:"لا مباريات محفوظة بعد، اضغط 🔔 على مباراة ليصلك تنبيه.",
       scorersEmpty:"يظهر الهدّافون بعد تسجيل الأهداف.",
@@ -754,7 +759,9 @@
   function roundLabel(r){ return ROUND_KEYS[r]?t(ROUND_KEYS[r]):(r||""); }
   function groupLabelShort(g){ if(!g) return ""; const m=g.match(/^Group\s+(.+)$/i); return m?(LANG==="ar"?t("groupWord")+" "+m[1]:"Grp "+m[1]):g; }
   function groupLabelFull(g){ if(!g) return ""; const m=g.match(/^Group\s+(.+)$/i); return m?(t("groupWord")+" "+m[1]):g; }
-  function matchState(dt,score,live){ if(live)return"live"; if(score&&score.ft)return"ft"; const diff=dt.getTime()-Date.now(); if(diff<0&&diff>-2.5*3600*1000)return"live"; return"upcoming"; }
+  // Abnormal states (from ESPN) that get their own amber status pill.
+  const ABNORMAL_STATES={suspended:1,delayed:1,postponed:1,abandoned:1,canceled:1,forfeit:1};
+  function matchState(dt,score,live,status){ if(status&&ABNORMAL_STATES[status])return status; if(live)return"live"; if(score&&score.ft)return"ft"; const diff=dt.getTime()-Date.now(); if(diff<0&&diff>-2.5*3600*1000)return"live"; return"upcoming"; }
 
   function pad(n){ return String(n).padStart(2,"0"); }
   function icsStamp(dt){ return `${dt.getUTCFullYear()}${pad(dt.getUTCMonth()+1)}${pad(dt.getUTCDate())}T${pad(dt.getUTCHours())}${pad(dt.getUTCMinutes())}00Z`; }
@@ -788,9 +795,12 @@
   }
   function matchCardHTML(r){
     const fav=isFav(r.team1)||isFav(r.team2);
-    const st=matchState(r.dt,r.score,r._live);
+    const st=matchState(r.dt,r.score,r._live,r._status);
     const scoreDisp=(r.score&&r.score.ft)?(LANG==="ar"?`${r.score.ft[1]}–${r.score.ft[0]}`:`${r.score.ft[0]}–${r.score.ft[1]}`):"";
-    const stTag=st==="live"?`<span class="status live">${t("statusLive").replace(/^●\s*/,"")}</span>`:st==="ft"?`<span class="status ft">${t("statusFt")}</span>`:`<span class="status">${fmtTime(r.dt)}${TZ?" "+TZ:""}</span>`;
+    const stTag=st==="live"?`<span class="status live">${t("statusLive").replace(/^●\s*/,"")}</span>`
+      :st==="ft"?`<span class="status ft">${t("statusFt")}</span>`
+      :ABNORMAL_STATES[st]?`<span class="status susp">${t("st_"+st)}</span>`
+      :`<span class="status">${fmtTime(r.dt)}${TZ?" "+TZ:""}</span>`;
     const grp=r.group?groupLabelShort(r.group):roundLabel(r.round||"");
     const cid="ics"+(icsId++); ICS_REG[cid]={m:r,dt:r.dt};
     const belled=belledMatches.has(matchKey(r));
@@ -1134,7 +1144,7 @@
   // Auto-refresh scores while any match is live, so the page stays current
   // without the user tapping refresh. Polls once a minute during live windows.
   let pollTimer=null;
-  function anyLive(){ return RAW.some(m=>{ const dt=toLocal(m.date,m.time); return dt && matchState(dt,m.score,m._live)==="live"; }); }
+  function anyLive(){ return RAW.some(m=>{ const dt=toLocal(m.date,m.time); if(!dt) return false; const s=matchState(dt,m.score,m._live,m._status); return s==="live"||s==="suspended"||s==="delayed"; }); }
   function schedulePoll(){ if(pollTimer)clearInterval(pollTimer); pollTimer=setInterval(()=>{ if(anyLive())load(true); }, 60000); }
 
   /* ---- Real-time scores from ESPN's public scoreboard ----
@@ -1164,7 +1174,7 @@
         pen: (x.shootoutScore!=null&&x.shootoutScore!=="")?parseInt(x.shootoutScore,10):null
       }));
       if(teams.some(t=>!t.iso || t.score==null || isNaN(t.score))) return null;
-      return { id: ev.id, teams, state:ty.state, completed:!!ty.completed };
+      return { id: ev.id, teams, state:ty.state, completed:!!ty.completed, statusName:(ty.name||"").toUpperCase() };
     }catch{ return null; }
   }
   async function fetchEspnDay(d){
@@ -1175,21 +1185,37 @@
       return (j.events||[]).map(parseEspnEvent).filter(Boolean);
     }catch{ return []; }
   }
+  // Map an ESPN status name to one of our "abnormal" match states (or null if normal).
+  // Substring match keeps this resilient to ESPN's naming (e.g. STATUS_RAIN_DELAY → delayed).
+  function abnormalState(name){
+    if(!name) return null;
+    if(name.includes("SUSPEND"))  return "suspended";
+    if(name.includes("DELAY"))    return "delayed";
+    if(name.includes("POSTPON"))  return "postponed";
+    if(name.includes("ABANDON"))  return "abandoned";
+    if(name.includes("CANCEL"))   return "canceled";
+    if(name.includes("FORFEIT"))  return "forfeit";
+    return null;
+  }
   async function enrichLiveScores(){
     try{
       const events=(await Promise.all(espnDates().map(fetchEspnDay))).flat();
       if(!events.length) return;
       for(const ev of events){
-        if(ev.state==="pre") continue;                 // not kicked off: leave as scheduled
+        const abn=abnormalState(ev.statusName);        // suspended / delayed / postponed / …
+        if(ev.state==="pre" && !abn) continue;         // not kicked off & normal: leave as scheduled
         const by={}; ev.teams.forEach(t=>by[t.iso]=t);
         // Each pair meets at most once in the tournament, so the team-pair is a unique key.
         const m=RAW.find(x=>{ const a=iso2Of(x.team1), b=iso2Of(x.team2); return a&&b&&a!==b&&by[a]&&by[b]; });
         if(!m) continue;
         const a=iso2Of(m.team1), b=iso2Of(m.team2);
-        m.score=Object.assign({},m.score,{ft:[by[a].score,by[b].score]});
-        if(by[a].pen!=null&&by[b].pen!=null) m.score.pen=[by[a].pen,by[b].pen];
-        m._live = ev.state==="in" && !ev.completed;    // in-progress → show "● Live" + running score
-        m._espnId = ev.id;                              // for the per-match summary (live goalscorers)
+        if(ev.state!=="pre"){                          // a postponed-before-kickoff match has no real score yet
+          m.score=Object.assign({},m.score,{ft:[by[a].score,by[b].score]});
+          if(by[a].pen!=null&&by[b].pen!=null) m.score.pen=[by[a].pen,by[b].pen];
+        }
+        m._status = abn;                               // null when normal; resolves itself once play resumes
+        m._live = ev.state==="in" && !ev.completed && !abn;  // suspended/delayed shown distinctly, not "● Live"
+        m._espnId = ev.id;                             // for the per-match summary (live goalscorers)
       }
     }catch{}
   }
@@ -1486,12 +1512,14 @@
     const el=document.getElementById("nextUp"); if(!el) return;
     if(view!=="schedule"){ el.style.display="none"; return; }
     if(!RAW.length){ el.style.display="none"; return; }
-    const now=Date.now(); let live=null, next=null, nextT=Infinity;
-    for(const m of RAW){ const dt=toLocal(m.date,m.time); if(!dt) continue; const t=dt.getTime(); const st=matchState(dt,m.score,m._live);
+    const now=Date.now(); let live=null, susp=null, next=null, nextT=Infinity;
+    for(const m of RAW){ const dt=toLocal(m.date,m.time); if(!dt) continue; const t=dt.getTime(); const st=matchState(dt,m.score,m._live,m._status);
       if(st==="live"){ if(!live) live=m; }
+      else if((st==="suspended"||st==="delayed") && !susp){ susp=m; }
       else if(st==="upcoming" && t>=now && t<nextT){ next=m; nextT=t; }
     }
     if(live){ el.innerHTML=`<span class="now-live"><span class="now-dot" aria-hidden="true"></span><span class="now-shim">${t("nowLabel")} ${labelOf(live.team1)} ${t("vs")} ${labelOf(live.team2)} ${t("liveWord")}</span></span>`; el.style.display=""; return; }
+    if(susp){ el.textContent=`${t("st_"+(susp._status||"suspended"))}: ${labelOf(susp.team1)} ${t("vs")} ${labelOf(susp.team2)}`; el.style.display=""; return; }
     if(!next){ el.style.display="none"; return; }
     el.textContent=`⏱ ${t("nextLabel")} ${labelOf(next.team1)} ${t("vs")} ${labelOf(next.team2)}, ${t("kicksOffIn")} ${fmtCountdown(nextT-now)}`;
     el.style.display="";
