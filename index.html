@@ -366,13 +366,14 @@
   .stamp { font-size: 11px; color: var(--muted); text-align: center; padding: .5rem; }
   .note { font-size: 11px; color: var(--muted); padding: .5rem 1rem 1rem; line-height: 1.5; }
 
-  footer { text-align: center; padding: 1.25rem 1rem 2rem; font-size: 12px; color: var(--muted); border-top: 1px solid var(--line); margin-top: .5rem; line-height: 1.6; }
-  footer a { color: var(--coral); text-decoration: none; font-weight: 600; }
-  footer a:hover { text-decoration: underline; }
-  footer .bio { max-width: 30rem; margin: 0 auto .6rem; }
-  footer .fan-count { max-width: 30rem; margin: 0 auto .8rem; color: var(--teal); font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 7px; }
-  footer .fan-count b { color: var(--teal); }
-  :root[data-theme="dark"] footer .fan-count, :root[data-theme="dark"] footer .fan-count b { color: #5DCAA5; }
+  /* Credits block — now lives at the bottom of the About panel (moved out of the page footer). */
+  .about-credit { text-align: center; margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line); font-size: 12px; color: var(--muted); line-height: 1.6; }
+  .about-credit a { color: var(--coral); text-decoration: none; font-weight: 600; }
+  .about-credit a:hover { text-decoration: underline; }
+  .about-credit .bio { margin: 0 auto .6rem; }
+  .about-credit .fan-count { margin: 0 auto .8rem; color: var(--teal); font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 7px; }
+  .about-credit .fan-count b { color: var(--teal); }
+  :root[data-theme="dark"] .about-credit .fan-count, :root[data-theme="dark"] .about-credit .fan-count b { color: #5DCAA5; }
   /* Live-motion cues: pulsing live dot (badge + Now line), shimmer Now line, breathing fan counter. */
   @keyframes wcLivePulse { 0%,100%{ opacity: 1; } 50%{ opacity: .2; } }
   @keyframes wcShimmer { 0%{ background-position: 160% 0; } 100%{ background-position: -60% 0; } }
@@ -504,11 +505,6 @@
 
   <div class="note" id="note" data-i18n="note">⚠ Times shown in your local timezone, converted from each venue's local kick-off. Live scores update automatically as matches are played, and may lag a minute or two behind the live broadcast.</div>
 
-  <footer>
-    <p class="fan-count" id="fanCount" hidden></p>
-    <p class="bio" data-i18n-html="bio">Built by Ahmed Al-Obaidi, a busy doctor with a soft spot for technology and soccer.<br>Made in spare moments between shifts, for fellow fans who just want the matches in one place.</p>
-    <p><a href="https://mrobaidi.com" target="_blank" rel="noopener" data-i18n="otherProjects">See my other projects here →</a></p>
-  </footer>
 </div>
 
 <div class="overlay" id="overlay">
@@ -528,7 +524,7 @@
         <div class="about-item"><span class="about-ic">📅</span><span class="about-tx" data-i18n-html="about.schedule"><b>Schedule</b>Every match, grouped by day. Kick-off times are shown in <b>your</b> local time automatically.</span></div>
         <div class="about-item"><span class="about-ic">📊</span><span class="about-tx" data-i18n-html="about.standings"><b>Standings</b>Tap the <b>Standings</b> tab for the group tables: wins, draws, losses, goal difference and points, updated as results come in.</span></div>
         <div class="about-item"><span class="about-ic">👟</span><span class="about-tx" data-i18n-html="about.scorers"><b>Scorers</b>Tap the <b>Scorers</b> tab for the tournament's top goalscorers, updated live as goals go in (own goals aren't counted).</span></div>
-        <div class="about-item"><span class="about-ic">🏆</span><span class="about-tx" data-i18n-html="about.bracket"><b>Bracket</b>Tap the <b>🏆 Bracket</b> button on the Schedule to see the knockout rounds, who's playing who, and who goes through.</span></div>
+        <div class="about-item"><span class="about-ic">🏆</span><span class="about-tx" data-i18n-html="about.bracket"><b>Bracket</b>The knockout tree, where the app opens during the knockouts. Lines connect each match to the next round so you can follow who goes through (penalty-shootout winners included). Tap a team to trace their path to the Final.</span></div>
         <div class="about-item"><span class="about-ic">🏅</span><span class="about-tx" data-i18n-html="about.history"><b>History</b>Tap the <b>History</b> tab for past World Cups (1930 to 2022): hosts, winners, and Golden Boot top scorers.</span></div>
         <div class="about-item"><span class="about-ic">🔍</span><span class="about-tx" data-i18n-html="about.filter"><b>Filter by group</b>Tap a group (A to L) to show only those matches.</span></div>
         <div class="about-item"><span class="about-ic">⭐</span><span class="about-tx" data-i18n-html="about.myteams"><b>My teams</b>Tap <b>⚙ Choose my teams</b> to pick your favourites. They get highlighted, and <b>★ My teams</b> filters to just them.</span></div>
@@ -545,6 +541,11 @@
       </div>
       <p class="about-note" data-i18n="aboutNote">Times may lag a minute or two behind the live broadcast. Schedule from the open-source openfootball project; live scores via ESPN's public feed.</p>
       <p class="about-note" id="iosInstallHint" data-i18n-html="iosHint" hidden>📱 <b>On iPhone:</b> tap the <b>Share</b> icon, then <b>Add to Home Screen</b> to install this app.</p>
+      <div class="about-credit">
+        <p class="fan-count" id="fanCount" hidden></p>
+        <p class="bio" data-i18n-html="bio">Built by Ahmed Al-Obaidi, a busy doctor with a soft spot for technology and soccer.<br>Made in spare moments between shifts, for fellow fans who just want the matches in one place.</p>
+        <p><a href="https://mrobaidi.com" target="_blank" rel="noopener" data-i18n="otherProjects">See my other projects here →</a></p>
+      </div>
     </div>
     <div class="modal-foot"><button class="btn-ghost" id="installBtn" data-i18n="install" hidden>⬇ Install app</button><button class="btn-primary" id="aboutOk" data-i18n="aboutOk">Got it 👍</button></div>
   </div>
@@ -579,7 +580,7 @@
       "about.schedule":"<b>Schedule</b>Every match, grouped by day. Kick-off times are shown in <b>your</b> local time automatically. Tap a team's name to see just their matches.",
       "about.standings":"<b>Standings</b>Tap the <b>Standings</b> tab for the group tables: wins, draws, losses, goal difference and points, updated as results come in.",
       "about.scorers":"<b>Scorers</b>Tap the <b>Scorers</b> tab for the tournament's top goalscorers, updated live as goals go in (own goals aren't counted).",
-      "about.bracket":"<b>Bracket</b>Tap the <b>🏆 Bracket</b> button on the Schedule to see the knockout rounds, who's playing who, and who goes through.",
+      "about.bracket":"<b>Bracket</b>The knockout tree, where the app opens during the knockouts. Lines connect each match to the next round so you can follow who goes through (penalty-shootout winners included). Tap a team to trace their path to the Final.",
       "about.history":"<b>History</b>Tap the <b>History</b> tab for past World Cups (1930 to 2022): hosts, winners, and Golden Boot top scorers.",
       "about.filter":"<b>Filter by group</b>Tap a group (A to L) to show only those matches.",
       "about.myteams":"<b>My teams</b>Tap <b>⚙ Choose my teams</b> to pick your favourites. They get highlighted, and <b>★ My teams</b> filters to just them.",
@@ -648,7 +649,7 @@
       "about.schedule":"<b>المباريات</b>كل مباراة، مرتّبة حسب اليوم. تُعرض أوقات الانطلاق بتوقيتك المحلي تلقائيًا. اضغط على اسم المنتخب لعرض مبارياته فقط.",
       "about.standings":"<b>الترتيب</b>اضغط تبويب <b>الترتيب</b> لجداول المجموعات: الفوز والتعادل والخسارة وفارق الأهداف والنقاط، تتحدّث مع ورود النتائج.",
       "about.scorers":"<b>الهدّافون</b>اضغط تبويب <b>الهدّافون</b> لأبرز هدّافي البطولة، يتحدّث مباشرةً مع تسجيل الأهداف (لا تُحتسب الأهداف العكسية).",
-      "about.bracket":"<b>الأدوار الإقصائية</b>اضغط زر <b>🏆 الأدوار الإقصائية</b> في صفحة المباريات لرؤية الأدوار الإقصائية ومن يلعب ضد من ومن يتأهّل.",
+      "about.bracket":"<b>الأدوار الإقصائية</b>شجرة الأدوار الإقصائية، حيث يفتح التطبيق أثناء الأدوار الإقصائية. خطوط تصل كل مباراة بالدور التالي لتتابع المتأهّلين (مع إظهار الفائز بركلات الترجيح). اضغط على فريق لتتبّع طريقه حتى النهائي.",
       "about.history":"<b>السجل</b>اضغط تبويب <b>السجل</b> لكؤوس العالم السابقة (1930 إلى 2022): المضيفون والأبطال وهدّافو الحذاء الذهبي.",
       "about.filter":"<b>التصفية حسب المجموعة</b>اضغط مجموعة (من A إلى L) لعرض مبارياتها فقط.",
       "about.myteams":"<b>فرقي</b>اضغط <b>⚙ اختر فرقي</b> لاختيار منتخباتك المفضّلة. تُميَّز بلون، و<b>★ فرقي</b> يصفّي المباريات لها فقط.",
@@ -781,6 +782,9 @@
   const LIGHT_BADGES = new Set(["ECU","COL"]);
 
   let RAW = [], favTeams = new Set();
+  // Capacitor native build? The bridge injects window.Capacitor only inside the app.
+  const NATIVE = !!(window.Capacitor && typeof window.Capacitor.isNativePlatform==="function" && window.Capacitor.isNativePlatform());
+  const CAP = ()=> (window.Capacitor && window.Capacitor.Plugins) || {};
   let showFavOnly=false, showRemindOnly=false, groupFilter=null, teamFilter=null, view="schedule";
   let selectedDayKey=null;    // day strip: selected day's fmtDay key (defaults to today)
   let currentDayKeys=[];      // ordered day keys currently in the strip (for swipe nav)
@@ -1267,6 +1271,15 @@
   function updateNotifStatus(){
     const st=document.getElementById("notifStatus"), btn=document.getElementById("notifBtn"), dot=document.getElementById("notifDot");
     if(!st) return;
+    if(NATIVE){
+      const LN=CAP().LocalNotifications;
+      (async()=>{ let granted=false; try{ granted=(await LN.checkPermissions()).display==="granted"; }catch{}
+        st.textContent=granted?t("notifOnClosed"):t("notifOff");
+        if(dot) dot.className="notif-dot"+(granted?" on":"");
+        if(btn){ btn.style.display=""; btn.textContent=granted?t("notifRecheck"):t("notifEnable"); }
+      })();
+      return;
+    }
     if(!("Notification" in window)){ st.textContent=t("notifUnsupported"); if(btn)btn.style.display="none"; if(dot)dot.className="notif-dot"; return; }
     const p=Notification.permission; let cls="";
     if(p==="granted"){ st.textContent=CAN_SCHEDULE?t("notifOnClosed"):t("notifOnOpen"); cls="on"; if(btn){btn.style.display=""; btn.textContent=t("notifRecheck");} }
@@ -1275,6 +1288,7 @@
     if(dot) dot.className="notif-dot"+(cls?" "+cls:"");
   }
   document.getElementById("notifBtn").onclick=async function(){
+    if(NATIVE){ const LN=CAP().LocalNotifications; if(LN){ try{ if((await LN.checkPermissions()).display!=="granted") await LN.requestPermissions(); await scheduleReminders(); }catch{} } updateNotifStatus(); return; }
     if(!("Notification" in window)) return;
     if(Notification.permission==="default"){ try{ await Notification.requestPermission(); }catch{} }
     if(Notification.permission==="granted"){ try{ await scheduleReminders(); }catch{} }
@@ -1719,9 +1733,31 @@
       if(mins<=REMIND_LEAD && mins>-2){ const k=matchKey(m); if(!notified.has(k)){ notified.add(k); fireReminder(m,mins); } }
     }
   }
+  // Native (Capacitor) reminders via the OS Local Notifications plugin — reliable when the
+  // app is CLOSED, on Android and iOS. Clears our prior schedule, then re-adds belled ones.
+  function notifId(key){ let h=0; for(let i=0;i<key.length;i++){ h=(h*31+key.charCodeAt(i))|0; } return Math.abs(h)%2000000000+1; }
+  async function scheduleNativeReminders(){
+    const LN=CAP().LocalNotifications; if(!LN) return;
+    try{
+      if((await LN.checkPermissions()).display!=="granted") return;
+      try{ const pend=await LN.getPending(); if(pend&&pend.notifications&&pend.notifications.length) await LN.cancel({notifications:pend.notifications.map(n=>({id:n.id}))}); }catch{}
+      const now=Date.now(); const list=[]; let count=0;
+      for(const m of RAW){
+        if(!belledMatches.has(matchKey(m))) continue;
+        const dt=toLocal(m.date,m.time); if(!dt) continue;
+        const at=dt.getTime()-REMIND_LEAD*60000;
+        if(at<=now || count++>60) continue;
+        list.push({ id:notifId(matchKey(m)), title:"⚽ World Cup 2026",
+          body:`${labelOf(m.team1)} ${t("vs")} ${labelOf(m.team2)} ${t("remindIn")} ${REMIND_LEAD} ${t("remindMinUnit")}`,
+          schedule:{ at:new Date(at), allowWhileIdle:true } });
+      }
+      if(list.length) await LN.schedule({notifications:list});
+    }catch{}
+  }
   // Schedule OS-level notifications for belled upcoming matches (fires even when closed).
   // Re-runs on every change: clears our prior schedules, then re-adds current belled ones.
   async function scheduleReminders(){
+    if(NATIVE) return scheduleNativeReminders();
     if(!CAN_SCHEDULE || !("serviceWorker" in navigator)) return;
     let reg; try{ reg = await navigator.serviceWorker.ready; }catch{ return; }
     try{ const pend=await reg.getNotifications({includeTriggered:true}); pend.forEach(n=>{ if(n.tag&&n.tag.indexOf("wc-rem:")===0) n.close(); }); }catch{}
@@ -1744,7 +1780,8 @@
   async function toggleBell(key){
     if(belledMatches.has(key)){ belledMatches.delete(key); }
     else {
-      if("Notification" in window && Notification.permission==="default"){ try{ await Notification.requestPermission(); }catch{} }
+      if(NATIVE){ const LN=CAP().LocalNotifications; if(LN){ try{ if((await LN.checkPermissions()).display!=="granted") await LN.requestPermissions(); }catch{} } }
+      else if("Notification" in window && Notification.permission==="default"){ try{ await Notification.requestPermission(); }catch{} }
       belledMatches.add(key);
     }
     saveBelled(); scheduleReminders();
@@ -1773,8 +1810,16 @@
     if(qv==="bracket"||qv==="standings"||qv==="scorers"||qv==="history") setView(qv);
     else if(qv!=="schedule") setView("bracket"); }catch{ setView("bracket"); }
 
-  /* ---- PWA: service worker + install affordance ---- */
-  if("serviceWorker" in navigator){
+  /* ---- Native (Capacitor) bootstrap: theme the status bar, drop the splash ---- */
+  if(NATIVE){
+    const P=CAP();
+    try{ P.StatusBar&&P.StatusBar.setOverlaysWebView({overlay:false}); }catch{}
+    try{ P.StatusBar&&P.StatusBar.setBackgroundColor({color:"#1E3C5A"}); }catch{}
+    try{ P.StatusBar&&P.StatusBar.setStyle({style:"DARK"}); }catch{}   // DARK = light text on the navy bar
+    try{ P.SplashScreen&&P.SplashScreen.hide(); }catch{}
+  }
+  /* ---- PWA: service worker + install affordance (web only; redundant inside the app) ---- */
+  if(!NATIVE && "serviceWorker" in navigator){
     // Register right away (script runs at end of body, so the DOM is ready).
     // Explicit relative path + scope so it works under the GitHub Pages /Fifa2026/ subpath.
     navigator.serviceWorker.register("./sw.js", { scope: "./" }).catch(()=>{});
