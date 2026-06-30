@@ -222,6 +222,10 @@
   .team-side.right { justify-content: flex-end; }
   .team-name { font-size: 14px; font-weight: 500; color: var(--navy); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .team-name.fav { font-weight: 700; }
+  .team-name.win { font-weight: 700; color: var(--teal); }
+  :root[data-theme="dark"] .team-name.win { color: #2FB39E; }
+  .pen-result { text-align: center; font-size: 11.5px; font-weight: 600; color: var(--teal); margin: -2px 0 5px; }
+  :root[data-theme="dark"] .pen-result { color: #2FB39E; }
   .team-name.tappable { cursor: pointer; border-radius: 6px; padding: 2px 5px; margin: -2px -5px; transition: background .12s; }
   .team-name.tappable:hover { background: rgba(0,0,0,.05); }
   :root[data-theme="dark"] .team-name.tappable:hover { background: rgba(255,255,255,.08); }
@@ -542,6 +546,7 @@
       notifUnsupported:"This browser doesn't support notifications.",
       notifEnable:"Enable reminders", notifRecheck:"Re-check reminders",
       vs:"v", statusLive:"● Live", statusFt:"FT", add:"📅 Add", nextWeek:"Next week's matches ↓",
+      penWin:"won", onPens:"on penalties",
       st_suspended:"⏸ Suspended", st_delayed:"⏳ Delayed", st_postponed:"⏳ Postponed", st_abandoned:"⛔ Abandoned", st_canceled:"⛔ Cancelled", st_forfeit:"⛔ Forfeit",
       loading:"Loading schedule…", noMatches:"No matches for this filter.",
       noBelled:"No belled matches yet, tap 🔔 on a match to get a reminder.",
@@ -609,6 +614,7 @@
       notifUnsupported:"هذا المتصفح لا يدعم الإشعارات.",
       notifEnable:"تفعيل التنبيهات", notifRecheck:"إعادة فحص التنبيهات",
       vs:"ضد", statusLive:"● مباشر", statusFt:"انتهت", add:"📅 إضافة", nextWeek:"مباريات الأسبوع التالي ↓",
+      penWin:"فاز", onPens:"بركلات الترجيح",
       st_suspended:"⏸ موقوفة", st_delayed:"⏳ مؤجّلة", st_postponed:"⏳ مؤجّلة", st_abandoned:"⛔ متوقّفة", st_canceled:"⛔ ملغاة", st_forfeit:"⛔ انسحاب",
       loading:"جارٍ تحميل الجدول…", noMatches:"لا مباريات ضمن هذه التصفية.",
       noBelled:"لا مباريات محفوظة بعد، اضغط 🔔 على مباراة ليصلك تنبيه.",
@@ -788,15 +794,22 @@
   // One match card's HTML (registers its calendar entry in ICS_REG).
   // Team name inside a schedule card. Tappable → jumps to that team's matches,
   // but only when it maps to a real team we can filter by (skips "Winner Group A" etc).
-  function teamNameHTML(name){
-    const c=canon(name), favCls=isFav(name)?" fav":"";
-    if(TEAM[c]) return `<span class="team-name tappable${favCls}" data-team="${c}" role="button" tabindex="0" title="${t("seeMatches")}">${labelOf(name)}</span>`;
-    return `<span class="team-name${favCls}">${labelOf(name)}</span>`;
+  function teamNameHTML(name,win){
+    const c=canon(name), favCls=isFav(name)?" fav":"", winCls=win?" win":"";
+    if(TEAM[c]) return `<span class="team-name tappable${favCls}${winCls}" data-team="${c}" role="button" tabindex="0" title="${t("seeMatches")}">${labelOf(name)}</span>`;
+    return `<span class="team-name${favCls}${winCls}">${labelOf(name)}</span>`;
   }
   function matchCardHTML(r){
     const fav=isFav(r.team1)||isFav(r.team2);
     const st=matchState(r.dt,r.score,r._live,r._status);
     const scoreDisp=(r.score&&r.score.ft)?(LANG==="ar"?`${r.score.ft[1]}–${r.score.ft[0]}`:`${r.score.ft[0]}–${r.score.ft[1]}`):"";
+    // Penalty shootout: the feed only sends pens when normal time was level. Show who went through.
+    const ftS=r.score&&r.score.ft, penS=r.score&&(r.score.p||r.score.pen);
+    let penWin=0;   // 0 none · 1 team1 · 2 team2
+    if(ftS&&penS&&ftS[0]===ftS[1]&&penS[0]!==penS[1]) penWin = penS[0]>penS[1] ? 1 : 2;
+    const penLine = penWin
+      ? `<div class="pen-result">${labelOf(penWin===1?r.team1:r.team2)} ${t("penWin")} <span dir="ltr">${Math.max(penS[0],penS[1])}–${Math.min(penS[0],penS[1])}</span> ${t("onPens")}</div>`
+      : "";
     const stTag=st==="live"?`<span class="status live">${t("statusLive").replace(/^●\s*/,"")}</span>`
       :st==="ft"?`<span class="status ft">${t("statusFt")}</span>`
       :ABNORMAL_STATES[st]?`<span class="status susp">${t("st_"+st)}</span>`
@@ -812,10 +825,11 @@
     return `<div class="match ${fav?'fav':''}${expd?' expanded':''}">
         <div class="m-top"><span class="grp-tag">${grp}</span><span class="m-venue">📍 ${venueOf(r.ground)}</span><span></span></div>
         <div class="m-teams">
-          <div class="team-side">${badge(r.team1)}${teamNameHTML(r.team1)}</div>
+          <div class="team-side">${badge(r.team1)}${teamNameHTML(r.team1,penWin===1)}</div>
           ${scoreDisp?`<span class="score">${scoreDisp}</span>`:`<span class="vs">${t("vs")}</span>`}
-          <div class="team-side right">${teamNameHTML(r.team2)}${badge(r.team2)}</div>
+          <div class="team-side right">${teamNameHTML(r.team2,penWin===2)}${badge(r.team2)}</div>
         </div>
+        ${penLine}
         <div class="m-foot">${stTag}<span class="m-foot-c">${center}</span><button class="cal-btn" data-cid="${cid}">${t("add")}</button></div>
         ${hasGoals?`<div class="goals-panel"><div class="g-col">${g1.map(goalLine).join("")}</div><div class="g-col">${g2.map(goalLine).join("")}</div></div>`:""}
       </div>`;
