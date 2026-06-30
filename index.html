@@ -122,6 +122,13 @@
   :root[data-theme="dark"] .brow, :root[data-theme="dark"] .bscore { color: var(--ink); }
 
   /* ── Knockout tree (connector bracket) ── */
+  /* Edge fades hint that the tree scrolls sideways; each hides at its end. */
+  .bk-frame { position: relative; }
+  .bk-fade { position: absolute; top: 0; bottom: 1rem; width: 32px; pointer-events: none; z-index: 3; transition: opacity .2s; }
+  .bk-fade.l { left: 0; background: linear-gradient(to right, var(--cream), transparent); }
+  .bk-fade.r { right: 0; background: linear-gradient(to left, var(--cream), transparent); }
+  .bk-frame.at-start .bk-fade.l { opacity: 0; }
+  .bk-frame.at-end .bk-fade.r { opacity: 0; }
   .bk-scroll { position: relative; overflow: auto; -webkit-overflow-scrolling: touch; margin: .25rem 0 1rem; padding: 0 1rem 1rem;
                max-height: calc(100dvh - 200px); scrollbar-width: thin; scrollbar-color: var(--coral) var(--line); }
   .bk-scroll::-webkit-scrollbar { width: 9px; height: 9px; }
@@ -1000,7 +1007,7 @@
     // Geometry. Each Round-of-32 match is a leaf row; later matches sit centred
     // between their two feeders, so the connector elbows read cleanly.
     const rtl=(LANG==="ar");
-    const CW=170, PITCH=214, RP=82, CH=68, TOP=30, PADX=2;
+    const CW=170, PITCH=214, RP=106, CH=82, TOP=30, PADX=2;
     const leavesOf=(n)=>{ const f=BK_FEED[n]; return f?leavesOf(f[0]).concat(leavesOf(f[1])):[n]; };
     const order=leavesOf(104); const rowOf={}; order.forEach((n,i)=>{ rowOf[n]=i; });
     const cyMemo={};
@@ -1061,11 +1068,18 @@
 
     let heads=""; BK_HEADS.forEach((h,c)=>{ heads+=`<div class="bk-head" style="left:${Lx(rawLeft(c))}px;top:6px;width:${CW}px">${roundLabel(h)}</div>`; });
 
-    content.innerHTML=`<div class="bk-scroll"><div class="bk-canvas${rtl?' rtl':''}" style="width:${W}px;height:${H}px"><svg class="bk-lines" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" aria-hidden="true">${lines}</svg>${heads}${cards}</div></div>`;
+    content.innerHTML=`<div class="bk-frame"><div class="bk-fade l"></div><div class="bk-fade r"></div><div class="bk-scroll"><div class="bk-canvas${rtl?' rtl':''}" style="width:${W}px;height:${H}px"><svg class="bk-lines" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" aria-hidden="true">${lines}</svg>${heads}${cards}</div></div></div>`;
 
     // Interactions: tap a team to trace their whole road; tap empty space to clear.
-    const scroll=content.querySelector(".bk-scroll"), canvas=content.querySelector(".bk-canvas");
+    const frame=content.querySelector(".bk-frame"), scroll=content.querySelector(".bk-scroll"), canvas=content.querySelector(".bk-canvas");
     if(scroll) scroll.scrollLeft = rtl ? (scroll.scrollWidth-scroll.clientWidth) : 0;
+    // Show/hide the left & right scroll-fades (direction-agnostic via rects).
+    function updateFades(){ if(!scroll||!frame)return; const sb=scroll.getBoundingClientRect(), cb=canvas.getBoundingClientRect();
+      frame.classList.toggle("at-start", cb.left>=sb.left-1); frame.classList.toggle("at-end", cb.right<=sb.right+1); }
+    if(scroll) scroll.addEventListener("scroll", updateFades, {passive:true});
+    if(window.__bkFade) window.removeEventListener("resize", window.__bkFade);
+    window.__bkFade=updateFades; window.addEventListener("resize", updateFades);
+    updateFades();
     let traced=null;
     function clearTrace(){ traced=null; canvas.classList.remove("tracing");
       canvas.querySelectorAll(".on").forEach(e=>e.classList.remove("on"));
