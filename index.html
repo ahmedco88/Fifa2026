@@ -121,6 +121,52 @@
   .bdate { font-size: 10px; color: var(--muted); padding: 3px 8px 0; }
   :root[data-theme="dark"] .brow, :root[data-theme="dark"] .bscore { color: var(--ink); }
 
+  /* ── Knockout tree (connector bracket) ── */
+  .bk-scroll { position: relative; overflow: auto; -webkit-overflow-scrolling: touch; margin: .25rem 0 1rem; padding: 0 1rem 1rem;
+               max-height: calc(100dvh - 200px); scrollbar-width: thin; scrollbar-color: var(--coral) var(--line); }
+  .bk-scroll::-webkit-scrollbar { width: 9px; height: 9px; }
+  .bk-scroll::-webkit-scrollbar-track { background: var(--line); border-radius: 5px; }
+  .bk-scroll::-webkit-scrollbar-thumb { background: var(--coral); border-radius: 5px; }
+  .bk-canvas { position: relative; }
+  .bk-lines { position: absolute; left: 0; top: 0; pointer-events: none; }
+  .bk-lines .ln { fill: none; stroke: #cdbfa9; stroke-width: 2; stroke-dasharray: 4 4; }
+  .bk-lines .ln.on { stroke: var(--teal); stroke-dasharray: none; }
+  .bk-lines .ln.fav { stroke: var(--coral); stroke-dasharray: none; }
+  .bk-lines .ln.hot { stroke: var(--coral); stroke-dasharray: none; stroke-width: 2.6; }
+  :root[data-theme="dark"] .bk-lines .ln { stroke: #3a4350; }
+  :root[data-theme="dark"] .bk-lines .ln.on { stroke: #2FB39E; }
+  .bk-head { position: absolute; font-size: 11px; font-weight: 700; letter-spacing: .5px; color: var(--muted); text-align: start; }
+  .bmatch2 { position: absolute; background: var(--card); border: .5px solid var(--line); border-radius: 10px; overflow: hidden; box-sizing: border-box; transition: opacity .15s; }
+  .bmatch2.upcoming { border-style: dashed; border-color: #cdbfa9; }
+  :root[data-theme="dark"] .bmatch2.upcoming { border-color: #3a4350; }
+  .bmatch2.live { border-color: var(--teal); box-shadow: 0 0 0 1px var(--teal); }
+  .bk-tag { font-size: 9.5px; font-weight: 700; letter-spacing: .4px; text-transform: uppercase; color: var(--muted); padding: 3px 8px 0; }
+  .brow2 { display: flex; align-items: center; gap: 7px; padding: 5px 8px; font-size: 13px; color: var(--navy); cursor: pointer; }
+  .brow2 + .brow2 { border-top: 1px solid var(--line); }
+  .brow2.tbd { cursor: default; color: var(--muted); font-style: italic; }
+  .brow2.win { font-weight: 700; }
+  .brow2.win .bn, .brow2.win .bsc { color: var(--teal); }
+  .brow2.fav .bn { color: var(--coral); }
+  .brow2:not(.tbd):hover { background: rgba(0,0,0,.04); }
+  :root[data-theme="dark"] .brow2:not(.tbd):hover { background: rgba(255,255,255,.06); }
+  .brow2 .badge { width: 24px; height: 18px; }
+  .brow2 .tbdb { background: var(--line); border-radius: 3px; }
+  .bn { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .bstar { color: var(--coral); font-size: 11px; }
+  .bsc { font-weight: 700; min-width: 26px; text-align: right; color: var(--navy); }
+  .bsc .pn { font-weight: 400; font-size: 11px; color: var(--muted); }
+  .bk-venue { font-size: 10px; color: var(--muted); padding: 2px 8px 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  :root[data-theme="dark"] .brow2, :root[data-theme="dark"] .bsc { color: var(--ink); }
+  :root[data-theme="dark"] .brow2.win .bn, :root[data-theme="dark"] .brow2.win .bsc { color: #2FB39E; }
+  .bk-champ { position: absolute; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px;
+              background: var(--card); border: .5px solid var(--teal); border-radius: 10px; box-sizing: border-box; transition: opacity .15s; }
+  .bk-champ .ttl { font-size: 10px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase; color: var(--muted); }
+  .bk-champ .who { font-size: 14px; font-weight: 700; color: var(--navy); display: flex; align-items: center; gap: 7px; }
+  .bk-champ .who .badge { width: 26px; height: 19px; }
+  :root[data-theme="dark"] .bk-champ .who { color: var(--ink); }
+  .bk-canvas.tracing .bmatch2, .bk-canvas.tracing .bk-champ { opacity: .28; }
+  .bk-canvas.tracing .bmatch2.on, .bk-canvas.tracing .bk-champ.on { opacity: 1; }
+
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--cream); color: var(--ink); line-height: 1.5; -webkit-font-smoothing: antialiased; }
   .wrap { max-width: 480px; margin: 0 auto; padding-bottom: 1rem; }
@@ -547,6 +593,7 @@
       notifEnable:"Enable reminders", notifRecheck:"Re-check reminders",
       vs:"v", statusLive:"● Live", statusFt:"FT", add:"📅 Add", nextWeek:"Next week's matches ↓",
       penWin:"won", onPens:"on penalties",
+      penShort:"pens", champion:"Champion", thirdPlace:"Third place", winnerShort:"Winner", loserShort:"Loser",
       st_suspended:"⏸ Suspended", st_delayed:"⏳ Delayed", st_postponed:"⏳ Postponed", st_abandoned:"⛔ Abandoned", st_canceled:"⛔ Cancelled", st_forfeit:"⛔ Forfeit",
       loading:"Loading schedule…", noMatches:"No matches for this filter.",
       noBelled:"No belled matches yet, tap 🔔 on a match to get a reminder.",
@@ -615,6 +662,7 @@
       notifEnable:"تفعيل التنبيهات", notifRecheck:"إعادة فحص التنبيهات",
       vs:"ضد", statusLive:"● مباشر", statusFt:"انتهت", add:"📅 إضافة", nextWeek:"مباريات الأسبوع التالي ↓",
       penWin:"فاز", onPens:"بركلات الترجيح",
+      penShort:"ركلات", champion:"البطل", thirdPlace:"المركز الثالث", winnerShort:"الفائز", loserShort:"الخاسر",
       st_suspended:"⏸ موقوفة", st_delayed:"⏳ مؤجّلة", st_postponed:"⏳ مؤجّلة", st_abandoned:"⛔ متوقّفة", st_canceled:"⛔ ملغاة", st_forfeit:"⛔ انسحاب",
       loading:"جارٍ تحميل الجدول…", noMatches:"لا مباريات ضمن هذه التصفية.",
       noBelled:"لا مباريات محفوظة بعد، اضغط 🔔 على مباراة ليصلك تنبيه.",
@@ -926,40 +974,116 @@
     if(r.includes("final")) return "Final";
     return null;
   }
-  function bracketCard(m){
-    const ft=m.score&&m.score.ft, pen=m.score&&(m.score.p||m.score.pen);
-    let w1=false,w2=false;
-    if(ft){ if(ft[0]>ft[1])w1=true; else if(ft[1]>ft[0])w2=true; else if(pen){ if(pen[0]>pen[1])w1=true; else if(pen[1]>pen[0])w2=true; } }
-    const sc=(i)=> ft ? (ft[i] + (pen?` (${pen[i]})`:"")) : "";
-    const row=(team,score,win)=>`<div class="brow ${win?'win':''} ${isFav(team)?'fav':''}">${badge(team)}<span class="bname">${labelOf(team)}</span><span class="bscore">${score}</span></div>`;
-    const dt=toLocal(m.date,m.time);
-    const when=dt?`${fmtDay(dt)} · ${fmtTime(dt)}${TZ?" "+TZ:""}`:"";
-    return `<div class="bmatch">${row(m.team1,sc(0),w1)}${row(m.team2,sc(1),w2)}${when?`<div class="bdate">${when}</div>`:""}</div>`;
-  }
+  // Bracket structure for WC2026, keyed by FIFA match number (num): which two
+  // matches feed each later match. Stable all tournament, even after the feed
+  // replaces "W74" placeholders with the real qualified team.
+  const BK_FEED={89:[74,77],90:[73,75],91:[76,78],92:[79,80],93:[83,84],94:[81,82],95:[86,88],96:[85,87],
+                 97:[89,90],98:[93,94],99:[91,92],100:[95,96],101:[97,98],102:[99,100],104:[101,102]};
+  const BK_NEXT={}; for(const n in BK_FEED) BK_FEED[n].forEach(f=>{ BK_NEXT[f]=+n; });
+  const BK_HEADS=["Round of 32","Round of 16","Quarter-finals","Semi-finals","Final"];
+  function bkColOf(n){ if(n<=88)return 0; if(n<=96)return 1; if(n<=100)return 2; if(n<=102)return 3; if(n===104)return 4; return -1; }
+  function bkWinSide(m){ if(!m||!m.score||!m.score.ft)return 0; const ft=m.score.ft,pen=m.score.p||m.score.pen;
+    if(ft[0]==null||ft[1]==null)return 0; if(ft[0]>ft[1])return 1; if(ft[1]>ft[0])return 2;
+    if(pen){ if(pen[0]>pen[1])return 1; if(pen[1]>pen[0])return 2; } return 0; }
+
   function renderBracket(){
     const content=document.getElementById("content");
-    const buckets={}; KO_ORDER.forEach(o=>buckets[o]=[]);
-    RAW.forEach(m=>{ const r=koRound(m); if(r) buckets[r].push(m); });
-    const cols=KO_ORDER.filter(o=>buckets[o].length);
-    if(!cols.length){ content.innerHTML=`<div class="loading">${t("bracketEmpty")}</div>`; return; }
-    const scrollable=cols.length>2;
-    let html=scrollable?`<div class="bracket-bar"><span class="lbl">${t("allRounds")}</span><span class="ln"></span><button class="bnav-btn" data-dir="-1" aria-label="Scroll to earlier rounds">‹</button><button class="bnav-btn" data-dir="1" aria-label="Scroll to later rounds">›</button></div>`:'';
-    html+='<div class="bracket-wrap"><div class="bracket">';
-    for(const r of cols){
-      const ms=buckets[r].map(m=>({...m,dt:toLocal(m.date,m.time)})).sort((a,b)=>(a.dt&&b.dt)?a.dt-b.dt:0);
-      html+=`<div class="bcol"><div class="bcol-head">${roundLabel(r)}</div>${ms.map(bracketCard).join("")}</div>`;
+    const M={}; RAW.forEach(m=>{ if(m&&m.num) M[m.num]=m; });
+    if(!M[73]&&!M[104]){ content.innerHTML=`<div class="loading">${t("bracketEmpty")}</div>`; return; }
+
+    // Resolve a slot to the real team. "W74"/"L101" look up that match's winner/loser.
+    function resolveSlot(tm){ if(!tm)return null; const w=/^W(\d+)$/.exec(tm); if(w)return winnerTeam(+w[1]); const l=/^L(\d+)$/.exec(tm); if(l)return loserTeam(+l[1]); return tm; }
+    function winnerTeam(num){ const m=M[num]; if(!m)return null; const s=bkWinSide(m); if(!s)return null; return resolveSlot(s===1?m.team1:m.team2); }
+    function loserTeam(num){ const m=M[num]; if(!m)return null; const s=bkWinSide(m); if(!s)return null; return resolveSlot(s===1?m.team2:m.team1); }
+    const decided=(num)=>{ const m=M[num]; return !!(m&&bkWinSide(m)&&!m._live); };
+
+    // Geometry. Each Round-of-32 match is a leaf row; later matches sit centred
+    // between their two feeders, so the connector elbows read cleanly.
+    const rtl=(LANG==="ar");
+    const CW=170, PITCH=214, RP=82, CH=68, TOP=30, PADX=2;
+    const leavesOf=(n)=>{ const f=BK_FEED[n]; return f?leavesOf(f[0]).concat(leavesOf(f[1])):[n]; };
+    const order=leavesOf(104); const rowOf={}; order.forEach((n,i)=>{ rowOf[n]=i; });
+    const cyMemo={};
+    const cy=(n)=>{ if(cyMemo[n]!=null)return cyMemo[n]; const f=BK_FEED[n]; const v=f?(cy(f[0])+cy(f[1]))/2:(TOP+rowOf[n]*RP+CH/2); return cyMemo[n]=v; };
+    cy(104);
+    const champX=PADX+5*PITCH, W=champX+CW+PADX;
+    const thirdTop=cy(104)+CH+46, H=Math.max(TOP+15*RP+CH, thirdTop+CH)+18;
+    const rawLeft=(c)=>PADX+c*PITCH, rawOut=(c)=>PADX+c*PITCH+CW, rawIn=(c)=>PADX+c*PITCH;
+    const Lx=(x)=> rtl?(W-x-CW):x;   // left of a CW-wide box (mirrored in Arabic)
+    const Px=(x)=> rtl?(W-x):x;      // mirror a bare x for line maths
+
+    // A team's run through the bracket (their R32 match, then each one they win).
+    function pathFrom(team){ const tc=canon(team); let start=null;
+      for(let n=73;n<=88;n++){ const m=M[n]; if(!m)continue; if(canon(resolveSlot(m.team1)||"")===tc||canon(resolveSlot(m.team2)||"")===tc){ start=n; break; } }
+      if(start==null)return []; const p=[start]; let cur=start;
+      while(BK_NEXT[cur] && winnerTeam(cur) && canon(winnerTeam(cur))===tc){ cur=BK_NEXT[cur]; p.push(cur); }
+      return p;
     }
-    content.innerHTML=html+'</div></div>';
-    if(scrollable){
-      const wrap=content.querySelector(".bracket-wrap"), br=content.querySelector(".bracket");
-      const prev=content.querySelector('.bnav-btn[data-dir="-1"]'), next=content.querySelector('.bnav-btn[data-dir="1"]');
-      const STEP=210; // one column (196) + gap (14)
-      function upd(){ const max=br.scrollWidth-br.clientWidth-1; prev.disabled=br.scrollLeft<=0; next.disabled=br.scrollLeft>=max; wrap.classList.toggle("at-end", br.scrollLeft>=max); }
-      prev.onclick=()=>br.scrollBy({left:-STEP,behavior:"smooth"});
-      next.onclick=()=>br.scrollBy({left:STEP,behavior:"smooth"});
-      br.addEventListener("scroll", upd, {passive:true});
-      upd();
+    // Pre-mark feeder branches that a favourite team won, so their road draws coral.
+    const favBranch=new Set();
+    favTeams.forEach(ftm=>{ const p=pathFrom(ftm); for(let i=0;i<p.length-1;i++) favBranch.add(p[i]);
+      if(p.length && winnerTeam(104) && canon(winnerTeam(104))===canon(ftm)) favBranch.add(104); });
+
+    // Connector lines (teal once a feeder is decided, coral on a fav's road, else grey dashed).
+    let lines="";
+    for(const nStr in BK_FEED){ const N=+nStr, cN=bkColOf(N);
+      BK_FEED[N].forEach(f=>{ const cF=bkColOf(f), yf=cy(f), yn=cy(N), mid=(rawOut(cF)+rawIn(cN))/2,
+        cls=favBranch.has(f)?"fav":(decided(f)?"on":"off");
+        lines+=`<path class="ln ${cls}" data-f="${f}" d="M${Px(rawOut(cF))},${yf} H${Px(mid)} V${yn} H${Px(rawIn(cN))}"></path>`; });
     }
+    { const yf=cy(104), mid=(rawOut(4)+champX)/2, cls=favBranch.has(104)?"fav":(decided(104)?"on":"off");
+      lines+=`<path class="ln ${cls}" data-f="104" d="M${Px(rawOut(4))},${yf} H${Px(mid)} V${yf} H${Px(champX)}"></path>`; }
+
+    // Cards.
+    function slotPH(raw){ const m=/^([WL])(\d+)$/.exec(raw||""); if(!m)return raw||"—"; return (m[1]==="W"?t("winnerShort"):t("loserShort"))+" "+m[2]; }
+    function row(team,raw,win,scoreHtml){
+      if(team){ const fav=isFav(team);
+        return `<div class="brow2${win?' win':''}${fav?' fav':''}" data-team="${canon(team)}" role="button" tabindex="0">${badge(team)}<span class="bn">${labelOf(team)}${fav?' <span class="bstar">★</span>':''}</span><span class="bsc">${scoreHtml}</span></div>`; }
+      return `<div class="brow2 tbd"><span class="badge tbdb"></span><span class="bn">${slotPH(raw)}</span><span class="bsc"></span></div>`;
+    }
+    function cardHTML(num,opts){ opts=opts||{}; const m=M[num]; if(!m)return ""; const c=bkColOf(num);
+      const left=opts.left!=null?opts.left:Lx(rawLeft(c)), top=opts.top!=null?opts.top:(cy(num)-CH/2);
+      const dt=toLocal(m.date,m.time), st=matchState(dt,m.score,m._live,m._status);
+      const ft=m.score&&m.score.ft, pen=m.score&&(m.score.p||m.score.pen), ws=bkWinSide(m);
+      const sc=(i)=> ft&&ft[i]!=null ? (ft[i]+(pen?` <span class="pn">(${pen[i]})</span>`:"")) : "";
+      const rows=row(resolveSlot(m.team1),m.team1,ws===1,sc(0))+row(resolveSlot(m.team2),m.team2,ws===2,sc(1));
+      let info=venueOf(m.ground);
+      const s = st==="ft"?(pen?t("penShort"):t("statusFt")) : st==="live"?t("statusLive").replace(/^●\s*/,"") : (dt?fmtDay(dt)+" "+fmtTime(dt):"");
+      info = info&&s ? info+" · "+s : (s||info);
+      const tag=opts.tag?`<div class="bk-tag">${opts.tag}</div>`:"";
+      return `<div class="bmatch2${st==='upcoming'?' upcoming':''}${st==='live'?' live':''}" data-num="${num}" style="left:${left}px;top:${top}px;width:${CW}px">${tag}${rows}<div class="bk-venue">📍 ${info}</div></div>`;
+    }
+    let cards=""; order.forEach(n=>{ cards+=cardHTML(n); });
+    [89,90,91,92,93,94,95,96,97,98,99,100,101,102,104].forEach(n=>{ cards+=cardHTML(n); });
+    if(M[103]) cards+=cardHTML(103,{left:Lx(rawLeft(4)),top:thirdTop,tag:t("thirdPlace")});
+    const champ=winnerTeam(104);
+    cards+=`<div class="bk-champ" data-num="champ" style="left:${Lx(champX)}px;top:${cy(104)-CH/2}px;width:${CW}px;height:${CH}px"><div class="ttl">🏆 ${t("champion")}</div><div class="who">${champ?badge(champ)+'<span class="bn">'+labelOf(champ)+'</span>':'<span class="bn">—</span>'}</div></div>`;
+
+    let heads=""; BK_HEADS.forEach((h,c)=>{ heads+=`<div class="bk-head" style="left:${Lx(rawLeft(c))}px;top:6px;width:${CW}px">${roundLabel(h)}</div>`; });
+
+    content.innerHTML=`<div class="bk-scroll"><div class="bk-canvas${rtl?' rtl':''}" style="width:${W}px;height:${H}px"><svg class="bk-lines" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" aria-hidden="true">${lines}</svg>${heads}${cards}</div></div>`;
+
+    // Interactions: tap a team to trace their whole road; tap empty space to clear.
+    const scroll=content.querySelector(".bk-scroll"), canvas=content.querySelector(".bk-canvas");
+    if(scroll) scroll.scrollLeft = rtl ? (scroll.scrollWidth-scroll.clientWidth) : 0;
+    let traced=null;
+    function clearTrace(){ traced=null; canvas.classList.remove("tracing");
+      canvas.querySelectorAll(".on").forEach(e=>e.classList.remove("on"));
+      canvas.querySelectorAll(".bk-lines .ln.hot").forEach(e=>e.classList.remove("hot")); }
+    function trace(team){ const tc=canon(team), p=pathFrom(team); if(!p.length)return;
+      if(traced===tc){ clearTrace(); return; }
+      clearTrace(); traced=tc; canvas.classList.add("tracing");
+      const set=new Set(p.map(String));
+      canvas.querySelectorAll(".bmatch2").forEach(el=>{ if(set.has(el.dataset.num)) el.classList.add("on"); });
+      if(winnerTeam(104)&&canon(winnerTeam(104))===tc){ const ch=canvas.querySelector(".bk-champ"); if(ch) ch.classList.add("on"); }
+      p.forEach(f=>{ canvas.querySelectorAll(`.bk-lines .ln[data-f="${f}"]`).forEach(e=>e.classList.add("hot")); });
+    }
+    canvas.querySelectorAll(".brow2[data-team]").forEach(el=>{
+      const h=()=>trace(el.dataset.team);
+      el.addEventListener("click",h);
+      el.addEventListener("keydown",e=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); h(); } });
+    });
+    if(scroll) scroll.addEventListener("click",e=>{ if(e.target===scroll||e.target===canvas) clearTrace(); });
   }
   // Build the group tables purely from match results the app already has.
   // 3 pts win / 1 draw / 0 loss; tiebreak Pts → GD → goals scored → name.
@@ -1627,8 +1751,11 @@
   // somewhere to return to (see armBackTrap / popstate handler above).
   try{ history.replaceState({wc:0},""); }catch{}
 
-  // Deep-link: ?view=bracket opens the knockout view (used by the app shortcuts).
-  try{ const qv=new URLSearchParams(location.search).get("view"); if(qv==="bracket"||qv==="standings"||qv==="scorers"||qv==="history") setView(qv); }catch{}
+  // Landing view: now that we're in the knockouts, open on the Bracket by default.
+  // A ?view= deep-link still wins (used by the app shortcuts); ?view=schedule stays home.
+  try{ const qv=new URLSearchParams(location.search).get("view");
+    if(qv==="bracket"||qv==="standings"||qv==="scorers"||qv==="history") setView(qv);
+    else if(qv!=="schedule") setView("bracket"); }catch{ setView("bracket"); }
 
   /* ---- PWA: service worker + install affordance ---- */
   if("serviceWorker" in navigator){
