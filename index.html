@@ -162,7 +162,8 @@
   .bstar { color: var(--coral); font-size: 11px; }
   .bsc { font-weight: 700; min-width: 26px; text-align: right; color: var(--navy); }
   .bsc .pn { font-weight: 400; font-size: 11px; color: var(--muted); }
-  .bk-venue { font-size: 10px; color: var(--muted); padding: 2px 8px 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .bk-when { font-size: 10px; color: var(--muted); padding: 3px 9px 0; white-space: nowrap; }
+  .bk-where { font-size: 10px; color: var(--muted); padding: 1px 9px 5px; white-space: nowrap; }
   :root[data-theme="dark"] .brow2, :root[data-theme="dark"] .bsc { color: var(--ink); }
   :root[data-theme="dark"] .brow2.win .bn, :root[data-theme="dark"] .brow2.win .bsc { color: #2FB39E; }
   .bk-champ { position: absolute; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px;
@@ -843,6 +844,8 @@
   const CA_VENUES=new Set(["Toronto","Vancouver"]);
   const MX_VENUES=new Set(["Mexico City","Guadalajara (Zapopan)","Monterrey (Guadalupe)"]);
   function venueOf(g){ if(!g) return ""; const c=CA_VENUES.has(g)?"Canada":MX_VENUES.has(g)?"Mexico":"USA"; return `${g} · ${c}`; }
+  // Bracket cards show city + country only — drop the stadium/suburb in parentheses.
+  function bkCity(g){ if(!g) return ""; const c=CA_VENUES.has(g)?"Canada":MX_VENUES.has(g)?"Mexico":"USA"; const city=g.replace(/\s*\([^)]*\)\s*/g,"").trim(); return `${city} · ${c}`; }
   // One goal line in the expandable scorer breakdown: minute + scorer (+ pen/OG marker).
   function goalLine(g){ if(!g||!g.name) return ""; const tag=g.owngoal?' <span class="g-tag">(OG)</span>':(g.penalty?' <span class="g-tag">(pen)</span>':''); return `<div class="g-line"><span class="g-ball">⚽</span><span class="g-min">${g.minute||""}'</span>${g.name}${tag}</div>`; }
 
@@ -1007,7 +1010,7 @@
     // Geometry. Each Round-of-32 match is a leaf row; later matches sit centred
     // between their two feeders, so the connector elbows read cleanly.
     const rtl=(LANG==="ar");
-    const CW=170, PITCH=214, RP=106, CH=82, TOP=30, PADX=2;
+    const CW=186, PITCH=230, RP=124, CH=100, TOP=30, PADX=2;
     const leavesOf=(n)=>{ const f=BK_FEED[n]; return f?leavesOf(f[0]).concat(leavesOf(f[1])):[n]; };
     const order=leavesOf(104); const rowOf={}; order.forEach((n,i)=>{ rowOf[n]=i; });
     const cyMemo={};
@@ -1054,11 +1057,10 @@
       const ft=m.score&&m.score.ft, pen=m.score&&(m.score.p||m.score.pen), ws=bkWinSide(m);
       const sc=(i)=> ft&&ft[i]!=null ? (ft[i]+(pen?` <span class="pn">(${pen[i]})</span>`:"")) : "";
       const rows=row(resolveSlot(m.team1),m.team1,ws===1,sc(0))+row(resolveSlot(m.team2),m.team2,ws===2,sc(1));
-      let info=venueOf(m.ground);
-      const s = st==="ft"?(pen?t("penShort"):t("statusFt")) : st==="live"?t("statusLive").replace(/^●\s*/,"") : (dt?fmtDay(dt)+" "+fmtTime(dt):"");
-      info = info&&s ? info+" · "+s : (s||info);
+      const when = st==="live" ? t("statusLive") : (dt ? fmtDay(dt)+" · "+fmtTime(dt) : "");
+      const where = bkCity(m.ground);
       const tag=opts.tag?`<div class="bk-tag">${opts.tag}</div>`:"";
-      return `<div class="bmatch2${st==='upcoming'?' upcoming':''}${st==='live'?' live':''}" data-num="${num}" style="left:${left}px;top:${top}px;width:${CW}px">${tag}${rows}<div class="bk-venue">📍 ${info}</div></div>`;
+      return `<div class="bmatch2${st==='upcoming'?' upcoming':''}${st==='live'?' live':''}" data-num="${num}" style="left:${left}px;top:${top}px;width:${CW}px">${tag}${rows}${when?`<div class="bk-when">${when}</div>`:""}${where?`<div class="bk-where">📍 ${where}</div>`:""}</div>`;
     }
     let cards=""; order.forEach(n=>{ cards+=cardHTML(n); });
     [89,90,91,92,93,94,95,96,97,98,99,100,101,102,104].forEach(n=>{ cards+=cardHTML(n); });
