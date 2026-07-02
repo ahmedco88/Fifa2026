@@ -1807,11 +1807,11 @@
   // somewhere to return to (see armBackTrap / popstate handler above).
   try{ history.replaceState({wc:0},""); }catch{}
 
-  // Landing view: now that we're in the knockouts, open on the Bracket by default.
-  // A ?view= deep-link still wins (used by the app shortcuts); ?view=schedule stays home.
+  // Landing view: open on the Schedule by default so people land on today's matches
+  // (the day strip auto-selects today). A ?view= deep-link still wins (app shortcuts).
   try{ const qv=new URLSearchParams(location.search).get("view");
     if(qv==="bracket"||qv==="standings"||qv==="scorers"||qv==="history") setView(qv);
-    else if(qv!=="schedule") setView("bracket"); }catch{ setView("bracket"); }
+    else setView("schedule"); }catch{ setView("schedule"); }
 
   /* ---- Native (Capacitor) bootstrap: theme the status bar, drop the splash ---- */
   if(NATIVE){
