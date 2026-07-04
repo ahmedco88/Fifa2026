@@ -134,12 +134,19 @@
   .bk-fade.r { right: 0; background: linear-gradient(to left, var(--cream), transparent); }
   .bk-frame.at-start .bk-fade.l { opacity: 0; }
   .bk-frame.at-end .bk-fade.r { opacity: 0; }
-  .bk-scroll { position: relative; overflow: auto; -webkit-overflow-scrolling: touch; margin: .25rem 0 1rem; padding: 0 1rem 1rem;
+  /* Pinch-to-zoom hint (two-finger icon) — fades out while the user is zooming. */
+  .bk-zoomhint { position: absolute; inset-inline-end: 14px; bottom: 22px; z-index: 4; width: 40px; height: 40px;
+                 display: flex; align-items: center; justify-content: center; color: var(--navy);
+                 background: rgba(255,255,255,.82); border: 1px solid var(--line); border-radius: 50%;
+                 opacity: .8; transition: opacity .35s; pointer-events: none; }
+  .bk-zoomhint.hide { opacity: 0; }
+  :root[data-theme="dark"] .bk-zoomhint { background: rgba(27,32,39,.85); color: var(--ink); }
+  .bk-scroll { position: relative; overflow: auto; -webkit-overflow-scrolling: touch; touch-action: pan-x pan-y; margin: .25rem 0 1rem; padding: 0 1rem 1rem;
                max-height: calc(100dvh - 200px); scrollbar-width: thin; scrollbar-color: var(--coral) var(--line); }
   .bk-scroll::-webkit-scrollbar { width: 9px; height: 9px; }
   .bk-scroll::-webkit-scrollbar-track { background: var(--line); border-radius: 5px; }
   .bk-scroll::-webkit-scrollbar-thumb { background: var(--coral); border-radius: 5px; }
-  .bk-canvas { position: relative; }
+  .bk-canvas { position: relative; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
   .bk-lines { position: absolute; left: 0; top: 0; pointer-events: none; }
   .bk-lines .ln { fill: none; stroke: #cdbfa9; stroke-width: 2; stroke-dasharray: 4 4; }
   .bk-lines .ln.on { stroke: var(--teal); stroke-dasharray: none; }
@@ -1052,6 +1059,9 @@
     wireCardHandlers(content);
   }
 
+  // Two-finger "pinch to zoom" hint icon (a hand pinching + a diagonal resize arrow).
+  const ZOOM_HINT_SVG=`<svg viewBox="0 0 44 44" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 20 L18 9"/><path d="M12.5 9 L18 9 L18 14.5"/><path d="M7 14.5 L7 20 L12.5 20"/><circle cx="29" cy="13" r="3.2"/><circle cx="21" cy="21" r="3.2"/><path d="M29 16.2 C29 22 28.5 24 29.5 28"/><path d="M21 24.2 C21 27 22 28 23.5 29.5"/><path d="M29.5 28 C30.5 34 27.5 37.5 23 36.5 C20 35.8 19 33 19 30.5"/></svg>`;
+
   function renderBracket(){
     const content=document.getElementById("content");
     const M={}; RAW.forEach(m=>{ if(m&&m.num) M[m.num]=m; });
@@ -1126,7 +1136,7 @@
 
     let heads=""; BK_HEADS.forEach((h,c)=>{ heads+=`<div class="bk-head" style="left:${Lx(rawLeft(c))}px;top:6px;width:${CW}px">${roundLabel(h)}</div>`; });
 
-    content.innerHTML=koToggleHTML()+`<div class="bk-frame"><div class="bk-fade l"></div><div class="bk-fade r"></div><div class="bk-scroll"><div class="bk-canvas${rtl?' rtl':''}" style="width:${W}px;height:${H}px"><svg class="bk-lines" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" aria-hidden="true">${lines}</svg>${heads}${cards}</div></div></div>`;
+    content.innerHTML=koToggleHTML()+`<div class="bk-frame"><div class="bk-fade l"></div><div class="bk-fade r"></div><div class="bk-scroll"><div class="bk-canvas${rtl?' rtl':''}" style="width:${W}px;height:${H}px"><svg class="bk-lines" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" aria-hidden="true">${lines}</svg>${heads}${cards}</div></div><div class="bk-zoomhint">${ZOOM_HINT_SVG}</div></div>`;
 
     // Interactions: tap a team to trace their whole road; tap empty space to clear.
     const frame=content.querySelector(".bk-frame"), scroll=content.querySelector(".bk-scroll"), canvas=content.querySelector(".bk-canvas");
@@ -1156,6 +1166,30 @@
       el.addEventListener("keydown",e=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); h(); } });
     });
     if(scroll) scroll.addEventListener("click",e=>{ if(e.target===scroll||e.target===canvas) clearTrace(); });
+
+    // ── Pinch-to-zoom (two fingers) + trackpad pinch (ctrl+wheel). Opens at 100%;
+    // zoom-out is clamped so it never shrinks past ~3 columns. The hint icon hides
+    // while zooming, then reappears. Panning stays native scroll; tap-to-trace intact.
+    if(scroll && canvas){
+      const hint=frame.querySelector(".bk-zoomhint");
+      const ZMIN=Math.min(1,(scroll.clientWidth-32)/(2*PITCH+CW)), ZMAX=1.3;
+      let zoom=1, hintT=null;
+      function hideHint(){ clearTimeout(hintT); if(hint) hint.classList.add("hide"); }
+      function showHintSoon(){ clearTimeout(hintT); hintT=setTimeout(()=>{ if(hint) hint.classList.remove("hide"); },600); }
+      function applyZoom(nz,fx,fy){ nz=Math.max(ZMIN,Math.min(ZMAX,nz)); if(Math.abs(nz-zoom)<0.001) return;
+        const cxp=(scroll.scrollLeft+fx)/zoom, cyp=(scroll.scrollTop+fy)/zoom;
+        canvas.style.zoom=nz; scroll.scrollLeft=cxp*nz-fx; scroll.scrollTop=cyp*nz-fy; zoom=nz; updateFades(); }
+      function tdist(t){ return Math.hypot(t[0].clientX-t[1].clientX, t[0].clientY-t[1].clientY); }
+      let pinch=null;
+      scroll.addEventListener("touchstart",e=>{ if(e.touches.length===2){ pinch={d:tdist(e.touches),z:zoom}; hideHint(); e.preventDefault(); } },{passive:false});
+      scroll.addEventListener("touchmove",e=>{ if(pinch&&e.touches.length===2){ e.preventDefault();
+        const r=scroll.getBoundingClientRect(), fx=(e.touches[0].clientX+e.touches[1].clientX)/2-r.left, fy=(e.touches[0].clientY+e.touches[1].clientY)/2-r.top;
+        applyZoom(pinch.z*tdist(e.touches)/pinch.d, fx, fy); } },{passive:false});
+      function endPinch(e){ if(pinch&&e.touches.length<2){ pinch=null; showHintSoon(); } }
+      scroll.addEventListener("touchend",endPinch); scroll.addEventListener("touchcancel",endPinch);
+      scroll.addEventListener("wheel",e=>{ if(!e.ctrlKey) return; e.preventDefault(); const r=scroll.getBoundingClientRect();
+        hideHint(); applyZoom(zoom*(e.deltaY<0?1.06:0.94), e.clientX-r.left, e.clientY-r.top); showHintSoon(); },{passive:false});
+    }
   }
   // Build the group tables purely from match results the app already has.
   // 3 pts win / 1 draw / 0 loss; tiebreak Pts → GD → goals scored → name.
