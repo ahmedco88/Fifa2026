@@ -135,7 +135,7 @@
   .bk-frame.at-start .bk-fade.l { opacity: 0; }
   .bk-frame.at-end .bk-fade.r { opacity: 0; }
   /* Pinch-to-zoom hint (two-finger icon) — fades out while the user is zooming. */
-  .bk-zoomhint { position: absolute; inset-inline-end: 14px; bottom: 22px; z-index: 4; width: 40px; height: 40px;
+  .bk-zoomhint { position: absolute; inset-inline-end: 14px; bottom: 22px; z-index: 4; width: 48px; height: 48px;
                  display: flex; align-items: center; justify-content: center; color: var(--navy);
                  background: rgba(255,255,255,.82); border: 1px solid var(--line); border-radius: 50%;
                  opacity: .8; transition: opacity .35s; pointer-events: none; }
@@ -1059,8 +1059,8 @@
     wireCardHandlers(content);
   }
 
-  // Two-finger "pinch to zoom" hint icon (a hand pinching + a diagonal resize arrow).
-  const ZOOM_HINT_SVG=`<svg viewBox="0 0 44 44" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 20 L18 9"/><path d="M12.5 9 L18 9 L18 14.5"/><path d="M7 14.5 L7 20 L12.5 20"/><circle cx="29" cy="13" r="3.2"/><circle cx="21" cy="21" r="3.2"/><path d="M29 16.2 C29 22 28.5 24 29.5 28"/><path d="M21 24.2 C21 27 22 28 23.5 29.5"/><path d="M29.5 28 C30.5 34 27.5 37.5 23 36.5 C20 35.8 19 33 19 30.5"/></svg>`;
+  // "Pinch to zoom" hint icon: two fingertip dots spreading along a diagonal double arrow.
+  const ZOOM_HINT_SVG=`<svg viewBox="0 0 48 48" width="30" height="30" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 29 L29 19"/><path d="M23.5 19 L29 19 L29 24.5"/><path d="M24.5 29 L19 29 L19 23.5"/><circle cx="33.5" cy="14.5" r="2.6" fill="currentColor" stroke="none"/><circle cx="14.5" cy="33.5" r="2.6" fill="currentColor" stroke="none"/></svg>`;
 
   function renderBracket(){
     const content=document.getElementById("content");
