@@ -121,6 +121,11 @@
   .bdate { font-size: 10px; color: var(--muted); padding: 3px 8px 0; }
   :root[data-theme="dark"] .brow, :root[data-theme="dark"] .bscore { color: var(--ink); }
 
+  /* ── Knockout view: Bracket ↔ By date toggle ── */
+  .ko-toggle { display: flex; gap: 0; background: var(--card); border: 1.5px solid var(--line); border-radius: 11px; padding: 3px; margin: 12px 1rem 14px; }
+  .ko-tab { flex: 1; border: none; background: none; color: var(--muted); font: inherit; font-size: 13px; font-weight: 600; padding: 8px 4px; border-radius: 8px; cursor: pointer; }
+  .ko-tab.sel { background: var(--teal); color: #fff; }
+
   /* ── Knockout tree (connector bracket) ── */
   /* Edge fades hint that the tree scrolls sideways; each hides at its end. */
   .bk-frame { position: relative; }
@@ -524,7 +529,7 @@
         <div class="about-item"><span class="about-ic">📅</span><span class="about-tx" data-i18n-html="about.schedule"><b>Schedule</b>Every match, grouped by day. Kick-off times are shown in <b>your</b> local time automatically.</span></div>
         <div class="about-item"><span class="about-ic">📊</span><span class="about-tx" data-i18n-html="about.standings"><b>Standings</b>Tap the <b>Standings</b> tab for the group tables: wins, draws, losses, goal difference and points, updated as results come in.</span></div>
         <div class="about-item"><span class="about-ic">👟</span><span class="about-tx" data-i18n-html="about.scorers"><b>Scorers</b>Tap the <b>Scorers</b> tab for the tournament's top goalscorers, updated live as goals go in (own goals aren't counted).</span></div>
-        <div class="about-item"><span class="about-ic">🏆</span><span class="about-tx" data-i18n-html="about.bracket"><b>Bracket</b>The knockout tree, where the app opens during the knockouts. Lines connect each match to the next round so you can follow who goes through (penalty-shootout winners included). Tap a team to trace their path to the Final.</span></div>
+        <div class="about-item"><span class="about-ic">🏆</span><span class="about-tx" data-i18n-html="about.bracket"><b>Knockout</b>The knockout rounds, where the app opens during the knockouts. Switch between the <b>Bracket</b> tree (lines connect each match to the next round, penalty-shootout winners included; tap a team to trace their path to the Final) and a <b>By date</b> list of every knockout match, day by day.</span></div>
         <div class="about-item"><span class="about-ic">🏅</span><span class="about-tx" data-i18n-html="about.history"><b>History</b>Tap the <b>History</b> tab for past World Cups (1930 to 2022): hosts, winners, and Golden Boot top scorers.</span></div>
         <div class="about-item"><span class="about-ic">🔍</span><span class="about-tx" data-i18n-html="about.filter"><b>Filter by group</b>Tap a group (A to L) to show only those matches.</span></div>
         <div class="about-item"><span class="about-ic">🎯</span><span class="about-tx" data-i18n-html="about.teamfilter"><b>Filter by team</b>Pick any team from the team dropdown to see just their matches: past, live and upcoming.</span></div>
@@ -566,7 +571,8 @@
       filterByTeam:"Filter by team", allTeams:"All teams", filterTitle:"Filters",
       seeMatches:"See this team's matches",
       myFilters:"My filters", myTeams:"★ My teams", upcoming:"⏱ Upcoming", myReminders:"🔔 My reminders",
-      chooseMyTeams:"⚙ Choose my teams", todayMatches:"Go to today's matches ↓", bracketBtn:"🏆 Bracket",
+      chooseMyTeams:"⚙ Choose my teams", todayMatches:"Go to today's matches ↓", bracketBtn:"🏆 Knockout",
+      koTree:"Bracket", koByDate:"By date",
       refreshScores:"↻ Refresh scores",
       ttTheme:"Toggle dark mode", ttShare:"Share this app", ttAbout:"About & help", ttLang:"العربية", ttRefresh:"Refresh scores",
       ttFavOn:"Show only your favourite teams' matches", ttFavOff:"Pick teams first, tap ⚙ Choose my teams",
@@ -581,7 +587,7 @@
       "about.schedule":"<b>Schedule</b>Every match, grouped by day. Kick-off times are shown in <b>your</b> local time automatically. Tap a team's name to see just their matches.",
       "about.standings":"<b>Standings</b>Tap the <b>Standings</b> tab for the group tables: wins, draws, losses, goal difference and points, updated as results come in.",
       "about.scorers":"<b>Scorers</b>Tap the <b>Scorers</b> tab for the tournament's top goalscorers, updated live as goals go in (own goals aren't counted).",
-      "about.bracket":"<b>Bracket</b>The knockout tree, where the app opens during the knockouts. Lines connect each match to the next round so you can follow who goes through (penalty-shootout winners included). Tap a team to trace their path to the Final.",
+      "about.bracket":"<b>Knockout</b>The knockout rounds, where the app opens during the knockouts. Switch between the <b>Bracket</b> tree (lines connect each match to the next round, penalty-shootout winners included; tap a team to trace their path to the Final) and a <b>By date</b> list of every knockout match, day by day.",
       "about.history":"<b>History</b>Tap the <b>History</b> tab for past World Cups (1930 to 2022): hosts, winners, and Golden Boot top scorers.",
       "about.filter":"<b>Filter by group</b>Tap a group (A to L) to show only those matches.",
       "about.teamfilter":"<b>Filter by team</b>Pick any team from the team dropdown to see just their matches: past, live and upcoming.",
@@ -637,6 +643,7 @@
       seeMatches:"عرض مباريات هذا المنتخب",
       myFilters:"عوامل التصفية", myTeams:"★ فرقي", upcoming:"⏱ القادمة", myReminders:"🔔 تنبيهاتي",
       chooseMyTeams:"⚙ اختر فرقي", todayMatches:"اذهب إلى مباريات اليوم ↓", bracketBtn:"🏆 الأدوار الإقصائية",
+      koTree:"الشجرة", koByDate:"حسب التاريخ",
       refreshScores:"↻ تحديث النتائج",
       ttTheme:"تبديل الوضع الليلي", ttShare:"مشاركة التطبيق", ttAbout:"عن التطبيق والمساعدة", ttLang:"English", ttRefresh:"تحديث النتائج",
       ttFavOn:"إظهار مباريات منتخباتي المفضّلة فقط", ttFavOff:"اختر منتخباتك أولًا، اضغط ⚙ اختر فرقي",
@@ -651,7 +658,7 @@
       "about.schedule":"<b>المباريات</b>كل مباراة، مرتّبة حسب اليوم. تُعرض أوقات الانطلاق بتوقيتك المحلي تلقائيًا. اضغط على اسم المنتخب لعرض مبارياته فقط.",
       "about.standings":"<b>الترتيب</b>اضغط تبويب <b>الترتيب</b> لجداول المجموعات: الفوز والتعادل والخسارة وفارق الأهداف والنقاط، تتحدّث مع ورود النتائج.",
       "about.scorers":"<b>الهدّافون</b>اضغط تبويب <b>الهدّافون</b> لأبرز هدّافي البطولة، يتحدّث مباشرةً مع تسجيل الأهداف (لا تُحتسب الأهداف العكسية).",
-      "about.bracket":"<b>الأدوار الإقصائية</b>شجرة الأدوار الإقصائية، حيث يفتح التطبيق أثناء الأدوار الإقصائية. خطوط تصل كل مباراة بالدور التالي لتتابع المتأهّلين (مع إظهار الفائز بركلات الترجيح). اضغط على فريق لتتبّع طريقه حتى النهائي.",
+      "about.bracket":"<b>الأدوار الإقصائية</b>حيث يفتح التطبيق أثناء الأدوار الإقصائية. بدّل بين <b>الشجرة</b> (خطوط تصل كل مباراة بالدور التالي، مع إظهار الفائز بركلات الترجيح؛ اضغط على فريق لتتبّع طريقه حتى النهائي) وقائمة <b>حسب التاريخ</b> بكل مباريات الأدوار الإقصائية، يومًا بيوم.",
       "about.history":"<b>السجل</b>اضغط تبويب <b>السجل</b> لكؤوس العالم السابقة (1930 إلى 2022): المضيفون والأبطال وهدّافو الحذاء الذهبي.",
       "about.filter":"<b>التصفية حسب المجموعة</b>اضغط مجموعة (من A إلى L) لعرض مبارياتها فقط.",
       "about.teamfilter":"<b>التصفية حسب الفريق</b>اختر أي منتخب من قائمة الفرق لرؤية مبارياته فقط: السابقة والجارية والقادمة.",
@@ -1003,10 +1010,52 @@
     if(ft[0]==null||ft[1]==null)return 0; if(ft[0]>ft[1])return 1; if(ft[1]>ft[0])return 2;
     if(pen){ if(pen[0]>pen[1])return 1; if(pen[1]>pen[0])return 2; } return 0; }
 
+  // Knockout view mode: "tree" (connector bracket) or "list" (matches by date). Remembered.
+  let koMode = (()=>{ try{ return localStorage.getItem("wc2026_ko_mode")==="list"?"list":"tree"; }catch{ return "tree"; } })();
+  function koToggleHTML(){
+    return `<div class="ko-toggle" role="tablist">`
+      +`<button class="ko-tab${koMode==="tree"?" sel":""}" data-ko="tree" role="tab" aria-selected="${koMode==="tree"}">${t("koTree")}</button>`
+      +`<button class="ko-tab${koMode==="list"?" sel":""}" data-ko="list" role="tab" aria-selected="${koMode==="list"}">${t("koByDate")}</button>`
+      +`</div>`;
+  }
+  function wireKoToggle(){ document.querySelectorAll("#content .ko-tab").forEach(b=>{ b.onclick=()=>setKoMode(b.dataset.ko); }); }
+  function setKoMode(m){ if(m===koMode) return; koMode=m; try{ localStorage.setItem("wc2026_ko_mode",m); }catch{} renderKnockout(); }
+  function renderKnockout(){ if(koMode==="list") renderKnockoutList(); else renderBracket(); wireKoToggle(); }
+
+  // Slot resolution reused from the tree: the By-date list shows the real team once a
+  // feeder is decided, and a friendly "Winner 74" placeholder until then.
+  function koMatchMap(){ const M={}; RAW.forEach(m=>{ if(m&&m.num) M[m.num]=m; }); return M; }
+  function koResolveSlot(M,tm){ if(!tm) return null; const w=/^W(\d+)$/.exec(tm); if(w) return koWinnerTeam(M,+w[1]); const l=/^L(\d+)$/.exec(tm); if(l) return koLoserTeam(M,+l[1]); return tm; }
+  function koWinnerTeam(M,num){ const m=M[num]; if(!m) return null; const s=bkWinSide(m); if(!s) return null; return koResolveSlot(M,s===1?m.team1:m.team2); }
+  function koLoserTeam(M,num){ const m=M[num]; if(!m) return null; const s=bkWinSide(m); if(!s) return null; return koResolveSlot(M,s===1?m.team2:m.team1); }
+  function koSlotLabel(raw){ const m=/^([WL])(\d+)$/.exec(raw||""); if(!m) return raw||"—"; return (m[1]==="W"?t("winnerShort"):t("loserShort"))+" "+m[2]; }
+
+  // "By date": every knockout match, chronological, grouped by day. Reuses the schedule
+  // match card (so bells, favourites, penalty lines and Add-to-calendar all work).
+  function renderKnockoutList(){
+    const content=document.getElementById("content");
+    const M=koMatchMap();
+    const rows=RAW.filter(m=>koRound(m))
+      .map(mt=>{ const dt=toLocal(mt.date,mt.time);
+        const t1=koResolveSlot(M,mt.team1)||koSlotLabel(mt.team1);
+        const t2=koResolveSlot(M,mt.team2)||koSlotLabel(mt.team2);
+        return {...mt, dt, team1:t1, team2:t2}; })
+      .filter(r=>r.dt).sort((a,b)=>a.dt-b.dt);
+    if(!rows.length){ content.innerHTML=koToggleHTML()+`<div class="loading">${t("bracketEmpty")}</div>`; return; }
+    let html=koToggleHTML(), lastDay="", open=false; const todayKey=fmtDay(new Date());
+    for(const r of rows){ const dayKey=fmtDay(r.dt);
+      if(dayKey!==lastDay){ if(open) html+="</div>"; const isT=dayKey===todayKey; html+=`<div class="day-head${isT?" is-today":""}">${dayKey}</div><div class="matches">`; open=true; lastDay=dayKey; }
+      html+=matchCardHTML(r);
+    }
+    if(open) html+="</div>";
+    content.innerHTML=html;
+    wireCardHandlers(content);
+  }
+
   function renderBracket(){
     const content=document.getElementById("content");
     const M={}; RAW.forEach(m=>{ if(m&&m.num) M[m.num]=m; });
-    if(!M[73]&&!M[104]){ content.innerHTML=`<div class="loading">${t("bracketEmpty")}</div>`; return; }
+    if(!M[73]&&!M[104]){ content.innerHTML=koToggleHTML()+`<div class="loading">${t("bracketEmpty")}</div>`; return; }
 
     // Resolve a slot to the real team. "W74"/"L101" look up that match's winner/loser.
     function resolveSlot(tm){ if(!tm)return null; const w=/^W(\d+)$/.exec(tm); if(w)return winnerTeam(+w[1]); const l=/^L(\d+)$/.exec(tm); if(l)return loserTeam(+l[1]); return tm; }
@@ -1077,7 +1126,7 @@
 
     let heads=""; BK_HEADS.forEach((h,c)=>{ heads+=`<div class="bk-head" style="left:${Lx(rawLeft(c))}px;top:6px;width:${CW}px">${roundLabel(h)}</div>`; });
 
-    content.innerHTML=`<div class="bk-frame"><div class="bk-fade l"></div><div class="bk-fade r"></div><div class="bk-scroll"><div class="bk-canvas${rtl?' rtl':''}" style="width:${W}px;height:${H}px"><svg class="bk-lines" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" aria-hidden="true">${lines}</svg>${heads}${cards}</div></div></div>`;
+    content.innerHTML=koToggleHTML()+`<div class="bk-frame"><div class="bk-fade l"></div><div class="bk-fade r"></div><div class="bk-scroll"><div class="bk-canvas${rtl?' rtl':''}" style="width:${W}px;height:${H}px"><svg class="bk-lines" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" aria-hidden="true">${lines}</svg>${heads}${cards}</div></div></div>`;
 
     // Interactions: tap a team to trace their whole road; tap empty space to clear.
     const frame=content.querySelector(".bk-frame"), scroll=content.querySelector(".bk-scroll"), canvas=content.querySelector(".bk-canvas");
@@ -1168,7 +1217,7 @@
     bindTeamTaps(content);   // tap a team → its matches in the Schedule
   }
 
-  function rerender(){ if(view==="bracket") renderBracket(); else if(view==="standings") renderStandings(); else if(view==="scorers") renderScorers(); else if(view==="history") renderHistory(); else render(); }
+  function rerender(){ if(view==="bracket") renderKnockout(); else if(view==="standings") renderStandings(); else if(view==="scorers") renderScorers(); else if(view==="history") renderHistory(); else render(); }
   function setView(v){
     view=v;
     if(v!=="schedule") armBackTrap();   // leaving home → arm phone back button to return here
