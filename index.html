@@ -289,6 +289,7 @@
   .team-name { font-size: 14px; font-weight: 500; color: var(--navy); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .team-name.fav { font-weight: 700; }
   .team-name.win { font-weight: 700; color: var(--teal); }
+  .team-name.tbd { font-weight: 500; font-style: italic; color: var(--muted); white-space: normal; }
   :root[data-theme="dark"] .team-name.win { color: #2FB39E; }
   .pen-result { text-align: center; font-size: 11.5px; font-weight: 600; color: var(--teal); margin: -2px 0 5px; }
   :root[data-theme="dark"] .pen-result { color: #2FB39E; }
@@ -634,6 +635,9 @@
       pastCups:"Past cups", mostTitles:"Most titles", pastTitle:"Past World Cups", titlesTitle:"Most World Cup titles",
       hostLbl:"Host:", winnerLbl:"Winner:", runnerLbl:"Runner-up:", goldenBootLbl:"Golden Boot:",
       "round.r32":"Round of 32","round.r16":"Round of 16","round.qf":"Quarter-finals","round.sf":"Semi-finals","round.third":"Third place","round.final":"Final",
+      koR32:"R32", koR16:"R16", koQF:"QF", koSF:"SF", koThird:"3rd place",
+      koFullR32:"Round-of-32 match", koFullR16:"Round-of-16 match", koFullQF:"Quarter-final", koFullSF:"Semi-final",
+      koOf:"of", matchNoLbl:"Match",
       allRounds:"All rounds", bracketEmpty:"The knockout bracket appears once the group stage finishes and the fixtures are set.",
       nextLabel:"Next:", kicksOffIn:"kicks off in", nowLabel:"Now:", liveWord:"(live)",
       cdD:"d", cdH:"h", cdM:"m", cdS:"s",
@@ -705,6 +709,9 @@
       pastCups:"الكؤوس السابقة", mostTitles:"الأكثر تتويجًا", pastTitle:"كؤوس العالم السابقة", titlesTitle:"الأكثر تتويجًا بكأس العالم",
       hostLbl:"المضيف:", winnerLbl:"البطل:", runnerLbl:"الوصيف:", goldenBootLbl:"الحذاء الذهبي:",
       "round.r32":"دور الـ32","round.r16":"دور الـ16","round.qf":"ربع النهائي","round.sf":"نصف النهائي","round.third":"تحديد المركز الثالث","round.final":"النهائي",
+      koR32:"دور 32", koR16:"دور 16", koQF:"ربع", koSF:"نصف", koThird:"المركز الثالث",
+      koFullR32:"مباراة دور الـ32", koFullR16:"مباراة دور الـ16", koFullQF:"ربع النهائي", koFullSF:"نصف النهائي",
+      koOf:"من", matchNoLbl:"مباراة",
       allRounds:"كل الأدوار", bracketEmpty:"تظهر الأدوار الإقصائية بعد انتهاء دور المجموعات وتحديد المواجهات.",
       nextLabel:"التالي:", kicksOffIn:"تبدأ خلال", nowLabel:"الآن:", liveWord:"(مباشر)",
       cdD:"ي", cdH:"س", cdM:"د", cdS:"ث",
@@ -876,6 +883,8 @@
   function teamNameHTML(name,win){
     const c=canon(name), favCls=isFav(name)?" fav":"", winCls=win?" win":"";
     if(TEAM[c]) return `<span class="team-name tappable${favCls}${winCls}" data-team="${c}" role="button" tabindex="0" title="${t("seeMatches")}">${labelOf(name)}</span>`;
+    // Unresolved knockout feeder (e.g. "W101"): show a friendly "Winner of Semi-final 1" instead of the raw code.
+    if(/^[WL]\d+$/.test(name)) return `<span class="team-name tbd">${koSlotName(name,"full")}</span>`;
     return `<span class="team-name${favCls}${winCls}">${labelOf(name)}</span>`;
   }
   function matchCardHTML(r){
@@ -890,10 +899,11 @@
       ? `<div class="pen-result">${labelOf(penWin===1?r.team1:r.team2)} ${t("penWin")} <span dir="ltr">${Math.max(penS[0],penS[1])}–${Math.min(penS[0],penS[1])}</span> ${t("onPens")}</div>`
       : "";
     const stTag=st==="live"?`<span class="status live">${t("statusLive").replace(/^●\s*/,"")}</span>`
-      :st==="ft"?`<span class="status ft">${t("statusFt")}</span>`
+      :st==="ft"?`<span class="status ft">${fmtTime(r.dt)} · ${t("statusFt")}</span>`
       :ABNORMAL_STATES[st]?`<span class="status susp">${t("st_"+st)}</span>`
       :`<span class="status">${fmtTime(r.dt)}${TZ?" "+TZ:""}</span>`;
-    const grp=r.group?groupLabelShort(r.group):roundLabel(r.round||"");
+    const koId=(!r.group&&r.num)?koIdent(r.num):null;
+    const grp=r.group?groupLabelShort(r.group):(koId?`${koFull(koId)} · ${t("matchNoLbl")} ${r.num}`:roundLabel(r.round||""));
     const cid="ics"+(icsId++); ICS_REG[cid]={m:r,dt:r.dt};
     const belled=belledMatches.has(matchKey(r));
     const bell=st==="upcoming"?`<button class="bell-btn ${belled?'on':''}" data-cid="${cid}" aria-label="${t("ttBell")}" aria-pressed="${belled}" title="${t("ttBell")}">🔔</button>`:"";
@@ -1035,7 +1045,32 @@
   function koResolveSlot(M,tm){ if(!tm) return null; const w=/^W(\d+)$/.exec(tm); if(w) return koWinnerTeam(M,+w[1]); const l=/^L(\d+)$/.exec(tm); if(l) return koLoserTeam(M,+l[1]); return tm; }
   function koWinnerTeam(M,num){ const m=M[num]; if(!m) return null; const s=bkWinSide(m); if(!s) return null; return koResolveSlot(M,s===1?m.team1:m.team2); }
   function koLoserTeam(M,num){ const m=M[num]; if(!m) return null; const s=bkWinSide(m); if(!s) return null; return koResolveSlot(M,s===1?m.team2:m.team1); }
-  function koSlotLabel(raw){ const m=/^([WL])(\d+)$/.exec(raw||""); if(!m) return raw||"—"; return (m[1]==="W"?t("winnerShort"):t("loserShort"))+" "+m[2]; }
+  // Round-relative identity of a knockout match from its FIFA match number.
+  // 73–88 = Round-of-32 #1–16 · 89–96 = Round-of-16 #1–8 · 97–100 = QF #1–4 · 101–102 = SF #1–2 · 103 = 3rd · 104 = Final.
+  function koIdent(num){ num=+num;
+    if(num>=73&&num<=88) return {r:"r32", i:num-72};
+    if(num>=89&&num<=96) return {r:"r16", i:num-88};
+    if(num>=97&&num<=100) return {r:"qf", i:num-96};
+    if(num>=101&&num<=102) return {r:"sf", i:num-100};
+    if(num===103) return {r:"third", i:0};
+    if(num===104) return {r:"final", i:0};
+    return null; }
+  // Compact code for the tight bracket-tree cards: "SF1", "QF3", "R16 3", "R32 7", "3rd place", "Final".
+  function koCode(id){ if(!id) return ""; switch(id.r){
+    case "r32": return t("koR32")+" "+id.i; case "r16": return t("koR16")+" "+id.i;
+    case "qf": return t("koQF")+id.i; case "sf": return t("koSF")+id.i;
+    case "third": return t("koThird"); default: return t("round.final"); } }
+  // Full round name for the roomier By-date list: "Semi-final 1", "Quarter-final 3", "Round-of-16 match 3".
+  function koFull(id){ if(!id) return ""; switch(id.r){
+    case "r32": return t("koFullR32")+" "+id.i; case "r16": return t("koFullR16")+" "+id.i;
+    case "qf": return t("koFullQF")+" "+id.i; case "sf": return t("koFullSF")+" "+id.i;
+    case "third": return t("round.third"); default: return t("round.final"); } }
+  // Human label for a W##/L## feeder slot. style "full" → "Winner of Semi-final 1"; else code → "Winner SF1".
+  function koSlotName(raw, style){ const m=/^([WL])(\d+)$/.exec(raw||""); if(!m) return raw||"—";
+    const id=koIdent(+m[2]); if(!id) return raw;
+    const who=m[1]==="W"?t("winnerShort"):t("loserShort");
+    return style==="full" ? who+" "+t("koOf")+" "+koFull(id) : who+" "+koCode(id); }
+  function koSlotLabel(raw){ return koSlotName(raw, "full"); }
 
   // "By date": every knockout match, chronological, grouped by day. Reuses the schedule
   // match card (so bells, favourites, penalty lines and Add-to-calendar all work).
@@ -1111,7 +1146,7 @@
       lines+=`<path class="ln ${cls}" data-f="104" d="M${Px(rawOut(4))},${yf} H${Px(mid)} V${yf} H${Px(champX)}"></path>`; }
 
     // Cards.
-    function slotPH(raw){ const m=/^([WL])(\d+)$/.exec(raw||""); if(!m)return raw||"—"; return (m[1]==="W"?t("winnerShort"):t("loserShort"))+" "+m[2]; }
+    function slotPH(raw){ return koSlotName(raw, "code"); }
     function row(team,raw,win,scoreHtml){
       if(team){ const fav=isFav(team);
         return `<div class="brow2${win?' win':''}${fav?' fav':''}" data-team="${canon(team)}" role="button" tabindex="0">${badge(team)}<span class="bn">${labelOf(team)}${fav?' <span class="bstar">★</span>':''}</span><span class="bsc">${scoreHtml}</span></div>`; }
@@ -1125,12 +1160,16 @@
       const rows=row(resolveSlot(m.team1),m.team1,ws===1,sc(0))+row(resolveSlot(m.team2),m.team2,ws===2,sc(1));
       const when = st==="live" ? t("statusLive") : (dt ? fmtDay(dt)+" · "+fmtTime(dt) : "");
       const where = bkCity(m.ground);
-      const tag=opts.tag?`<div class="bk-tag">${opts.tag}</div>`:"";
+      // Every card carries its round-relative code + FIFA match number (e.g. "SF1 · #101"),
+      // so the "Winner SF1" feeder labels on later cards are traceable to a specific match.
+      const koId=koIdent(num);
+      const tagText = opts.tag!=null ? opts.tag : (koId?`${koCode(koId)} · #${num}`:"");
+      const tag=tagText?`<div class="bk-tag">${tagText}</div>`:"";
       return `<div class="bmatch2${st==='upcoming'?' upcoming':''}${st==='live'?' live':''}" data-num="${num}" style="left:${left}px;top:${top}px;width:${CW}px">${tag}${rows}${when?`<div class="bk-when">${when}</div>`:""}${where?`<div class="bk-where">📍 ${where}</div>`:""}</div>`;
     }
     let cards=""; order.forEach(n=>{ cards+=cardHTML(n); });
     [89,90,91,92,93,94,95,96,97,98,99,100,101,102,104].forEach(n=>{ cards+=cardHTML(n); });
-    if(M[103]) cards+=cardHTML(103,{left:Lx(rawLeft(4)),top:thirdTop,tag:t("thirdPlace")});
+    if(M[103]) cards+=cardHTML(103,{left:Lx(rawLeft(4)),top:thirdTop});
     const champ=winnerTeam(104);
     cards+=`<div class="bk-champ" data-num="champ" style="left:${Lx(champX)}px;top:${cy(104)-CH/2}px;width:${CW}px;height:${CH}px"><div class="ttl">🏆 ${t("champion")}</div><div class="who">${champ?badge(champ)+'<span class="bn">'+labelOf(champ)+'</span>':'<span class="bn">—</span>'}</div></div>`;
 
